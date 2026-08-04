@@ -9,17 +9,21 @@
 {% render 'contrast-override', background_color: section.settings.background_color, section_id: section.id %}
 
 {%- liquid
-  assign first_block = section.blocks.first
-  assign initial_background = first_block.settings.slide_background_color
-  assign initial_text = first_block.settings.slide_text_color
+  assign slide_indices = '1,2,3,4,5' | split: ','
+  assign initial_background = section.settings.slide_1_background_color
+  assign initial_text = section.settings.slide_1_text_color
 -%}
 
 {%- capture slide_colors -%}
-  {%- for block in section.blocks -%}
-    {%- if block.settings.slide_background_color != blank or block.settings.slide_text_color != blank -%}
-      #announcement-bar-{{ section.id }} .announcement-bar__slides > *:nth-child({{ forloop.index }}) {
-        {% if block.settings.slide_background_color != blank %}--slide-background-color: {{ block.settings.slide_background_color }};{% endif %}
-        {% if block.settings.slide_text_color != blank %}--slide-text-color: {{ block.settings.slide_text_color }};{% endif %}
+  {%- for i in slide_indices -%}
+    {%- assign bg_key = 'slide_' | append: i | append: '_background_color' -%}
+    {%- assign text_key = 'slide_' | append: i | append: '_text_color' -%}
+    {%- assign slide_bg = section.settings[bg_key] -%}
+    {%- assign slide_text = section.settings[text_key] -%}
+    {%- if slide_bg != blank or slide_text != blank -%}
+      #announcement-bar-{{ section.id }} .announcement-bar__slides > *:nth-child({{ i }}) {
+        {% if slide_bg != blank %}--slide-background-color: {{ slide_bg }};{% endif %}
+        {% if slide_text != blank %}--slide-text-color: {{ slide_text }};{% endif %}
       }
     {%- endif -%}
   {%- endfor -%}
@@ -63,41 +67,51 @@
 {%- if section.blocks.size > 1 -%}
   <script>
     (() => {
-      const root = document.getElementById('announcement-bar-{{ section.id }}');
-      if (!root || root.dataset.slideColorsInit === 'true') return;
-      root.dataset.slideColorsInit = 'true';
+      const init = () => {
+        const root = document.getElementById('announcement-bar-{{ section.id }}');
+        if (!root || root.dataset.slideColorsInit === 'true') return;
 
-      let slides = root.querySelectorAll('.announcement-bar__slide');
-      if (!slides.length) slides = root.querySelectorAll('.announcement-bar__slides > *');
-      if (slides.length < 2) return;
+        let slides = root.querySelectorAll('.announcement-bar__slide');
+        if (!slides.length) slides = root.querySelectorAll('.announcement-bar__slides > *');
+        if (slides.length < 2) return;
 
-      const sync = () => {
-        const active =
-          Array.from(slides).find((slide) => slide.getAttribute('aria-hidden') !== 'true') || slides[0];
-        const styles = getComputedStyle(active);
-        const background = styles.getPropertyValue('--slide-background-color').trim();
-        const text = styles.getPropertyValue('--slide-text-color').trim();
+        root.dataset.slideColorsInit = 'true';
 
-        if (background) {
-          root.style.setProperty('--announcement-active-background', background);
-        } else {
-          root.style.removeProperty('--announcement-active-background');
-        }
+        const sync = () => {
+          const active =
+            Array.from(slides).find((slide) => slide.getAttribute('aria-hidden') !== 'true') || slides[0];
+          const styles = getComputedStyle(active);
+          const background = styles.getPropertyValue('--slide-background-color').trim();
+          const text = styles.getPropertyValue('--slide-text-color').trim();
 
-        if (text) {
-          root.style.setProperty('--announcement-active-text', text);
-          root.style.setProperty('--color-foreground', text);
-        } else {
-          root.style.removeProperty('--announcement-active-text');
-          root.style.removeProperty('--color-foreground');
-        }
+          if (background) {
+            root.style.setProperty('--announcement-active-background', background);
+          } else {
+            root.style.removeProperty('--announcement-active-background');
+          }
+
+          if (text) {
+            root.style.setProperty('--announcement-active-text', text);
+            root.style.setProperty('--color-foreground', text);
+          } else {
+            root.style.removeProperty('--announcement-active-text');
+            root.style.removeProperty('--color-foreground');
+          }
+        };
+
+        sync();
+
+        const observer = new MutationObserver(sync);
+        slides.forEach((slide) =>
+          observer.observe(slide, { attributes: true, attributeFilter: ['aria-hidden'] })
+        );
       };
 
-      sync();
-      const observer = new MutationObserver(sync);
-      slides.forEach((slide) =>
-        observer.observe(slide, { attributes: true, attributeFilter: ['aria-hidden'] })
-      );
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init, { once: true });
+      } else {
+        init();
+      }
     })();
   </script>
 {%- endif -%}
@@ -191,3 +205,174 @@
     inset: 0;
   }
 {% endstylesheet %}
+
+{% schema %}
+{
+  "name": "t:names.announcement_bar",
+  "blocks": [
+    {
+      "type": "_announcement"
+    }
+  ],
+  "enabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "range",
+      "id": "speed",
+      "label": "t:settings.scroll_speed",
+      "min": 2,
+      "max": 10,
+      "default": 5,
+      "unit": "sec"
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.section_width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:options.page"
+        },
+        {
+          "value": "full-width",
+          "label": "t:options.full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background_color",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "range",
+      "id": "divider_width",
+      "label": "t:settings.divider_thickness",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "t:settings.divider_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ section.settings.divider_width > 0 }}"
+    },
+    {
+      "type": "header",
+      "content": "Per-slide colours"
+    },
+    {
+      "type": "paragraph",
+      "content": "Set a background and text colour for each announcement, in the order the announcements appear above. Leave blank to use the section colours."
+    },
+    {
+      "type": "color",
+      "id": "slide_1_background_color",
+      "label": "Slide 1 background",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "slide_1_text_color",
+      "label": "Slide 1 text",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "slide_2_background_color",
+      "label": "Slide 2 background",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "slide_2_text_color",
+      "label": "Slide 2 text",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "slide_3_background_color",
+      "label": "Slide 3 background",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "slide_3_text_color",
+      "label": "Slide 3 text",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "slide_4_background_color",
+      "label": "Slide 4 background",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "slide_4_text_color",
+      "label": "Slide 4 text",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "slide_5_background_color",
+      "label": "Slide 5 background",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "color",
+      "id": "slide_5_text_color",
+      "label": "Slide 5 text",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 15
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:names.announcement_bar",
+      "blocks": {
+        "announcement_1": {
+          "type": "_announcement"
+        }
+      },
+      "block_order": ["announcement_1"]
+    }
+  ]
+}
+{% endschema %}
