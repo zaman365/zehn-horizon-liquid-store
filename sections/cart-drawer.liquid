@@ -1,0 +1,1031 @@
+{%- comment -%}
+  ============================================================================
+  ZEHN cart drawer — Liquid port of components/zehn/CartDrawer.tsx
+
+  Install: sections/cart-drawer.liquid
+  Add it to the "header" section group (or "footer" — position doesn't matter,
+  it's fixed-position). The header finds it by [data-zehn-cart-drawer] and
+  dispatches zehn:cart:open instead of navigating to /cart.
+
+  Quantity + remove use the AJAX Cart API and re-render this section through
+  the Section Rendering API, then broadcast zehn:cart:updated so the header
+  badge follows along. No page reloads.
+
+  Public API:
+    window.ZehnCartDrawer.open() / .close() / .refresh()
+  Events it listens for:
+    zehn:cart:open      open the drawer
+    zehn:cart:refresh   re-pull cart HTML (fire this after add-to-cart)
+  ============================================================================
+{%- endcomment -%}
+
+{%- liquid
+  assign fg = section.settings.text_color
+  assign border = section.settings.border_color
+-%}
+
+{%- capture icon_close -%}
+  <svg class="zcd-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+{%- endcapture -%}
+{%- capture icon_bag -%}
+  <svg class="zcd-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+{%- endcapture -%}
+{%- capture icon_minus -%}
+  <svg class="zcd-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/></svg>
+{%- endcapture -%}
+{%- capture icon_plus -%}
+  <svg class="zcd-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+{%- endcapture -%}
+{%- capture icon_trash -%}
+  <svg class="zcd-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+{%- endcapture -%}
+
+{%- style -%}
+  #ZehnCartDrawer-{{ section.id }} {
+    --zcd-fg: {{ fg }};
+    --zcd-fg-70: {{ fg | color_modify: 'alpha', 0.7 }};
+    --zcd-fg-60: {{ fg | color_modify: 'alpha', 0.6 }};
+    --zcd-fg-55: {{ fg | color_modify: 'alpha', 0.55 }};
+    --zcd-fg-30: {{ fg | color_modify: 'alpha', 0.3 }};
+    --zcd-fg-20: {{ fg | color_modify: 'alpha', 0.2 }};
+    --zcd-fg-05: {{ fg | color_modify: 'alpha', 0.05 }};
+    --zcd-border-50: {{ border | color_modify: 'alpha', 0.5 }};
+    --zcd-border-40: {{ border | color_modify: 'alpha', 0.4 }};
+    --zcd-card: {{ section.settings.card_color }};
+    --zcd-muted: {{ section.settings.muted_color }};
+    --zcd-accent: {{ section.settings.accent_color }};
+    --zcd-primary: {{ section.settings.primary_color }};
+    --zcd-primary-fg: {{ section.settings.primary_foreground }};
+    --zcd-success: {{ section.settings.shipping_color }};
+    --zcd-ease: cubic-bezier(0, 0, 0.2, 1);
+  }
+
+  #ZehnCartDrawer-{{ section.id }}[hidden] { display: none; }
+
+  @keyframes zcd-fade-in-{{ section.id }} {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes zcd-slide-in-{{ section.id }} {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: {{ section.settings.z_index }};
+    border: 0;
+    padding: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    z-index: {{ section.settings.z_index }};
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 512px;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    background: var(--zcd-card);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+    color: var(--zcd-fg);
+  }
+
+  /* Animate on open and close only — an AJAX quantity change re-renders the
+     panel, and animating that would re-slide the drawer on every tap. */
+  #ZehnCartDrawer-{{ section.id }}.is-entering .zcd-backdrop,
+  #ZehnCartDrawer-{{ section.id }}.is-closing .zcd-backdrop {
+    animation: zcd-fade-in-{{ section.id }} 400ms ease-out forwards;
+  }
+
+  #ZehnCartDrawer-{{ section.id }}.is-entering .zcd-panel,
+  #ZehnCartDrawer-{{ section.id }}.is-closing .zcd-panel {
+    animation: zcd-slide-in-{{ section.id }} 300ms ease-out forwards;
+  }
+
+  #ZehnCartDrawer-{{ section.id }}.is-closing .zcd-backdrop,
+  #ZehnCartDrawer-{{ section.id }}.is-closing .zcd-panel {
+    animation-direction: reverse;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  /* ---------- header ---------- */
+  #ZehnCartDrawer-{{ section.id }} .zcd-head {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--zcd-border-50);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-title {
+    margin: 0;
+    font-family: var(--font-display, 'Archivo', system-ui, sans-serif);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: var(--zcd-fg);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-subtitle {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--zcd-fg-60);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border: 0;
+    border-radius: 9999px;
+    background: none;
+    color: var(--zcd-fg-70);
+    cursor: pointer;
+    transition: color 200ms var(--zcd-ease), background-color 200ms var(--zcd-ease);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-close:hover {
+    color: var(--zcd-fg);
+    background: var(--zcd-fg-05);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-close .zcd-icon { width: 24px; height: 24px; }
+
+  /* ---------- body ---------- */
+  #ZehnCartDrawer-{{ section.id }} .zcd-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 24px;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-empty .zcd-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    color: var(--zcd-fg-30);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-empty p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--zcd-fg-60);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-empty button {
+    margin-top: 16px;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--zcd-accent);
+    cursor: pointer;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-empty button:hover { text-decoration: underline; }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-line {
+    display: flex;
+    gap: 16px;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-line[data-busy='true'] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-thumb {
+    position: relative;
+    flex-shrink: 0;
+    width: 96px;
+    height: 96px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--zcd-muted);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-thumb img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-info {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-name {
+    display: block;
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--zcd-fg);
+    text-decoration: none;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-name:hover { text-decoration: none; }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-variant {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--zcd-fg-60);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-qty-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-stepper {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--zcd-fg-20);
+    border-radius: 9999px;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-step {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border: 0;
+    background: none;
+    color: var(--zcd-fg);
+    cursor: pointer;
+    transition: background-color 200ms var(--zcd-ease);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-step:first-child {
+    border-radius: 9999px 0 0 9999px;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-step:last-child {
+    border-radius: 0 9999px 9999px 0;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-step:hover:not(:disabled) {
+    background: var(--zcd-fg-05);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-step:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-step .zcd-icon { width: 12px; height: 12px; }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-qty {
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--zcd-fg);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+    border: 0;
+    background: none;
+    color: var(--zcd-fg-60);
+    cursor: pointer;
+    transition: color 200ms var(--zcd-ease);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-remove:hover { color: var(--zcd-accent); }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-prices {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-price {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-price--sale { color: var(--zcd-accent); }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-was {
+    margin: 0;
+    font-size: 12px;
+    color: var(--zcd-fg-55);
+    text-decoration: line-through;
+    white-space: nowrap;
+  }
+
+  /* ---------- footer ---------- */
+  #ZehnCartDrawer-{{ section.id }} .zcd-foot {
+    flex-shrink: 0;
+    max-height: 55dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px 20px max(20px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--zcd-border-40);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-summary > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--zcd-fg-70);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-summary strong {
+    font-weight: 400;
+    color: var(--zcd-fg);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-ship {
+    font-weight: 500;
+    color: var(--zcd-success);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 4px 0 12px;
+    border-bottom: 1px solid var(--zcd-border-40);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--zcd-fg);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-total__label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 8px;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-total small {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--zcd-fg-55);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 9999px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 200ms var(--zcd-ease), opacity 200ms var(--zcd-ease);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-btn--primary {
+    background: var(--zcd-primary);
+    color: var(--zcd-primary-fg);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-btn--primary:hover {
+    opacity: 0.9;
+    text-decoration: none;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-btn--ghost {
+    border: 1px solid var(--zcd-fg-20);
+    background: transparent;
+    color: var(--zcd-fg);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-btn--ghost:hover {
+    background: var(--zcd-fg-05);
+    text-decoration: none;
+  }
+
+  #ZehnCartDrawer-{{ section.id }} .zcd-note {
+    margin: 0 0 12px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--zcd-fg-55);
+  }
+
+  #ZehnCartDrawer-{{ section.id }} :focus-visible {
+    outline: 2px solid var(--zcd-accent);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #ZehnCartDrawer-{{ section.id }} .zcd-backdrop,
+    #ZehnCartDrawer-{{ section.id }} .zcd-panel {
+      animation: none;
+    }
+  }
+{%- endstyle -%}
+
+<div
+  id="ZehnCartDrawer-{{ section.id }}"
+  class="zcd"
+  data-zehn-cart-drawer
+  data-count="{{ cart.item_count }}"
+  hidden
+>
+  <button
+    type="button"
+    class="zcd-backdrop"
+    data-zcd-close
+    tabindex="-1"
+    aria-hidden="true"
+  ></button>
+
+  <div
+    class="zcd-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="ZehnCartTitle-{{ section.id }}"
+  >
+    <div class="zcd-head">
+      <div>
+        <h2 class="zcd-title" id="ZehnCartTitle-{{ section.id }}">
+          {{ section.settings.heading }}
+        </h2>
+        <p class="zcd-subtitle">
+          {{ cart.item_count }}
+          {%- if cart.item_count == 1 -%}
+            {{ section.settings.item_singular }}
+          {%- else -%}
+            {{ section.settings.item_plural }}
+          {%- endif -%}
+        </p>
+      </div>
+      <button
+        type="button"
+        class="zcd-close"
+        data-zcd-close
+        aria-label="{{ section.settings.close_label | escape }}"
+      >
+        {{ icon_close }}
+      </button>
+    </div>
+
+    <div class="zcd-body">
+      {%- if cart.item_count == 0 -%}
+        <div class="zcd-empty">
+          {{ icon_bag }}
+          <p>{{ section.settings.empty_text }}</p>
+          <button type="button" data-zcd-close>{{ section.settings.continue_label }}</button>
+        </div>
+      {%- else -%}
+        <div class="zcd-lines">
+          {%- for item in cart.items -%}
+            {%- liquid
+              assign on_sale = false
+              if item.variant.compare_at_price > item.variant.price
+                assign on_sale = true
+              endif
+
+              assign variant_label = ''
+              unless item.variant.title == 'Default Title'
+                assign variant_label = item.variant.title
+              endunless
+            -%}
+
+            <div class="zcd-line" data-zcd-line data-key="{{ item.key }}" data-busy="false">
+              <div class="zcd-thumb">
+                {%- if item.image -%}
+                  {{
+                    item.image
+                    | image_url: width: 240
+                    | image_tag:
+                      loading: 'lazy',
+                      alt: item.image.alt | default: item.product.title,
+                      widths: '96, 192, 288'
+                  }}
+                {%- endif -%}
+              </div>
+
+              <div class="zcd-info">
+                <a class="zcd-name" href="{{ item.url }}">{{ item.product.title }}</a>
+
+                {%- if variant_label != blank -%}
+                  <p class="zcd-variant">{{ variant_label }}</p>
+                {%- endif -%}
+
+                <div class="zcd-qty-row">
+                  <div class="zcd-stepper">
+                    <button
+                      type="button"
+                      class="zcd-step"
+                      data-zcd-change="{{ item.quantity | minus: 1 }}"
+                      {% if item.quantity <= 1 %}disabled{% endif %}
+                      aria-label="{{ section.settings.decrease_label | escape }}"
+                    >
+                      {{ icon_minus }}
+                    </button>
+                    <span class="zcd-qty" aria-live="polite">{{ item.quantity }}</span>
+                    <button
+                      type="button"
+                      class="zcd-step"
+                      data-zcd-change="{{ item.quantity | plus: 1 }}"
+                      aria-label="{{ section.settings.increase_label | escape }}"
+                    >
+                      {{ icon_plus }}
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="zcd-remove"
+                    data-zcd-change="0"
+                    aria-label="{{ section.settings.remove_label | escape }}"
+                  >
+                    {{ icon_trash }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="zcd-prices">
+                <p class="zcd-price{% if on_sale %} zcd-price--sale{% endif %}">
+                  {{ item.final_line_price | money }}
+                </p>
+                {%- if on_sale -%}
+                  <p class="zcd-was">
+                    {{ item.variant.compare_at_price | times: item.quantity | money }}
+                  </p>
+                {%- endif -%}
+              </div>
+            </div>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+
+    {%- if cart.item_count > 0 -%}
+      <div class="zcd-foot">
+        <div class="zcd-summary">
+          <div>
+            <span>{{ section.settings.subtotal_label }}</span>
+            <strong>{{ cart.items_subtotal_price | money }}</strong>
+          </div>
+          {%- if section.settings.shipping_note != blank -%}
+            <div>
+              <span>{{ section.settings.shipping_label }}</span>
+              <span class="zcd-ship">{{ section.settings.shipping_note }}</span>
+            </div>
+          {%- endif -%}
+          {%- if cart.cart_level_discount_applications.size > 0 -%}
+            {%- for discount in cart.cart_level_discount_applications -%}
+              <div>
+                <span>{{ discount.title }}</span>
+                <strong>-{{ discount.total_allocated_amount | money }}</strong>
+              </div>
+            {%- endfor -%}
+          {%- endif -%}
+        </div>
+
+        <div class="zcd-total">
+          <span class="zcd-total__label">
+            <span>{{ section.settings.total_label }}</span>
+            <small>{{ section.settings.tax_note }}</small>
+          </span>
+          <span>{{ cart.total_price | money }}</span>
+        </div>
+
+        <form action="{{ routes.cart_url }}" method="post" novalidate class="zcd-actions">
+          <button type="submit" name="checkout" class="zcd-btn zcd-btn--primary">
+            {{ section.settings.checkout_label }}
+          </button>
+          <a href="{{ routes.cart_url }}" class="zcd-btn zcd-btn--ghost">
+            {{ section.settings.view_cart_label }}
+          </a>
+        </form>
+
+        {%- if section.settings.discount_note != blank -%}
+          <p class="zcd-note">{{ section.settings.discount_note }}</p>
+        {%- endif -%}
+
+        <button type="button" class="zcd-btn zcd-btn--ghost" data-zcd-close>
+          {{ section.settings.continue_label }}
+        </button>
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+
+<script>
+  (function () {
+    var root = document.getElementById('ZehnCartDrawer-{{ section.id }}');
+    if (!root) return;
+
+    window.__zehnCartDrawers = window.__zehnCartDrawers || {};
+    if (window.__zehnCartDrawers['{{ section.id }}']) {
+      window.__zehnCartDrawers['{{ section.id }}']();
+    }
+
+    var sectionId = {{ section.id | json }};
+    var lastFocused = null;
+    var closeTimer = null;
+    var enterTimer = null;
+
+    /* ---------- scroll lock ---------- */
+    function lockScroll(lock) {
+      document.body.style.overflow = lock ? 'hidden' : '';
+      document.documentElement.style.overflow = lock ? 'hidden' : '';
+    }
+
+    function isOpen() {
+      return !root.hasAttribute('hidden');
+    }
+
+    function open() {
+      if (isOpen()) return;
+      if (closeTimer) clearTimeout(closeTimer);
+      lastFocused = document.activeElement;
+      root.removeAttribute('hidden');
+      root.classList.remove('is-closing');
+      root.classList.add('is-entering');
+      if (enterTimer) clearTimeout(enterTimer);
+      enterTimer = setTimeout(function () {
+        root.classList.remove('is-entering');
+      }, 420);
+      lockScroll(true);
+      var closeBtn = root.querySelector('.zcd-close');
+      if (closeBtn) closeBtn.focus();
+    }
+
+    function close() {
+      if (!isOpen()) return;
+      root.classList.remove('is-entering');
+      root.classList.add('is-closing');
+      lockScroll(false);
+      closeTimer = setTimeout(function () {
+        root.setAttribute('hidden', '');
+        root.classList.remove('is-closing');
+      }, 300);
+      if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    }
+
+    /* ---------- cart mutations ---------- */
+    function setBusy(line, busy) {
+      if (line) line.setAttribute('data-busy', busy ? 'true' : 'false');
+    }
+
+    function announceCount() {
+      var count = Number(root.getAttribute('data-count')) || 0;
+      document.dispatchEvent(
+        new CustomEvent('zehn:cart:updated', {bubbles: true, detail: {count: count}}),
+      );
+    }
+
+    function swapMarkup(html) {
+      var parsed = new DOMParser().parseFromString(html, 'text/html');
+      var fresh = parsed.querySelector('[data-zehn-cart-drawer]');
+      if (!fresh) return;
+      // Only the inner markup is replaced, so delegated listeners survive.
+      root.innerHTML = fresh.innerHTML;
+      root.setAttribute('data-count', fresh.getAttribute('data-count') || '0');
+      announceCount();
+    }
+
+    function refresh() {
+      return fetch(window.location.pathname + '?sections=' + encodeURIComponent(sectionId))
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (data && data[sectionId]) swapMarkup(data[sectionId]);
+        })
+        .catch(function () {});
+    }
+
+    function changeLine(key, quantity, line) {
+      setBusy(line, true);
+      return fetch('{{ routes.cart_change_url }}.js', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', Accept: 'application/json'},
+        body: JSON.stringify({
+          id: key,
+          quantity: quantity,
+          sections: sectionId,
+          sections_url: window.location.pathname,
+        }),
+      })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (data && data.sections && data.sections[sectionId]) {
+            swapMarkup(data.sections[sectionId]);
+          } else {
+            return refresh();
+          }
+        })
+        .catch(function () {
+          setBusy(line, false);
+          return refresh();
+        });
+    }
+
+    /* ---------- delegated events ---------- */
+    function onClick(event) {
+      var closer = event.target.closest('[data-zcd-close]');
+      if (closer) {
+        event.preventDefault();
+        close();
+        return;
+      }
+
+      var changer = event.target.closest('[data-zcd-change]');
+      if (changer) {
+        event.preventDefault();
+        var line = changer.closest('[data-zcd-line]');
+        if (!line) return;
+        changeLine(line.getAttribute('data-key'), changer.getAttribute('data-zcd-change'), line);
+      }
+    }
+
+    function onKeyDown(event) {
+      if (event.key === 'Escape' && isOpen()) close();
+    }
+
+    root.addEventListener('click', onClick);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('zehn:cart:open', open);
+    document.addEventListener('zehn:cart:refresh', refresh);
+
+    window.ZehnCartDrawer = {open: open, close: close, refresh: refresh};
+
+    window.__zehnCartDrawers['{{ section.id }}'] = function () {
+      lockScroll(false);
+      if (closeTimer) clearTimeout(closeTimer);
+      if (enterTimer) clearTimeout(enterTimer);
+      root.removeEventListener('click', onClick);
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('zehn:cart:open', open);
+      document.removeEventListener('zehn:cart:refresh', refresh);
+    };
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "ZEHN cart drawer",
+  "tag": "div",
+  "class": "zehn-cart-drawer-section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Warenkorb"
+    },
+    {
+      "type": "text",
+      "id": "item_singular",
+      "label": "Item word (singular)",
+      "default": "Artikel"
+    },
+    {
+      "type": "text",
+      "id": "item_plural",
+      "label": "Item word (plural)",
+      "default": "Artikel"
+    },
+    {
+      "type": "text",
+      "id": "empty_text",
+      "label": "Empty cart message",
+      "default": "Ihr Warenkorb ist leer"
+    },
+    {
+      "type": "text",
+      "id": "subtotal_label",
+      "label": "Subtotal label",
+      "default": "Zwischensumme"
+    },
+    {
+      "type": "text",
+      "id": "shipping_label",
+      "label": "Shipping label",
+      "default": "Versand"
+    },
+    {
+      "type": "text",
+      "id": "shipping_note",
+      "label": "Shipping value",
+      "default": "Standard DE: kostenlos",
+      "info": "Leave empty to hide the shipping row."
+    },
+    {
+      "type": "text",
+      "id": "total_label",
+      "label": "Total label",
+      "default": "Gesamt"
+    },
+    {
+      "type": "text",
+      "id": "tax_note",
+      "label": "Tax note",
+      "default": "Inklusive MwSt."
+    },
+    {
+      "type": "text",
+      "id": "checkout_label",
+      "label": "Checkout button",
+      "default": "Zur Kasse"
+    },
+    {
+      "type": "text",
+      "id": "view_cart_label",
+      "label": "View cart button",
+      "default": "Warenkorb anzeigen"
+    },
+    {
+      "type": "text",
+      "id": "continue_label",
+      "label": "Continue shopping button",
+      "default": "Weiter einkaufen"
+    },
+    {
+      "type": "text",
+      "id": "discount_note",
+      "label": "Discount note",
+      "default": "Rabattcodes können im Checkout eingelöst werden.",
+      "info": "Liquid themes can't apply discount codes in the cart — only at checkout."
+    },
+    {
+      "type": "header",
+      "content": "Accessibility labels"
+    },
+    {
+      "type": "text",
+      "id": "close_label",
+      "label": "Close button",
+      "default": "Warenkorb schließen"
+    },
+    {
+      "type": "text",
+      "id": "decrease_label",
+      "label": "Decrease quantity",
+      "default": "Menge verringern"
+    },
+    {
+      "type": "text",
+      "id": "increase_label",
+      "label": "Increase quantity",
+      "default": "Menge erhöhen"
+    },
+    {
+      "type": "text",
+      "id": "remove_label",
+      "label": "Remove item",
+      "default": "Artikel entfernen"
+    },
+    {
+      "type": "header",
+      "content": "Colours"
+    },
+    {
+      "type": "color",
+      "id": "card_color",
+      "label": "Drawer background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#0F1426"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Borders",
+      "default": "#8E97A4"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Image placeholder",
+      "default": "#F4F4F5"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent",
+      "default": "#FF5F1F"
+    },
+    {
+      "type": "color",
+      "id": "primary_color",
+      "label": "Checkout button",
+      "default": "#0F1426"
+    },
+    {
+      "type": "color",
+      "id": "primary_foreground",
+      "label": "Checkout button text",
+      "default": "#F4F4F5"
+    },
+    {
+      "type": "color",
+      "id": "shipping_color",
+      "label": "Shipping value",
+      "default": "#16A34A"
+    },
+    {
+      "type": "number",
+      "id": "z_index",
+      "label": "Stacking order (z-index)",
+      "default": 200
+    }
+  ],
+  "presets": [
+    {
+      "name": "ZEHN cart drawer"
+    }
+  ]
+}
+{% endschema %}
