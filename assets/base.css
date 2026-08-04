@@ -2215,3 +2215,7 @@ main > .shopify-section:first-child .section:not(.disable-section-top-offset) {
   text-align:center;
   color:#ffffff!important;
 }
+
+.page-wrapper{
+  padding-top:130px;
+}
