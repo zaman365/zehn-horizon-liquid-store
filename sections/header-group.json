@@ -14,66 +14,56 @@
     "header_announcements_9jGBFp": {
       "type": "header-announcements",
       "blocks": {
-        "announcement_QTEUtA": {
-          "type": "_announcement",
-          "name": "t:names.announcement",
+        "announcement_dtURRc": {
+          "type": "announcement",
           "settings": {
             "text": "Kostenloser DHL-Versand & Rücksendung in Deutschland",
             "link": "",
-            "font": "var(--font-subheading--family)",
-            "font_size": "0.75rem",
-            "weight": "",
-            "letter_spacing": "normal",
-            "case": "none",
-            "text_color": "{{ settings.color_palette.background }}"
-          },
-          "blocks": {}
+            "bg_color": "#ff6b35",
+            "text_color": "#ffffff"
+          }
         },
-        "announcement_MHzDqe": {
-          "type": "_announcement",
-          "name": "t:names.announcement",
+        "announcement_3ypDpE": {
+          "type": "announcement",
           "settings": {
             "text": "Sichere Zahlung im Checkout",
             "link": "",
-            "font": "var(--font-subheading--family)",
-            "font_size": "0.75rem",
-            "weight": "",
-            "letter_spacing": "normal",
-            "case": "none",
-            "text_color": "{{ settings.color_palette.background }}"
-          },
-          "blocks": {}
+            "bg_color": "#ff6b35",
+            "text_color": "#ffffff"
+          }
         },
-        "announcement_8HMqbr": {
-          "type": "_announcement",
-          "name": "t:names.announcement",
+        "announcement_GP9eGz": {
+          "type": "announcement",
           "settings": {
             "text": "EU: Versand 5,99 € · Rücksendung kostenlos",
             "link": "",
-            "font": "var(--font-subheading--family)",
-            "font_size": "0.75rem",
-            "weight": "",
-            "letter_spacing": "normal",
-            "case": "none",
-            "text_color": ""
-          },
-          "blocks": {}
+            "bg_color": "#0F1426",
+            "text_color": "#ffffff"
+          }
         }
       },
       "block_order": [
-        "announcement_QTEUtA",
-        "announcement_MHzDqe",
-        "announcement_8HMqbr"
+        "announcement_dtURRc",
+        "announcement_3ypDpE",
+        "announcement_GP9eGz"
       ],
       "name": "t:names.announcement_bar",
       "settings": {
-        "speed": 5,
-        "section_width": "page-width",
-        "background_color": "#FF6B35",
-        "divider_width": 0,
-        "divider_color": "",
-        "padding-block-start": 8,
-        "padding-block-end": 8
+        "autoplay": true,
+        "rotate_speed": 6,
+        "fade_speed": 500,
+        "pause_on_hover": true,
+        "enable_entrance": true,
+        "fixed": true,
+        "height_mobile": 26,
+        "height_desktop": 29,
+        "max_width": 1400,
+        "font_size_mobile": 11,
+        "font_size_desktop": 12,
+        "z_index": 60,
+        "aria_label": "Ankündigungen",
+        "prev_label": "Vorherige Ankündigung",
+        "next_label": "Nächste Ankündigung"
       }
     },
     "header_section": {
