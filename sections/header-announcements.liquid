@@ -31,10 +31,6 @@
   <style>
     {{ slide_colors }}
 
-    #announcement-bar-{{ section.id }}.announcement-bar {
-      background-color: transparent;
-    }
-
     #announcement-bar-{{ section.id }} .announcement-bar__background {
       background-color: var(--announcement-active-background, transparent);
     }
@@ -280,7 +276,7 @@
     },
     {
       "type": "paragraph",
-      "content": "Background and text colours for individual announcements are set on each announcement block."
+      "content": "Background and text colours for individual announcements are set on each announcement block. Leave a block's colours blank to use the section background below."
     },
     {
       "type": "select",
@@ -340,7 +336,7 @@
       "id": "padding-block-end",
       "label": "t:settings.bottom",
       "min": 0,
-      "max": 100,
+      "max": 100,      
       "step": 1,
       "unit": "px",
       "default": 15
