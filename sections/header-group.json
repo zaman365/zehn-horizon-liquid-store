@@ -55,7 +55,7 @@
             "weight": "",
             "letter_spacing": "normal",
             "case": "none",
-            "text_color": "{{ settings.color_palette.background }}"
+            "text_color": "{{ settings.color_palette.foreground }}"
           },
           "blocks": {}
         },
@@ -85,7 +85,7 @@
       "settings": {
         "speed": 5,
         "section_width": "page-width",
-        "background_color": "#FF6B35",
+        "background_color": "#ff6b35",
         "divider_width": 0,
         "divider_color": "",
         "padding-block-start": 8,
