@@ -1,0 +1,733 @@
+{%- comment -%}
+  ZEHN — Footer
+  Place in: sections/zehn-footer.liquid
+
+  Self-contained: no Tailwind / theme utility classes required.
+  Layout: brand + newsletter + socials in column 1, up to 3 menu columns beside it.
+  Mobile (<750px): menu columns collapse into accordions. Desktop: always open.
+
+  Assets to upload to /assets:
+    ZEHN_Platinum.svg              (background watermark)
+    ZEHN_Wordmark_with_logo.webp   (footer logo — or use the image picker instead)
+{%- endcomment -%}
+
+{%- liquid
+  assign cols = section.blocks.size | plus: 1 | at_most: 4
+  assign year = 'now' | date: '%Y'
+
+  assign logo_src = ''
+  if section.settings.logo != blank
+    assign logo_src = section.settings.logo | image_url: width: 600
+  elsif section.settings.logo_asset != blank
+    assign logo_src = section.settings.logo_asset | asset_url
+  endif
+
+  assign watermark_src = ''
+  if section.settings.watermark_asset != blank
+    assign watermark_src = section.settings.watermark_asset | asset_url
+  elsif section.settings.watermark_image != blank
+    assign watermark_src = section.settings.watermark_image | image_url: width: 1400
+  endif
+-%}
+
+<style>
+  #shopify-section-{{ section.id }} .zf {
+    --zf-bg: {{ section.settings.color_bg }};
+    --zf-text: {{ section.settings.color_text }};
+    --zf-link: {{ section.settings.color_link }};
+    --zf-accent: {{ section.settings.color_accent }};
+    --zf-rule: {{ section.settings.color_text }}1f;
+    --zf-bubble: {{ section.settings.color_text }}14;
+    --zf-cols: {{ cols }};
+    --zf-gap: {{ section.settings.column_gap }}px;
+    --zf-max: {{ section.settings.max_width }}px;
+
+    box-sizing: border-box;
+    width: 100%;
+    font-family: inherit;
+  }
+  #shopify-section-{{ section.id }} .zf *,
+  #shopify-section-{{ section.id }} .zf *::before,
+  #shopify-section-{{ section.id }} .zf *::after { box-sizing: border-box; }
+
+  /* ---------- main dark panel ---------- */
+  #shopify-section-{{ section.id }} .zf__main {
+    position: relative;
+    overflow: hidden;
+    background: var(--zf-bg);
+    color: var(--zf-text);
+    padding-top: {{ section.settings.padding_top | divided_by: 1.6 | round }}px;
+    padding-bottom: {{ section.settings.padding_bottom | divided_by: 1.6 | round }}px;
+  }
+  #shopify-section-{{ section.id }} .zf__watermark-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 36px;
+    pointer-events: none;
+    user-select: none;
+  }
+  #shopify-section-{{ section.id }} .zf__watermark {
+    display: block;
+    width: auto;
+    height: 210px;
+    max-width: none;
+    opacity: {{ section.settings.watermark_opacity | divided_by: 100.0 }};
+  }
+  #shopify-section-{{ section.id }} .zf__inner {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: var(--zf-max);
+    margin: 0 auto;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  #shopify-section-{{ section.id }} .zf__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  /* ---------- brand column ---------- */
+  #shopify-section-{{ section.id }} .zf__logo {
+    display: block;
+    height: 32px;
+    width: auto;
+    max-width: 100%;
+    margin-bottom: 12px;
+    border-radius: 0;
+  }
+  #shopify-section-{{ section.id }} .zf__logo-text {
+    margin: 0 0 12px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--zf-text);
+  }
+  #shopify-section-{{ section.id }} .zf__label {
+    display: block;
+    margin: 0 0 12px;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--zf-text);
+  }
+  #shopify-section-{{ section.id }} .zf__newsletter { margin-bottom: 24px; }
+  #shopify-section-{{ section.id }} .zf__form { position: relative; margin: 0; }
+  #shopify-section-{{ section.id }} .zf__input {
+    width: 100%;
+    padding: 10px 96px 10px 0;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--zf-text);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--zf-rule);
+    border-radius: 0;
+    transition: border-color 300ms ease;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  #shopify-section-{{ section.id }} .zf__input::placeholder { color: {{ section.settings.color_text }}66; }
+  #shopify-section-{{ section.id }} .zf__input:focus {
+    outline: none;
+    border-bottom: 2px solid var(--zf-accent);
+  }
+  #shopify-section-{{ section.id }} .zf__submit {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 6px 0;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: {{ section.settings.color_button }};
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    transition: color 300ms ease;
+  }
+  #shopify-section-{{ section.id }} .zf__submit:hover { color: var(--zf-accent); }
+  #shopify-section-{{ section.id }} .zf__message {
+    margin: 10px 0 0;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--zf-link);
+  }
+  #shopify-section-{{ section.id }} .zf__message--error { color: {{ section.settings.color_error }}; }
+
+  /* ---------- socials ---------- */
+  #shopify-section-{{ section.id }} .zf__socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+  #shopify-section-{{ section.id }} .zf__social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: var(--zf-bubble);
+    color: var(--zf-link);
+    text-decoration: none;
+    transition: color 300ms ease, background-color 300ms ease;
+  }
+  #shopify-section-{{ section.id }} .zf__social svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+  }
+  #shopify-section-{{ section.id }} .zf__social:hover { background: {{ section.settings.color_text }}24; }
+  #shopify-section-{{ section.id }} .zf__social--facebook:hover { color: #1877f2; }
+  #shopify-section-{{ section.id }} .zf__social--instagram:hover { color: #e1306c; }
+  #shopify-section-{{ section.id }} .zf__social--tiktok:hover { color: #25f4ee; }
+  #shopify-section-{{ section.id }} .zf__social--linkedin:hover { color: #0077b5; }
+  #shopify-section-{{ section.id }} .zf__social--youtube:hover { color: #ff0000; }
+  #shopify-section-{{ section.id }} .zf__social--pinterest:hover { color: #e60023; }
+
+  /* ---------- menu columns ---------- */
+  #shopify-section-{{ section.id }} .zf__col { border-bottom: 1px solid var(--zf-rule); }
+  #shopify-section-{{ section.id }} .zf__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 16px 0;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #shopify-section-{{ section.id }} .zf__heading {
+    margin: 0;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--zf-text);
+  }
+  #shopify-section-{{ section.id }} .zf__chevron {
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    color: var(--zf-link);
+    transition: transform 300ms ease;
+  }
+  #shopify-section-{{ section.id }} .zf__toggle[aria-expanded='true'] .zf__chevron { transform: rotate(180deg); }
+  #shopify-section-{{ section.id }} .zf__panel {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 350ms ease, opacity 350ms ease;
+  }
+  #shopify-section-{{ section.id }} .zf__links {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 8px;
+  }
+  #shopify-section-{{ section.id }} .zf__links li { margin: 0; }
+  #shopify-section-{{ section.id }} .zf__link {
+    display: inline-block;
+    padding: 6px 0;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    color: var(--zf-link);
+    text-decoration: none;
+    transition: color 300ms ease;
+  }
+  #shopify-section-{{ section.id }} .zf__link:hover { color: var(--zf-accent); }
+
+  /* ---------- bottom band ---------- */
+  #shopify-section-{{ section.id }} .zf__bottom {
+    width: 100%;
+    background: {{ section.settings.color_bottom_bg }};
+  }
+  #shopify-section-{{ section.id }} .zf__payments {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 32px;
+    padding: 24px 24px 16px;
+  }
+  #shopify-section-{{ section.id }} .zf__payment {
+    display: block;
+    height: 20px;
+    width: auto;
+    max-width: 60px;
+    object-fit: contain;
+  }
+  #shopify-section-{{ section.id }} .zf__payments svg {
+    height: 24px;
+    width: auto;
+    display: block;
+  }
+  #shopify-section-{{ section.id }} .zf__legal {
+    padding: 8px 24px 24px;
+    text-align: center;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.6;
+    color: {{ section.settings.color_legal }};
+  }
+  #shopify-section-{{ section.id }} .zf__legal p { margin: 0; }
+  #shopify-section-{{ section.id }} .zf__legal p + p { margin-top: 4px; }
+  #shopify-section-{{ section.id }} .zf__legal--desktop { display: none; }
+
+  /* ---------- desktop ---------- */
+  @media screen and (min-width: 750px) {
+    #shopify-section-{{ section.id }} .zf__main {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+    #shopify-section-{{ section.id }} .zf__inner {
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+    #shopify-section-{{ section.id }} .zf__watermark-wrap {
+      align-items: center;
+      padding-bottom: 0;
+    }
+    #shopify-section-{{ section.id }} .zf__watermark { height: 280px; }
+    #shopify-section-{{ section.id }} .zf__grid {
+      grid-template-columns: repeat(var(--zf-cols), minmax(0, 1fr));
+      gap: var(--zf-gap);
+    }
+    #shopify-section-{{ section.id }} .zf__col { border-bottom: 0; }
+    #shopify-section-{{ section.id }} .zf__toggle {
+      padding: 0;
+      margin-bottom: 16px;
+      cursor: default;
+      pointer-events: none;
+    }
+    #shopify-section-{{ section.id }} .zf__chevron { display: none; }
+    #shopify-section-{{ section.id }} .zf__panel {
+      max-height: none !important;
+      opacity: 1 !important;
+      overflow: visible;
+    }
+    #shopify-section-{{ section.id }} .zf__links { padding-bottom: 0; }
+    #shopify-section-{{ section.id }} .zf__socials { margin-bottom: 0; }
+    #shopify-section-{{ section.id }} .zf__social { width: 48px; height: 48px; }
+    #shopify-section-{{ section.id }} .zf__social svg { width: 20px; height: 20px; }
+    #shopify-section-{{ section.id }} .zf__logo { height: 40px; margin-bottom: 16px; }
+    #shopify-section-{{ section.id }} .zf__payments { padding: 40px 40px 16px; gap: 48px; }
+    #shopify-section-{{ section.id }} .zf__payment { height: 24px; max-width: 80px; }
+    #shopify-section-{{ section.id }} .zf__legal { font-size: 13px; padding-bottom: 32px; }
+    #shopify-section-{{ section.id }} .zf__legal--mobile { display: none; }
+    #shopify-section-{{ section.id }} .zf__legal--desktop { display: block; }
+  }
+  @media screen and (min-width: 990px) {
+    #shopify-section-{{ section.id }} .zf__watermark { height: 400px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #shopify-section-{{ section.id }} .zf__panel,
+    #shopify-section-{{ section.id }} .zf__chevron { transition: none !important; }
+  }
+</style>
+
+<div class="zf" id="zf-{{ section.id }}">
+  <div class="zf__main">
+
+    {%- if watermark_src != blank -%}
+      <div class="zf__watermark-wrap">
+        <img
+          class="zf__watermark"
+          src="{{ watermark_src }}"
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+        >
+      </div>
+    {%- endif -%}
+
+    <div class="zf__inner">
+      <div class="zf__grid">
+
+        {%- comment -%} ---------- brand / newsletter / socials ---------- {%- endcomment -%}
+        <div class="zf__brand">
+          {%- if logo_src != blank -%}
+            <a href="{{ routes.root_url }}">
+              <img
+                class="zf__logo"
+                src="{{ logo_src }}"
+                alt="{{ shop.name | escape }}"
+                loading="lazy"
+                decoding="async"
+              >
+            </a>
+          {%- else -%}
+            <p class="zf__logo-text">{{ shop.name }}</p>
+          {%- endif -%}
+
+          {%- if section.settings.show_newsletter -%}
+            <div class="zf__newsletter">
+              {%- if section.settings.newsletter_heading != blank -%}
+                <h3 class="zf__label">{{ section.settings.newsletter_heading }}</h3>
+              {%- endif -%}
+
+              {%- form 'customer', class: 'zf__form' -%}
+                <input type="hidden" name="contact[tags]" value="newsletter">
+                <label class="zf__label" for="zf-email-{{ section.id }}" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;">
+                  {{ section.settings.newsletter_placeholder | default: 'Email' }}
+                </label>
+                <input
+                  class="zf__input"
+                  id="zf-email-{{ section.id }}"
+                  type="email"
+                  name="contact[email]"
+                  value="{{ form.email }}"
+                  placeholder="{{ section.settings.newsletter_placeholder | escape }}"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  autocomplete="email"
+                  required
+                  {% if form.errors %}aria-invalid="true" aria-describedby="zf-msg-{{ section.id }}"{% endif %}
+                >
+                <button class="zf__submit" type="submit">
+                  {{ section.settings.newsletter_button_label }}
+                </button>
+
+                {%- if form.errors -%}
+                  <p class="zf__message zf__message--error" id="zf-msg-{{ section.id }}" tabindex="-1">
+                    {{ form.errors.translated_fields.email | capitalize }} {{ form.errors.messages.email }}
+                  </p>
+                {%- elsif form.posted_successfully? -%}
+                  <p class="zf__message" id="zf-msg-{{ section.id }}" tabindex="-1">
+                    {{ section.settings.newsletter_success }}
+                  </p>
+                {%- endif -%}
+              {%- endform -%}
+            </div>
+          {%- endif -%}
+
+          <div class="zf__socials">
+            {%- if section.settings.social_facebook != blank -%}
+              <a class="zf__social zf__social--facebook" href="{{ section.settings.social_facebook }}" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+              </a>
+            {%- endif -%}
+            {%- if section.settings.social_instagram != blank -%}
+              <a class="zf__social zf__social--instagram" href="{{ section.settings.social_instagram }}" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+              </a>
+            {%- endif -%}
+            {%- if section.settings.social_tiktok != blank -%}
+              <a class="zf__social zf__social--tiktok" href="{{ section.settings.social_tiktok }}" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.48a8.18 8.18 0 0 0 4.76 1.52V7.56a4.84 4.84 0 0 1-1-.87z"/></svg>
+              </a>
+            {%- endif -%}
+            {%- if section.settings.social_linkedin != blank -%}
+              <a class="zf__social zf__social--linkedin" href="{{ section.settings.social_linkedin }}" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg>
+              </a>
+            {%- endif -%}
+            {%- if section.settings.social_youtube != blank -%}
+              <a class="zf__social zf__social--youtube" href="{{ section.settings.social_youtube }}" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>
+              </a>
+            {%- endif -%}
+            {%- if section.settings.social_pinterest != blank -%}
+              <a class="zf__social zf__social--pinterest" href="{{ section.settings.social_pinterest }}" target="_blank" rel="noopener noreferrer" aria-label="Pinterest">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738a.36.36 0 0 1 .083.345c-.091.378-.293 1.194-.332 1.361-.053.218-.173.265-.4.159-1.492-.694-2.424-2.875-2.424-4.627 0-3.769 2.737-7.229 7.892-7.229 4.144 0 7.365 2.953 7.365 6.899 0 4.117-2.595 7.431-6.199 7.431-1.211 0-2.348-.63-2.738-1.373 0 0-.599 2.282-.744 2.84-.282 1.084-1.064 2.456-1.549 3.235 1.163.359 2.396.553 3.682.553 6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/></svg>
+              </a>
+            {%- endif -%}
+          </div>
+        </div>
+
+        {%- comment -%} ---------- menu columns ---------- {%- endcomment -%}
+        {%- for block in section.blocks -%}
+          {%- liquid
+            assign menu = block.settings.menu
+            assign heading = block.settings.heading
+            if heading == blank and menu != blank
+              assign heading = menu.title
+            endif
+          -%}
+          <div class="zf__col" {{ block.shopify_attributes }}>
+            <button
+              class="zf__toggle"
+              type="button"
+              data-zf-toggle
+              aria-expanded="false"
+              aria-controls="zf-panel-{{ block.id }}"
+              id="zf-heading-{{ block.id }}"
+            >
+              <h3 class="zf__heading">{{ heading }}</h3>
+              <svg class="zf__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <div
+              class="zf__panel"
+              id="zf-panel-{{ block.id }}"
+              role="region"
+              aria-labelledby="zf-heading-{{ block.id }}"
+            >
+              {%- if menu != blank -%}
+                <ul class="zf__links">
+                  {%- for link in menu.links -%}
+                    <li><a class="zf__link" href="{{ link.url }}">{{ link.title }}</a></li>
+                  {%- endfor -%}
+                </ul>
+              {%- endif -%}
+            </div>
+          </div>
+        {%- endfor -%}
+
+      </div>
+    </div>
+  </div>
+
+  {%- comment -%} ---------- payment + legal band ---------- {%- endcomment -%}
+  <div class="zf__bottom">
+    {%- if section.settings.show_payment_icons -%}
+      <div class="zf__payments">
+        {%- if section.settings.payment_assets != blank -%}
+          {%- assign files = section.settings.payment_assets | split: ',' -%}
+          {%- for file in files -%}
+            {%- assign filename = file | strip -%}
+            {%- if filename != blank -%}
+              <img
+                class="zf__payment"
+                src="{{ filename | asset_url }}"
+                alt="{{ filename | split: '.' | first | capitalize }}"
+                loading="lazy"
+                decoding="async"
+              >
+            {%- endif -%}
+          {%- endfor -%}
+        {%- else -%}
+          {%- for type in shop.enabled_payment_types -%}
+            {{ type | payment_type_svg_tag: class: 'zf__payment' }}
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+
+    <div class="zf__legal">
+      {%- if section.settings.legal_text_mobile != blank -%}
+        <div class="zf__legal--mobile">{{ section.settings.legal_text_mobile }}</div>
+      {%- endif -%}
+      {%- if section.settings.legal_text != blank -%}
+        <div class="zf__legal--desktop">{{ section.settings.legal_text }}</div>
+      {%- endif -%}
+      {%- if section.settings.copyright_text != blank -%}
+        <p>&copy; {{ year }} {{ section.settings.copyright_text }}</p>
+      {%- endif -%}
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var root = document.getElementById('zf-{{ section.id }}');
+    if (!root) return;
+
+    var desktop = window.matchMedia('(min-width: 750px)');
+    var toggles = root.querySelectorAll('[data-zf-toggle]');
+
+    function panelFor(btn) {
+      return document.getElementById(btn.getAttribute('aria-controls'));
+    }
+
+    function reset() {
+      toggles.forEach(function (btn) {
+        var panel = panelFor(btn);
+        if (!panel) return;
+        btn.setAttribute('aria-expanded', 'false');
+        panel.style.maxHeight = '';
+        panel.style.opacity = '';
+      });
+    }
+
+    toggles.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (desktop.matches) return;
+        var panel = panelFor(btn);
+        if (!panel) return;
+        var isOpen = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+        panel.style.maxHeight = isOpen ? '0px' : panel.scrollHeight + 'px';
+        panel.style.opacity = isOpen ? '0' : '1';
+      });
+    });
+
+    if (desktop.addEventListener) {
+      desktop.addEventListener('change', reset);
+    } else if (desktop.addListener) {
+      desktop.addListener(reset);
+    }
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "ZEHN footer",
+  "tag": "footer",
+  "class": "zehn-footer-section",
+  "max_blocks": 3,
+  "enabled_on": {
+    "groups": ["footer"]
+  },
+  "settings": [
+    { "type": "header", "content": "Brand" },
+    { "type": "image_picker", "id": "logo", "label": "Logo" },
+    {
+      "type": "text",
+      "id": "logo_asset",
+      "label": "Logo asset filename",
+      "info": "Used if no image is picked above. File must be in /assets, e.g. ZEHN_Wordmark_with_logo.webp"
+    },
+    {
+      "type": "text",
+      "id": "watermark_asset",
+      "label": "Background watermark asset filename",
+      "default": "ZEHN_Platinum.svg",
+      "info": "SVG in /assets. Takes priority over the image below."
+    },
+    { "type": "image_picker", "id": "watermark_image", "label": "Background watermark image" },
+    {
+      "type": "range",
+      "id": "watermark_opacity",
+      "label": "Watermark opacity",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "%",
+      "default": 10
+    },
+    { "type": "header", "content": "Newsletter" },
+    { "type": "checkbox", "id": "show_newsletter", "label": "Show newsletter form", "default": true },
+    { "type": "text", "id": "newsletter_heading", "label": "Heading", "default": "Newsletter" },
+    { "type": "text", "id": "newsletter_placeholder", "label": "Placeholder", "default": "Ihre E-Mail-Adresse" },
+    { "type": "text", "id": "newsletter_button_label", "label": "Button label", "default": "Senden" },
+    {
+      "type": "text",
+      "id": "newsletter_success",
+      "label": "Success message",
+      "default": "Danke für Ihre Anmeldung."
+    },
+    { "type": "header", "content": "Social links" },
+    { "type": "url", "id": "social_facebook", "label": "Facebook" },
+    { "type": "url", "id": "social_instagram", "label": "Instagram" },
+    { "type": "url", "id": "social_tiktok", "label": "TikTok" },
+    { "type": "url", "id": "social_linkedin", "label": "LinkedIn" },
+    { "type": "url", "id": "social_youtube", "label": "YouTube" },
+    { "type": "url", "id": "social_pinterest", "label": "Pinterest" },
+    { "type": "header", "content": "Payment & legal" },
+    { "type": "checkbox", "id": "show_payment_icons", "label": "Show payment icons", "default": true },
+    {
+      "type": "text",
+      "id": "payment_assets",
+      "label": "Custom payment icon filenames",
+      "info": "Comma separated files in /assets, e.g. visa.svg, mastercard.svg, paypal.svg, klarna.svg. Leave blank to use the store's enabled payment methods."
+    },
+    {
+      "type": "richtext",
+      "id": "legal_text",
+      "label": "Legal line (desktop)",
+      "default": "<p>ZEHN ist eine Marke der VINCET GmbH, die den Onlineshop unter https://zehnfashion.de betreibt.</p>"
+    },
+    {
+      "type": "richtext",
+      "id": "legal_text_mobile",
+      "label": "Legal line (mobile)",
+      "default": "<p>ZEHN ist eine Marke der VINCET GmbH</p>"
+    },
+    {
+      "type": "text",
+      "id": "copyright_text",
+      "label": "Copyright line",
+      "default": "VINCET GmbH. Alle Rechte vorbehalten.",
+      "info": "The © symbol and current year are added automatically."
+    },
+    { "type": "header", "content": "Layout" },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Content width",
+      "min": 900,
+      "max": 1800,
+      "step": 20,
+      "unit": "px",
+      "default": 1600
+    },
+    {
+      "type": "range",
+      "id": "column_gap",
+      "label": "Column gap",
+      "min": 16,
+      "max": 80,
+      "step": 4,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Top padding",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Bottom padding",
+      "min": 0,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 64
+    },
+    { "type": "header", "content": "Colours" },
+    { "type": "color", "id": "color_bg", "label": "Background", "default": "#0f1426" },
+    { "type": "color", "id": "color_text", "label": "Headings & text", "default": "#ffffff" },
+    { "type": "color", "id": "color_link", "label": "Links", "default": "#b9c0cf" },
+    { "type": "color", "id": "color_accent", "label": "Accent (hover)", "default": "#d6dce5" },
+    { "type": "color", "id": "color_button", "label": "Newsletter button text", "default": "#ffffff" },
+    { "type": "color", "id": "color_error", "label": "Error message", "default": "#ff8a8a" },
+    { "type": "color", "id": "color_bottom_bg", "label": "Bottom band background", "default": "#ffffff" },
+    { "type": "color", "id": "color_legal", "label": "Legal text", "default": "#9aa0ac" }
+  ],
+  "blocks": [
+    {
+      "type": "menu_column",
+      "name": "Menu column",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading", "info": "Falls back to the menu name." },
+        { "type": "link_list", "id": "menu", "label": "Menu", "default": "footer" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "ZEHN footer",
+      "blocks": [
+        { "type": "menu_column", "settings": { "heading": "Rechtliches" } },
+        { "type": "menu_column", "settings": { "heading": "Über ZEHN" } },
+        { "type": "menu_column", "settings": { "heading": "Kundenservice" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

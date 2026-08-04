@@ -1,0 +1,629 @@
+<style>
+  #HeroFold-{{ section.id }} {
+    position: relative;
+    width: 100%;
+    height: var(--hero-fold-height-mobile, 640px);
+    max-height: var(--hero-fold-height-mobile, 640px);
+    overflow: hidden;
+    background-color: var(--hero-fold-bg, #e5e5e5);
+    isolation: isolate;
+  }
+
+  @media (min-width: 1024px) {
+    #HeroFold-{{ section.id }} {
+      height: calc(100vw / 2.5);
+      min-height: var(--hero-fold-min-height-desktop, 480px);
+      max-height: min(var(--hero-fold-height-desktop, 800px), calc(100dvh - 100px));
+    }
+  }
+
+  #HeroFold-{{ section.id }} .hero-viewport {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  #HeroFold-{{ section.id }} .hero-stage {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  #HeroFold-{{ section.id }} .hero-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.025);
+    transition:
+      opacity var(--hero-transition-speed, 1800ms) cubic-bezier(0.22, 1, 0.36, 1),
+      transform var(--hero-transition-speed, 1800ms) cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+
+  #HeroFold-{{ section.id }} .hero-slide.is-active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+  }
+
+  #HeroFold-{{ section.id }} .hero-slide-img,
+  #HeroFold-{{ section.id }} .hero-slide-img img,
+  #HeroFold-{{ section.id }} .hero-slide-img source {
+    width: 100%;
+    height: 100%;
+  }
+
+  #HeroFold-{{ section.id }} .hero-slide-img {
+    position: absolute;
+    inset: 0;
+    max-width: none;
+    max-height: none;
+    aspect-ratio: unset;
+  }
+
+  #HeroFold-{{ section.id }} .hero-slide-img img {
+    -o-object-fit: cover;
+    object-fit: cover;
+    -o-object-position: center 42%;
+    object-position: center 42%;
+  }
+
+  @media (min-width: 1024px) {
+    #HeroFold-{{ section.id }} .hero-slide-img img {
+      -o-object-position: center 0%;
+      object-position: center 0%;
+    }
+  }
+
+  #HeroFold-{{ section.id }} .hero-slide-placeholder {
+    width: 100%;
+    height: 100%;
+    background: var(--hero-fold-bg, #e5e5e5);
+  }
+
+  #HeroFold-{{ section.id }} .hero-placeholder-svg {
+    width: 100%;
+    height: 100%;
+    opacity: 0.4;
+  }
+
+  #HeroFold-{{ section.id }}::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, var(--hero-fold-bg, #e5e5e5) 0, transparent 80px),
+      linear-gradient(270deg, var(--hero-fold-bg, #e5e5e5) 0, transparent 80px);
+  }
+
+  #HeroFold-{{ section.id }} .hero-fold__click-target {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: block;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  #HeroFold-{{ section.id }} .hero-fold__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 5rem;
+    pointer-events: none;
+  }
+
+  #HeroFold-{{ section.id }} .hero-fold__content {
+    position: relative;
+    z-index: 201;
+    pointer-events: auto;
+    text-align: center;
+  }
+
+  @media (min-width: 640px) {
+    #HeroFold-{{ section.id }} .hero-fold__overlay {
+      padding-bottom: 6rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    #HeroFold-{{ section.id }} .hero-fold__overlay {
+      padding-bottom: 7rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    #HeroFold-{{ section.id }} .hero-fold__overlay {
+      padding-bottom: 8rem;
+    }
+  }
+
+  #HeroFold-{{ section.id }} .hero-fold__heading {
+    margin: 0 0 0.75rem;
+    font-family: "Archivo", "Inter", system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--hero-heading-color, #ffffff);
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.45));
+  }
+
+  @media (min-width: 1024px) {
+    #HeroFold-{{ section.id }} .hero-fold__heading {
+      margin-bottom: 1.25rem;
+      font-size: 39px;
+      letter-spacing: 0.18em;
+      filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.45));
+    }
+  }
+
+  @media (min-width: 1280px) {
+    #HeroFold-{{ section.id }} .hero-fold__heading {
+      font-size: 47px;
+    }
+  }
+
+#HeroFold-{{ section.id }} .hero-slide:not(.is-active) .hero-fold__click-target,
+#HeroFold-{{ section.id }} .hero-slide:not(.is-active) .hero-fold__content,
+#HeroFold-{{ section.id }} .hero-slide:not(.is-active) .hero-fold__button {
+  pointer-events: none;
+}
+
+  #HeroFold-{{ section.id }} .hero-fold__button {
+    position: relative;
+    z-index: 1;
+    display: inline-block!important;
+    padding: 0.375rem 1.25rem;
+    font-family: "Archivo", "Inter", system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    text-decoration: none;
+    color: var(--hero-button-text, #0F1426);
+    background-color: var(--hero-button-bg, #ffffff);
+    opacity: 0.8;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.3s ease;
+  }
+
+  #HeroFold-{{ section.id }} .hero-fold__button:hover,
+  #HeroFold-{{ section.id }} .hero-fold__button:focus-visible {
+    transform: scale(1.05) !important;
+    opacity: 1 !important;
+    text-decoration:underline;
+  }
+
+  @media (min-width: 1024px) {
+    #HeroFold-{{ section.id }} .hero-fold__button {
+      padding: 0.75rem 2.5rem;
+      font-size: 14px;
+      letter-spacing: 0.25em;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    }
+  }
+
+  #HeroFold-{{ section.id }} .hero-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background-color: rgba(0, 0, 0, var(--hero-overlay-opacity, 0));
+  }
+
+  #HeroFold-{{ section.id }} .hero-fold__dots {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    z-index: 30;
+    display: flex;
+    gap: 0.5rem;
+    transform: translateX(-50%);
+  }
+
+  #HeroFold-{{ section.id }} .hero-fold__dot {
+    width: 8px;
+    height: 8px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+  }
+
+  #HeroFold-{{ section.id }} .hero-fold__dot.is-active {
+    background-color: #ffffff;
+    transform: scale(1.2);
+  }
+</style>
+
+{%- liquid
+  assign section_id = section.id
+  assign autoplay = section.settings.autoplay
+  assign autoplay_speed = section.settings.autoplay_speed | times: 1000
+  assign transition_speed = section.settings.transition_speed
+  assign mobile_height = section.settings.mobile_height
+  assign desktop_height = section.settings.desktop_height
+  assign desktop_min_height = section.settings.desktop_min_height
+  assign overlay_opacity = section.settings.overlay_opacity | divided_by: 100.0
+-%}
+
+<section
+  class="hero-fold"
+  id="HeroFold-{{ section_id }}"
+  data-homepage-hero-fold
+  data-autoplay="{{ autoplay }}"
+  data-autoplay-speed="{{ autoplay_speed }}"
+  data-transition-speed="{{ transition_speed }}"
+  style="
+    --hero-fold-height-mobile: {{ mobile_height }}px;
+    --hero-fold-height-desktop: {{ desktop_height }}px;
+    --hero-fold-min-height-desktop: {{ desktop_min_height }}px;
+    --hero-fold-bg: {{ section.settings.background_color }};
+    --hero-overlay-opacity: {{ overlay_opacity }};
+    --hero-heading-color: {{ section.settings.heading_color }};
+    --hero-button-bg: {{ section.settings.button_bg_color }};
+    --hero-button-text: {{ section.settings.button_text_color }};
+  "
+>
+  <div class="hero-viewport">
+    <div class="hero-stage">
+
+      {%- for block in section.blocks -%}
+        {%- assign heading_text = block.settings.heading -%}
+        {%- assign button_label = block.settings.button_label -%}
+        {%- assign button_link = block.settings.button_link -%}
+
+        <div
+          data-hero-slide="{{ block.id }}"
+          class="hero-slide{% if forloop.first %} is-active{% endif %}"
+          {{ block.shopify_attributes }}
+        >
+          <picture class="hero-slide-img">
+            {%- if block.settings.image_mobile != blank -%}
+              <source media="(max-width: 1023px)"
+                srcset="{{ block.settings.image_mobile | image_url: width: 750 }} 750w,
+                        {{ block.settings.image_mobile | image_url: width: 1100 }} 1100w,
+                        {{ block.settings.image_mobile | image_url: width: 1500 }} 1500w"
+                sizes="100vw">
+            {%- endif -%}
+
+            {%- if block.settings.image_desktop != blank -%}
+              <source media="(min-width: 1024px)"
+                srcset="{{ block.settings.image_desktop | image_url: width: 1600 }} 1600w,
+                        {{ block.settings.image_desktop | image_url: width: 2200 }} 2200w,
+                        {{ block.settings.image_desktop | image_url: width: 2800 }} 2800w"
+                sizes="100vw">
+            {%- endif -%}
+
+            {%- assign fallback_img = block.settings.image_desktop | default: block.settings.image_mobile -%}
+            {%- if fallback_img != blank -%}
+              <img
+                src="{{ fallback_img | image_url: width: 2200 }}"
+                alt="{{ block.settings.alt_text | default: heading_text | escape }}"
+                width="2200"
+                height="800"
+                loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+                fetchpriority="{% if forloop.first %}high{% else %}auto{% endif %}"
+                decoding="async"
+              >
+            {%- else -%}
+              <div class="hero-slide-placeholder">{{ 'hero-apparel-1' | placeholder_svg_tag: 'hero-placeholder-svg' }}</div>
+            {%- endif -%}
+          </picture>
+
+          {%- if button_link != blank -%}
+            <a class="hero-fold__click-target" aria-label="{{ heading_text | strip_html | escape }}" href="{{ button_link }}"></a>
+          {%- endif -%}
+
+          <div class="hero-fold__overlay">
+            <div class="hero-fold__content">
+              {%- if heading_text != blank -%}
+                <h1 class="hero-fold__heading">{{ heading_text }}</h1>
+              {%- endif -%}
+
+              {%- if button_label != blank and button_link != blank -%}
+                <a class="hero-fold__button" href="{{ button_link }}">{{ button_label }}</a>
+              {%- endif -%}
+            </div>
+          </div>
+        </div>
+      {%- endfor -%}
+
+      {%- if section.blocks.size > 1 -%}
+        <div class="hero-fold__dots" role="tablist" aria-label="Slide navigation">
+          {%- for block in section.blocks -%}
+            <button
+              type="button"
+              class="hero-fold__dot{% if forloop.first %} is-active{% endif %}"
+              data-hero-dot
+              data-slide-index="{{ forloop.index0 }}"
+              aria-label="{{ 'sections.slideshow.load_slide' | t: index: forloop.index }}"
+            ></button>
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    function initHeroFold() {
+      var el = document.getElementById('HeroFold-{{ section.id }}');
+      if (!el || el.dataset.heroInitialized) return;
+
+      var slides = Array.prototype.slice.call(el.querySelectorAll('[data-hero-slide]'));
+      if (slides.length < 2) return;
+
+      el.dataset.heroInitialized = 'true';
+
+      var dots = Array.prototype.slice.call(el.querySelectorAll('[data-hero-dot]'));
+      var currentIndex = 0;
+      var timer = null;
+      var autoplay = el.dataset.autoplay === 'true';
+      var autoplaySpeed = parseInt(el.dataset.autoplaySpeed, 10) || 5000;
+      var transitionSpeed = parseInt(el.dataset.transitionSpeed, 10) || 1800;
+      var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      el.style.setProperty('--hero-transition-speed', transitionSpeed + 'ms');
+
+      function goToSlide(index) {
+        if (index === currentIndex || !slides[index]) return;
+        slides[currentIndex].classList.remove('is-active');
+        if (dots[currentIndex]) dots[currentIndex].classList.remove('is-active');
+
+        currentIndex = index;
+
+        slides[currentIndex].classList.add('is-active');
+        if (dots[currentIndex]) dots[currentIndex].classList.add('is-active');
+      }
+
+      function next() {
+        goToSlide((currentIndex + 1) % slides.length);
+      }
+
+      function stop() {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      }
+
+      function start() {
+        stop();
+        if (autoplay && !prefersReducedMotion) {
+          timer = setInterval(next, autoplaySpeed);
+        }
+      }
+
+      dots.forEach(function (dot) {
+        dot.addEventListener('click', function () {
+          goToSlide(parseInt(dot.dataset.slideIndex, 10));
+          start();
+        });
+      });
+
+      el.addEventListener('mouseenter', stop);
+      el.addEventListener('mouseleave', start);
+      el.addEventListener('focusin', stop);
+      el.addEventListener('focusout', start);
+
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+          stop();
+        } else {
+          start();
+        }
+      });
+
+      start();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initHeroFold);
+    } else {
+      initHeroFold();
+    }
+
+    document.addEventListener('shopify:section:load', initHeroFold);
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Hero Slider",
+  "class": "shopify-section--hero-slider",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Colors"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Fallback background color",
+      "default": "#e5e5e5"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_bg_color",
+      "label": "Button background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button text color",
+      "default": "#0F1426"
+    },
+    {
+      "type": "range",
+      "id": "overlay_opacity",
+      "label": "Image darkening overlay",
+      "min": 0,
+      "max": 60,
+      "step": 5,
+      "unit": "%",
+      "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "mobile_height",
+      "label": "Mobile height",
+      "min": 300,
+      "max": 900,
+      "step": 10,
+      "unit": "px",
+      "default": 640
+    },
+    {
+      "type": "range",
+      "id": "desktop_height",
+      "label": "Desktop max height",
+      "min": 400,
+      "max": 1000,
+      "step": 10,
+      "unit": "px",
+      "default": 800
+    },
+    {
+      "type": "range",
+      "id": "desktop_min_height",
+      "label": "Desktop min height",
+      "min": 300,
+      "max": 700,
+      "step": 10,
+      "unit": "px",
+      "default": 480
+    },
+    {
+      "type": "header",
+      "content": "Autoplay"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "Auto-rotate slides",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "autoplay_speed",
+      "label": "Change slides every",
+      "min": 3,
+      "max": 10,
+      "step": 1,
+      "unit": "s",
+      "default": 5
+    },
+    {
+      "type": "range",
+      "id": "transition_speed",
+      "label": "Transition speed",
+      "min": 400,
+      "max": 2400,
+      "step": 100,
+      "unit": "ms",
+      "default": 1800
+    }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Slide",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image_desktop",
+          "label": "Desktop image",
+          "info": "Recommended size: 2200 x 800px"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Mobile image",
+          "info": "Recommended size: 750 x 900px. Falls back to desktop image if empty."
+        },
+        {
+          "type": "text",
+          "id": "alt_text",
+          "label": "Image alt text"
+        },
+        {
+          "type": "header",
+          "content": "Slide content"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button label"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Button link",
+          "info": "Also used as the slide's full-image click-through link."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero Slider",
+      "blocks": [
+        {
+          "type": "slide",
+          "settings": {
+            "heading": "SOMMERKOLLEKTION",
+            "button_label": "ENTDECKEN"
+          }
+        },
+        {
+          "type": "slide",
+          "settings": {
+            "heading": "HERBSTKOLLEKTION",
+            "button_label": "ENTDECKEN"
+          }
+        },
+        {
+          "type": "slide",
+          "settings": {
+            "heading": "WINTERKOLLEKTION",
+            "button_label": "ENTDECKEN"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
