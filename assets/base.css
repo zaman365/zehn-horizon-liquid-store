@@ -2214,4 +2214,6 @@ main > .shopify-section:first-child .section:not(.disable-section-top-offset) {
 .announcement-bar__text{
   text-align:center;
   color:#ffffff!important;
+  font-size: .75rem!important;
+  line-height: 1rem!important;
 }
