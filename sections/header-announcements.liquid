@@ -1,5 +1,3 @@
-
-
 {% if section.blocks.size > 1 %}
   <script
     src="{{ 'announcement-bar.js' | asset_url }}"
@@ -10,10 +8,32 @@
 
 {% render 'contrast-override', background_color: section.settings.background_color, section_id: section.id %}
 
+{%- liquid
+  assign first_block = section.blocks.first
+  assign initial_background = first_block.settings.slide_background_color
+  assign initial_text = first_block.settings.slide_text_color
+-%}
+
+{%- capture slide_colors -%}
+  {%- for block in section.blocks -%}
+    {%- if block.settings.slide_background_color != blank or block.settings.slide_text_color != blank -%}
+      #announcement-bar-{{ section.id }} .announcement-bar__slides > *:nth-child({{ forloop.index }}) {
+        {% if block.settings.slide_background_color != blank %}--slide-background-color: {{ block.settings.slide_background_color }};{% endif %}
+        {% if block.settings.slide_text_color != blank %}--slide-text-color: {{ block.settings.slide_text_color }};{% endif %}
+      }
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- if slide_colors != blank -%}
+  <style>{{ slide_colors }}</style>
+{%- endif -%}
+
 <div class="section-background color-custom-{{ section.id }}"></div>
 <aside
+  id="announcement-bar-{{ section.id }}"
   class="announcement-bar spacing-style section section--{{ section.settings.section_width }} color-custom-{{ section.id }}"
-  style="{% render 'spacing-padding', settings: section.settings %}; --border-bottom-width: {{ section.settings.divider_width }}px;{% if section.settings.divider_color != blank %} --color-border: {{ section.settings.divider_color }};{% endif %}"
+  style="{% render 'spacing-padding', settings: section.settings %}; --border-bottom-width: {{ section.settings.divider_width }}px;{% if section.settings.divider_color != blank %} --color-border: {{ section.settings.divider_color }};{% endif %}{% if initial_background != blank %} --announcement-active-background: {{ initial_background }};{% endif %}{% if initial_text != blank %} --announcement-active-text: {{ initial_text }}; --color-foreground: {{ initial_text }};{% endif %}"
 >
   {% liquid
     assign autoplay = false
@@ -40,9 +60,56 @@
   </announcement-bar-component>
 </aside>
 
+{%- if section.blocks.size > 1 -%}
+  <script>
+    (() => {
+      const root = document.getElementById('announcement-bar-{{ section.id }}');
+      if (!root || root.dataset.slideColorsInit === 'true') return;
+      root.dataset.slideColorsInit = 'true';
+
+      let slides = root.querySelectorAll('.announcement-bar__slide');
+      if (!slides.length) slides = root.querySelectorAll('.announcement-bar__slides > *');
+      if (slides.length < 2) return;
+
+      const sync = () => {
+        const active =
+          Array.from(slides).find((slide) => slide.getAttribute('aria-hidden') !== 'true') || slides[0];
+        const styles = getComputedStyle(active);
+        const background = styles.getPropertyValue('--slide-background-color').trim();
+        const text = styles.getPropertyValue('--slide-text-color').trim();
+
+        if (background) {
+          root.style.setProperty('--announcement-active-background', background);
+        } else {
+          root.style.removeProperty('--announcement-active-background');
+        }
+
+        if (text) {
+          root.style.setProperty('--announcement-active-text', text);
+          root.style.setProperty('--color-foreground', text);
+        } else {
+          root.style.removeProperty('--announcement-active-text');
+          root.style.removeProperty('--color-foreground');
+        }
+      };
+
+      sync();
+      const observer = new MutationObserver(sync);
+      slides.forEach((slide) =>
+        observer.observe(slide, { attributes: true, attributeFilter: ['aria-hidden'] })
+      );
+    })();
+  </script>
+{%- endif -%}
+
 {% stylesheet %}
   .announcement-bar {
     border-block-end: var(--border-bottom-width) solid var(--color-border);
+    position: relative;
+    z-index: 1;
+    background-color: var(--announcement-active-background, transparent);
+    color: var(--announcement-active-text, inherit);
+    transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
   }
 
   .announcement-bar__slider {
@@ -84,7 +151,7 @@
   }
 
   .announcement-bar__slider slideshow-arrows .slideshow-control {
-    color: var(--color-foreground);
+    color: var(--announcement-active-text, var(--color-foreground));
   }
 
   .announcement-bar__slider .slideshow-control {
@@ -124,106 +191,3 @@
     inset: 0;
   }
 {% endstylesheet %}
-
-{% schema %}
-{
-  "name": "t:names.announcement_bar",
-  "blocks": [
-    {
-      "type": "_announcement"
-    }
-  ],
-  "enabled_on": {
-    "groups": ["header"]
-  },
-  "settings": [
-    {
-      "type": "range",
-      "id": "speed",
-      "label": "t:settings.scroll_speed",
-      "min": 2,
-      "max": 10,
-      "default": 5,
-      "unit": "sec"
-    },
-    {
-      "type": "header",
-      "content": "t:content.appearance"
-    },
-    {
-      "type": "select",
-      "id": "section_width",
-      "label": "t:settings.section_width",
-      "options": [
-        {
-          "value": "page-width",
-          "label": "t:options.page"
-        },
-        {
-          "value": "full-width",
-          "label": "t:options.full"
-        }
-      ],
-      "default": "page-width"
-    },
-    {
-      "type": "color",
-      "id": "background_color",
-      "label": "t:settings.background_color",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "range",
-      "id": "divider_width",
-      "label": "t:settings.divider_thickness",
-      "min": 0,
-      "max": 5,
-      "step": 0.5,
-      "unit": "px",
-      "default": 0
-    },
-    {
-      "type": "color",
-      "id": "divider_color",
-      "label": "t:settings.divider_color",
-      "placeholder": "t:settings.default",
-      "visible_if": "{{ section.settings.divider_width > 0 }}"
-    },
-    {
-      "type": "header",
-      "content": "t:content.padding"
-    },
-    {
-      "type": "range",
-      "id": "padding-block-start",
-      "label": "t:settings.top",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 15
-    },
-    {
-      "type": "range",
-      "id": "padding-block-end",
-      "label": "t:settings.bottom",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 15
-    }
-  ],
-  "presets": [
-    {
-      "name": "t:names.announcement_bar",
-      "blocks": {
-        "announcement_1": {
-          "type": "_announcement"
-        }
-      },
-      "block_order": ["announcement_1"]
-    }
-  ]
-}
-{% endschema %}
