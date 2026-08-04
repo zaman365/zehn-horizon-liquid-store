@@ -1,0 +1,125 @@
+{%- comment -%}
+  ============================================================================
+  ZEHN cart sync
+
+  Install: snippets/zehn-cart-sync.liquid
+  Render once, near the end of layout/theme.liquid:
+
+    {% render 'zehn-cart-sync' %}
+    </body>
+
+  Watches every request to the Ajax Cart API (/cart/add, /cart/change,
+  /cart/update, /cart/clear) through both fetch and XMLHttpRequest. When one
+  succeeds it re-reads /cart.js and broadcasts zehn:cart:updated, which the
+  header badge listens for, then refreshes the drawer markup.
+
+  This means any add-to-cart — your own code, a theme script, a third-party
+  app — keeps the header count correct without a reload, and without those
+  scripts knowing anything about the header.
+
+  Requests the cart drawer makes itself are skipped: it already receives fresh
+  section HTML in its own response and updates the badge from that.
+  ============================================================================
+{%- endcomment -%}
+
+<script>
+  (function () {
+    if (window.__zehnCartSyncReady) return;
+    window.__zehnCartSyncReady = true;
+
+    var CART_MUTATION = /\/cart\/(add|change|update|clear)(\.js)?(\?|$)/;
+    var syncTimer = null;
+
+    /* Read the real cart, tell the header, refresh the drawer. */
+    function sync() {
+      return fetch({{ routes.cart_url | json }} + '.js', {
+        headers: {Accept: 'application/json'},
+        cache: 'no-store',
+      })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (cart) {
+          document.dispatchEvent(
+            new CustomEvent('zehn:cart:updated', {
+              bubbles: true,
+              detail: {count: cart.item_count, cart: cart},
+            }),
+          );
+
+          if (window.ZehnCartDrawer && typeof window.ZehnCartDrawer.refresh === 'function') {
+            return window.ZehnCartDrawer.refresh();
+          }
+        })
+        .catch(function () {});
+    }
+
+    /* Several mutations can land at once (e.g. a bundle adding three lines). */
+    function scheduleSync() {
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(sync, 120);
+    }
+
+    function isCartMutation(url) {
+      return typeof url === 'string' && CART_MUTATION.test(url);
+    }
+
+    /* The drawer's own calls already ask for section HTML — don't double-fetch. */
+    function isDrawerRequest(init) {
+      if (!init || typeof init.body !== 'string') return false;
+      return init.body.indexOf('"sections"') !== -1;
+    }
+
+    /* ---------- fetch ---------- */
+    var nativeFetch = window.fetch;
+    if (typeof nativeFetch === 'function') {
+      window.fetch = function (input, init) {
+        var url = input && input.url ? input.url : String(input);
+        var watch = isCartMutation(url) && !isDrawerRequest(init);
+        var request = nativeFetch.apply(this, arguments);
+
+        if (watch) {
+          request
+            .then(function (response) {
+              if (response && response.ok) scheduleSync();
+              return response;
+            })
+            .catch(function () {});
+        }
+
+        return request;
+      };
+    }
+
+    /* ---------- XMLHttpRequest ---------- */
+    var nativeOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function (method, url) {
+      this.__zehnWatch = isCartMutation(url);
+      return nativeOpen.apply(this, arguments);
+    };
+
+    var nativeSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function () {
+      if (this.__zehnWatch) {
+        this.addEventListener('load', function () {
+          if (this.status >= 200 && this.status < 300) scheduleSync();
+        });
+      }
+      return nativeSend.apply(this, arguments);
+    };
+
+    /* ---------- events other themes and apps commonly emit ---------- */
+    ['cart:refresh', 'cart:updated', 'shopify:cart:updated', 'zehn:cart:sync'].forEach(
+      function (name) {
+        document.addEventListener(name, scheduleSync);
+      },
+    );
+
+    /* Coming back via the browser cache serves a stale badge. */
+    window.addEventListener('pageshow', function (event) {
+      if (event.persisted) scheduleSync();
+    });
+
+    window.ZehnCartSync = sync;
+  })();
+</script>
