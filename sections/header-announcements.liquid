@@ -9,19 +9,17 @@
 {% render 'contrast-override', background_color: section.settings.background_color, section_id: section.id %}
 
 {%- liquid
-  assign slide_indices = '1,2,3,4,5' | split: ','
-  assign initial_background = section.settings.slide_1_background_color
-  assign initial_text = section.settings.slide_1_text_color
+  assign first_block = section.blocks.first
+  assign initial_background = first_block.settings.slide_background_color
+  assign initial_text = first_block.settings.slide_text_color
 -%}
 
 {%- capture slide_colors -%}
-  {%- for i in slide_indices -%}
-    {%- assign bg_key = 'slide_' | append: i | append: '_background_color' -%}
-    {%- assign text_key = 'slide_' | append: i | append: '_text_color' -%}
-    {%- assign slide_bg = section.settings[bg_key] -%}
-    {%- assign slide_text = section.settings[text_key] -%}
+  {%- for block in section.blocks -%}
+    {%- assign slide_bg = block.settings.slide_background_color -%}
+    {%- assign slide_text = block.settings.slide_text_color -%}
     {%- if slide_bg != blank or slide_text != blank -%}
-      #announcement-bar-{{ section.id }} .announcement-bar__slides > *:nth-child({{ i }}) {
+      #announcement-bar-{{ section.id }} .announcement-bar__slides > *:nth-child({{ forloop.index }}) {
         {% if slide_bg != blank %}--slide-background-color: {{ slide_bg }};{% endif %}
         {% if slide_text != blank %}--slide-text-color: {{ slide_text }};{% endif %}
       }
@@ -30,7 +28,22 @@
 {%- endcapture -%}
 
 {%- if slide_colors != blank -%}
-  <style>{{ slide_colors }}</style>
+  <style>
+    {{ slide_colors }}
+
+    #announcement-bar-{{ section.id }}.announcement-bar {
+      background-color: transparent;
+    }
+
+    #announcement-bar-{{ section.id }} .announcement-bar__background {
+      background-color: var(--announcement-active-background, transparent);
+    }
+
+    #announcement-bar-{{ section.id }}[style*='--announcement-active-text'],
+    #announcement-bar-{{ section.id }}[style*='--announcement-active-text'] * {
+      color: var(--announcement-active-text);
+    }
+  </style>
 {%- endif -%}
 
 <div class="section-background color-custom-{{ section.id }}"></div>
@@ -39,6 +52,8 @@
   class="announcement-bar spacing-style section section--{{ section.settings.section_width }} color-custom-{{ section.id }}"
   style="{% render 'spacing-padding', settings: section.settings %}; --border-bottom-width: {{ section.settings.divider_width }}px;{% if section.settings.divider_color != blank %} --color-border: {{ section.settings.divider_color }};{% endif %}{% if initial_background != blank %} --announcement-active-background: {{ initial_background }};{% endif %}{% if initial_text != blank %} --announcement-active-text: {{ initial_text }}; --color-foreground: {{ initial_text }};{% endif %}"
 >
+  <div class="announcement-bar__background" aria-hidden="true"></div>
+
   {% liquid
     assign autoplay = false
     assign show_arrows = false
@@ -71,16 +86,22 @@
         const root = document.getElementById('announcement-bar-{{ section.id }}');
         if (!root || root.dataset.slideColorsInit === 'true') return;
 
-        let slides = root.querySelectorAll('.announcement-bar__slide');
-        if (!slides.length) slides = root.querySelectorAll('.announcement-bar__slides > *');
+        const container = root.querySelector('.announcement-bar__slides');
+        if (!container) return;
+
+        const getSlides = () => {
+          const named = container.querySelectorAll(':scope > .announcement-bar__slide');
+          return named.length ? Array.from(named) : Array.from(container.children);
+        };
+
+        let slides = getSlides();
         if (slides.length < 2) return;
 
         root.dataset.slideColorsInit = 'true';
 
-        const sync = () => {
-          const active =
-            Array.from(slides).find((slide) => slide.getAttribute('aria-hidden') !== 'true') || slides[0];
-          const styles = getComputedStyle(active);
+        const apply = (slide) => {
+          if (!slide) return;
+          const styles = getComputedStyle(slide);
           const background = styles.getPropertyValue('--slide-background-color').trim();
           const text = styles.getPropertyValue('--slide-text-color').trim();
 
@@ -99,12 +120,30 @@
           }
         };
 
+        const visible = (slide) => {
+          if (slide.getAttribute('aria-hidden') === 'true') return false;
+          if (slide.hasAttribute('hidden')) return false;
+          const styles = getComputedStyle(slide);
+          if (styles.visibility === 'hidden' || styles.display === 'none') return false;
+          return parseFloat(styles.opacity || '1') > 0.5;
+        };
+
+        const sync = () => {
+          slides = getSlides();
+          apply(slides.find(visible) || slides[0]);
+        };
+
         sync();
 
         const observer = new MutationObserver(sync);
-        slides.forEach((slide) =>
-          observer.observe(slide, { attributes: true, attributeFilter: ['aria-hidden'] })
-        );
+        observer.observe(container, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['aria-hidden', 'hidden', 'class', 'style'],
+        });
+
+        root.addEventListener('click', () => requestAnimationFrame(sync));
       };
 
       if (document.readyState === 'loading') {
@@ -121,9 +160,16 @@
     border-block-end: var(--border-bottom-width) solid var(--color-border);
     position: relative;
     z-index: 1;
+    transition: color 0.4s ease-in-out;
+  }
+
+  .announcement-bar__background {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-color: var(--announcement-active-background, transparent);
-    color: var(--announcement-active-text, inherit);
-    transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
+    transition: background-color 0.4s ease-in-out;
   }
 
   .announcement-bar__slider {
@@ -131,6 +177,7 @@
     flex-direction: row;
     align-items: center;
     position: relative;
+    z-index: 1;
 
     @media screen and (max-width: 749px) {
       grid-column: 1 / -1;
@@ -232,6 +279,10 @@
       "content": "t:content.appearance"
     },
     {
+      "type": "paragraph",
+      "content": "Background and text colours for individual announcements are set on each announcement block."
+    },
+    {
       "type": "select",
       "id": "section_width",
       "label": "t:settings.section_width",
@@ -269,74 +320,6 @@
       "label": "t:settings.divider_color",
       "placeholder": "t:settings.default",
       "visible_if": "{{ section.settings.divider_width > 0 }}"
-    },
-    {
-      "type": "header",
-      "content": "Per-slide colours"
-    },
-    {
-      "type": "paragraph",
-      "content": "Set a background and text colour for each announcement, in the order the announcements appear above. Leave blank to use the section colours."
-    },
-    {
-      "type": "color",
-      "id": "slide_1_background_color",
-      "label": "Slide 1 background",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "color",
-      "id": "slide_1_text_color",
-      "label": "Slide 1 text",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "color",
-      "id": "slide_2_background_color",
-      "label": "Slide 2 background",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "color",
-      "id": "slide_2_text_color",
-      "label": "Slide 2 text",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "color",
-      "id": "slide_3_background_color",
-      "label": "Slide 3 background",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "color",
-      "id": "slide_3_text_color",
-      "label": "Slide 3 text",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "color",
-      "id": "slide_4_background_color",
-      "label": "Slide 4 background",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "color",
-      "id": "slide_4_text_color",
-      "label": "Slide 4 text",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "color",
-      "id": "slide_5_background_color",
-      "label": "Slide 5 background",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "color",
-      "id": "slide_5_text_color",
-      "label": "Slide 5 text",
-      "placeholder": "t:settings.default"
     },
     {
       "type": "header",
