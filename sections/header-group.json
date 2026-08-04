@@ -55,22 +55,7 @@
             "weight": "",
             "letter_spacing": "normal",
             "case": "none",
-            "text_color": "{{ settings.color_palette.foreground }}"
-          },
-          "blocks": {}
-        },
-        "announcement_3LxG7C": {
-          "type": "_announcement",
-          "name": "t:names.announcement",
-          "settings": {
-            "text": "EU: Versand 5,99 € · Rücksendung kostenlos",
-            "link": "",
-            "font": "var(--font-subheading--family)",
-            "font_size": "",
-            "weight": "",
-            "letter_spacing": "normal",
-            "case": "none",
-            "text_color": "{{ settings.color_palette.background }}"
+            "text_color": ""
           },
           "blocks": {}
         }
@@ -78,8 +63,7 @@
       "block_order": [
         "announcement_QTEUtA",
         "announcement_MHzDqe",
-        "announcement_8HMqbr",
-        "announcement_3LxG7C"
+        "announcement_8HMqbr"
       ],
       "name": "t:names.announcement_bar",
       "settings": {
@@ -88,6 +72,16 @@
         "background_color": "#ff6b35",
         "divider_width": 0,
         "divider_color": "",
+        "slide_1_background_color": "",
+        "slide_1_text_color": "",
+        "slide_2_background_color": "",
+        "slide_2_text_color": "",
+        "slide_3_background_color": "{{ settings.color_palette.color1 }}",
+        "slide_3_text_color": "{{ settings.color_palette.background }}",
+        "slide_4_background_color": "",
+        "slide_4_text_color": "",
+        "slide_5_background_color": "",
+        "slide_5_text_color": "",
         "padding-block-start": 8,
         "padding-block-end": 8
       }
