@@ -59,9 +59,7 @@
   #shopify-section-{{ section.id }} .zehn-bento-heading {
     margin: 0;
     font-family: inherit;
-    font-size: clamp(1.75rem, 4.2vw, 3rem);
     font-weight: 700;
-    line-height: 1.1;
     letter-spacing: -0.01em;
     text-wrap: balance;
     color: {{ section.settings.color_heading }};
@@ -215,7 +213,7 @@
           <span class="zehn-bento-eyebrow">{{ section.settings.eyebrow }}</span>
         {%- endif -%}
         {%- if section.settings.heading != blank -%}
-          <h2 class="zehn-bento-heading">{{ section.settings.heading }}</h2>
+          <h2 class="zehn-bento-heading h2">{{ section.settings.heading }}</h2>
         {%- endif -%}
       </div>
     {%- endif -%}
