@@ -90,10 +90,65 @@
         "nav_label": "Hauptnavigation",
         "cart_label": "Warenkorb"
       }
+    },
+    "cart_drawer_GFgkJJ": {
+      "type": "cart-drawer",
+      "name": "ZEHN cart drawer",
+      "settings": {
+        "heading": "Warenkorb",
+        "item_singular": "Artikel",
+        "item_plural": "Artikel",
+        "empty_text": "Ihr Warenkorb ist leer",
+        "subtotal_label": "Zwischensumme",
+        "shipping_label": "Versand",
+        "shipping_note": "Standard DE: kostenlos",
+        "total_label": "Gesamt",
+        "tax_note": "Inklusive MwSt.",
+        "checkout_label": "Zur Kasse",
+        "view_cart_label": "Warenkorb anzeigen",
+        "continue_label": "Weiter einkaufen",
+        "discount_note": "Rabattcodes können im Checkout eingelöst werden.",
+        "close_label": "Warenkorb schließen",
+        "decrease_label": "Menge verringern",
+        "increase_label": "Menge erhöhen",
+        "remove_label": "Artikel entfernen",
+        "card_color": "#FFFFFF",
+        "text_color": "#0F1426",
+        "border_color": "#8E97A4",
+        "muted_color": "#F4F4F5",
+        "accent_color": "#FF5F1F",
+        "primary_color": "#0F1426",
+        "primary_foreground": "#F4F4F5",
+        "shipping_color": "#16A34A",
+        "z_index": 200
+      }
+    },
+    "search_modal_N7e9fG": {
+      "type": "search-modal",
+      "name": "ZEHN search modal",
+      "settings": {
+        "placeholder": "Wonach suchen Sie?",
+        "clear_label": "Löschen",
+        "popular_label": "Beliebte Suchbegriffe",
+        "popular_searches": "shirt, jeans, short, cargo, jackets",
+        "no_results_text": "Keine Ergebnisse gefunden für",
+        "no_results_hint": "Versuchen Sie es mit anderen Suchbegriffen",
+        "dialog_label": "Suche",
+        "close_label": "Suche schließen",
+        "results_limit": 8,
+        "offset": 4,
+        "z_index": 60,
+        "card_color": "#FFFFFF",
+        "text_color": "#0F1426",
+        "muted_color": "#F4F4F5",
+        "accent_color": "#FF5F1F"
+      }
     }
   },
   "order": [
     "header_announcements_9jGBFp",
-    "header_section"
+    "header_section",
+    "cart_drawer_GFgkJJ",
+    "search_modal_N7e9fG"
   ]
 }
