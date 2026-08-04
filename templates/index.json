@@ -25,22 +25,17 @@
             "desktop_image": "shopify://shop_images/BANNER_Slider-3.jpg",
             "mobile_image": "shopify://shop_images/BANNER_Slider_2_-_Mobile_2.jpg"
           }
-        },
-        "slide_nLNQbc": {
-          "type": "slide",
-          "settings": {}
         }
       },
       "block_order": [
         "slide_wMzkzD",
-        "slide_NkFAba",
-        "slide_nLNQbc"
+        "slide_NkFAba"
       ],
       "name": "Hero Slider",
       "settings": {
         "heading": "SOMMERKOLLEKTION",
         "cta_label": "ENTDECKEN",
-        "link": "",
+        "link": "shopify://collections/all",
         "link_label": "Zur Kollektion",
         "cta_text_color": "#0f1426",
         "autoplay": true,
