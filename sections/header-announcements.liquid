@@ -1,226 +1,602 @@
-{% if section.blocks.size > 1 %}
-  <script
-    src="{{ 'announcement-bar.js' | asset_url }}"
-    type="module"
-    fetchpriority="low"
-  ></script>
-{% endif %}
+{%- comment -%}
+  ============================================================================
+  Announcement bar
+  Liquid port of the Hydrogen <AnnouncementBar /> component.
 
-{% render 'contrast-override', background_color: section.settings.background_color, section_id: section.id %}
+  - Zero Tailwind dependency. Every value is a scoped CSS custom property.
+  - Announcements are blocks, so the merchant edits text + colours in the
+    theme editor.
+  - Keeps the [data-announcement-bar] hook so existing CSS
+    (print rules, header stack offsets) keeps working.
 
-<div class="section-background color-custom-{{ section.id }}"></div>
-<aside
-  class="announcement-bar spacing-style section section--{{ section.settings.section_width }} color-custom-{{ section.id }}"
-  style="{% render 'spacing-padding', settings: section.settings %}; --border-bottom-width: {{ section.settings.divider_width }}px;{% if section.settings.divider_color != blank %} --color-border: {{ section.settings.divider_color }};{% endif %}"
->
-  {% liquid
-    assign autoplay = false
-    assign show_arrows = false
-    if section.blocks.size > 1
-      assign autoplay = true
-      assign show_arrows = true
-    endif
-  %}
+  Install: sections/announcement-bar.liquid
+  Add it to the top of the "header" section group so it sits above the header.
 
-  <announcement-bar-component
-    class="announcement-bar__slider"
-    {% if autoplay == true %}
-      autoplay="{{ section.settings.speed }}" aria-live="polite"
-    {% endif %}
-  >
-    {% if show_arrows %}
-      {% render 'slideshow-arrows', icon_style: 'chevron' %}
-    {% endif %}
+  Exposes --announcement-bar-height on :root — use it instead of hard-coding
+  26px / 29px in your header-stack maths.
+  ============================================================================
+{%- endcomment -%}
 
-    <div class="announcement-bar__slides">
-      {% content_for 'blocks' %}
-    </div>
-  </announcement-bar-component>
-</aside>
+{%- liquid
+  assign bar_id = 'AnnouncementBar-' | append: section.id
+  assign data_id = 'AnnouncementBarData-' | append: section.id
+  assign fade_ms = section.settings.fade_speed
+  assign interval_ms = section.settings.rotate_speed | times: 1000
+  assign first = section.blocks | first
+-%}
 
-{% stylesheet %}
-  .announcement-bar {
-    border-block-end: var(--border-bottom-width) solid var(--color-border);
-  }
+{%- if section.blocks.size > 0 -%}
 
-  .announcement-bar__slider {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    position: relative;
-
-    @media screen and (max-width: 749px) {
-      grid-column: 1 / -1;
+  {%- style -%}
+    :root {
+      --announcement-bar-height: {{ section.settings.height_mobile }}px;
     }
-  }
 
-  .announcement-bar__slides {
-    display: grid;
-    grid: [stack] auto / [stack] auto;
-    width: calc(100% - var(--button-size) * 2);
-    max-width: 680px;
-    margin-inline: auto;
-  }
+    #{{ bar_id }} {
+      --ab-bg: {{ first.settings.bg_color }};
+      --ab-fg: {{ first.settings.text_color }};
+      --ab-height: {{ section.settings.height_mobile }}px;
+      --ab-z: {{ section.settings.z_index }};
+      --ab-fade: {{ fade_ms }}ms;
+      --ab-slide: 32px;
+      --ab-max-width: {{ section.settings.max_width }}px;
+      --ab-pad-inline: 16px;
+      --ab-arrow-inset: 8px;
+      --ab-font-size: {{ section.settings.font_size_mobile }}px;
+      --ab-font-weight: 500;
+      --ab-tracking: 0.025em;
 
-  .announcement-bar__slides > * {
-    grid-area: stack;
-  }
+      position: {% if section.settings.fixed %}fixed{% else %}relative{% endif %};
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: var(--ab-z);
+      height: var(--ab-height);
+      background-color: var(--ab-bg);
+      color: var(--ab-fg);
+      transition:
+        background-color var(--ab-fade) ease-out,
+        color var(--ab-fade) ease-out;
+    }
 
-  .announcement-bar__slide {
-    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
-    content-visibility: visible;
+    {%- if section.settings.enable_entrance -%}
+      @keyframes ab-enter-{{ section.id }} {
+        from {
+          opacity: 0;
+          transform: translateY(-100%);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-    &[aria-hidden='true'] {
+      #{{ bar_id }} {
+        animation: ab-enter-{{ section.id }} var(--ab-fade) ease-out 10ms both;
+      }
+    {%- endif -%}
+
+    #{{ bar_id }} .announcement-bar__inner {
+      width: 100%;
+      height: 100%;
+      margin: 0 auto;
+      padding-left: var(--ab-pad-inline);
+      padding-right: var(--ab-pad-inline);
+      box-sizing: border-box;
+    }
+
+    #{{ bar_id }} .announcement-bar__track {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      max-width: var(--ab-max-width);
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    #{{ bar_id }} .announcement-bar__text {
+      margin: 0;
+      padding: 0 28px;
+      font-family: var(--font-body, inherit);
+      font-size: var(--ab-font-size);
+      font-weight: var(--ab-font-weight);
+      line-height: 1.2;
+      letter-spacing: var(--ab-tracking);
+      text-align: center;
+      color: inherit;
+      opacity: 1;
+      transform: translateX(0);
+      transition:
+        opacity var(--ab-fade) ease,
+        transform var(--ab-fade) ease;
+    }
+
+    #{{ bar_id }}.is-transitioning .announcement-bar__text {
       opacity: 0;
-      visibility: hidden;
+      transform: translateX(calc(-1 * var(--ab-slide)));
     }
-  }
 
-  .announcement-bar__slider slideshow-arrows {
-    padding: 0;
-    mix-blend-mode: normal;
-  }
+    #{{ bar_id }} .announcement-bar__link {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
 
-  .announcement-bar__slider slideshow-arrows .slideshow-control {
-    color: var(--color-foreground);
-  }
+    #{{ bar_id }} .announcement-bar__arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border: 0;
+      border-radius: 9999px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      transition: background-color 150ms ease;
+      -webkit-appearance: none;
+      appearance: none;
+    }
 
-  .announcement-bar__slider .slideshow-control {
-    display: flex;
-    padding: 0;
-    width: var(--button-size);
-    height: var(--button-size);
-    align-items: center;
-    justify-content: center;
-    opacity: 1;
-    animation: none;
+    #{{ bar_id }} .announcement-bar__arrow:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
 
-    @media screen and (min-width: 750px) {
-      --slideshow-control-offset: calc((var(--button-size) - var(--icon-size-xs)) / 2);
+    #{{ bar_id }} .announcement-bar__arrow:focus-visible {
+      outline: 2px solid currentColor;
+      outline-offset: 1px;
+    }
 
-      .section--page-width &.slideshow-control--previous {
-        transform: translateX(var(--slideshow-control-offset));
+    #{{ bar_id }} .announcement-bar__arrow--prev {
+      left: var(--ab-arrow-inset);
+    }
+
+    #{{ bar_id }} .announcement-bar__arrow--next {
+      right: var(--ab-arrow-inset);
+    }
+
+    #{{ bar_id }} .announcement-bar__arrow svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    @media (min-width: 640px) {
+      :root {
+        --announcement-bar-height: {{ section.settings.height_desktop }}px;
+      }
+
+      #{{ bar_id }} {
+        --ab-height: {{ section.settings.height_desktop }}px;
+        --ab-font-size: {{ section.settings.font_size_desktop }}px;
+        --ab-pad-inline: 24px;
+        --ab-arrow-inset: 16px;
       }
     }
-  }
 
-  .announcement-bar__slider .slideshow-control .svg-wrapper {
-    width: var(--icon-size-xs);
-    height: var(--icon-size-xs);
-  }
+    @media (min-width: 1024px) {
+      #{{ bar_id }} {
+        --ab-pad-inline: 32px;
+      }
+    }
 
-  .announcement-bar__slide {
-    place-content: center;
-  }
+    @media (prefers-reduced-motion: reduce) {
+      #{{ bar_id }},
+      #{{ bar_id }} .announcement-bar__text {
+        animation: none;
+        transition-duration: 1ms;
+      }
 
-  .announcement-bar__text:first-child {
-    margin: 0;
-  }
+      #{{ bar_id }}.is-transitioning .announcement-bar__text {
+        transform: none;
+      }
+    }
+  {%- endstyle -%}
 
-  .announcement-bar__link {
-    position: absolute;
-    inset: 0;
-  }
-{% endstylesheet %}
+  <div
+    id="{{ bar_id }}"
+    class="announcement-bar"
+    data-announcement-bar
+    data-ab-fade="{{ fade_ms }}"
+    data-ab-interval="{{ interval_ms }}"
+    data-ab-autoplay="{{ section.settings.autoplay }}"
+    data-ab-pause="{{ section.settings.pause_on_hover }}"
+    role="region"
+    aria-label="{{ section.settings.aria_label | escape }}"
+  >
+    <div class="announcement-bar__inner">
+      <div class="announcement-bar__track">
+        {%- if section.blocks.size > 1 -%}
+          <button
+            type="button"
+            class="announcement-bar__arrow announcement-bar__arrow--prev"
+            data-ab-prev
+            aria-label="{{ section.settings.prev_label | escape }}"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+        {%- endif -%}
+
+        <p class="announcement-bar__text" data-ab-text aria-live="polite" aria-atomic="true">
+          {%- if first.settings.link != blank -%}
+            <a class="announcement-bar__link" href="{{ first.settings.link }}">
+              {{- first.settings.text -}}
+            </a>
+          {%- else -%}
+            {{- first.settings.text -}}
+          {%- endif -%}
+        </p>
+
+        {%- if section.blocks.size > 1 -%}
+          <button
+            type="button"
+            class="announcement-bar__arrow announcement-bar__arrow--next"
+            data-ab-next
+            aria-label="{{ section.settings.next_label | escape }}"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+
+  {%- capture announcements_json -%}
+    [
+      {%- for block in section.blocks -%}
+        {
+          "text": {{ block.settings.text | strip_newlines | json }},
+          "url": {{ block.settings.link | default: '' | json }},
+          "bg": {{ block.settings.bg_color | json }},
+          "fg": {{ block.settings.text_color | json }}
+        }{%- unless forloop.last -%},{%- endunless -%}
+      {%- endfor -%}
+    ]
+  {%- endcapture -%}
+
+  <script type="application/json" id="{{ data_id }}">
+    {{ announcements_json }}
+  </script>
+
+  <script>
+    (function () {
+      var root = document.getElementById('{{ bar_id }}');
+      var dataEl = document.getElementById('{{ data_id }}');
+      if (!root || !dataEl) return;
+
+      // Theme editor re-runs this script on section reload — kill the old timers.
+      window.__announcementBars = window.__announcementBars || {};
+      if (window.__announcementBars['{{ section.id }}']) {
+        window.__announcementBars['{{ section.id }}']();
+      }
+
+      var items = [];
+      try {
+        items = JSON.parse(dataEl.textContent);
+      } catch (e) {
+        return;
+      }
+      if (items.length < 2) return;
+
+      var textEl = root.querySelector('[data-ab-text]');
+      var prevBtn = root.querySelector('[data-ab-prev]');
+      var nextBtn = root.querySelector('[data-ab-next]');
+
+      var fade = parseInt(root.dataset.abFade, 10) || 500;
+      var interval = parseInt(root.dataset.abInterval, 10) || 6000;
+      var autoplay = root.dataset.abAutoplay === 'true';
+      var pauseOnHover = root.dataset.abPause === 'true';
+
+      var index = 0;
+      var autoTimer = null;
+      var fadeTimer = null;
+
+      function render(i) {
+        var item = items[i];
+        while (textEl.firstChild) textEl.removeChild(textEl.firstChild);
+
+        if (item.url) {
+          var link = document.createElement('a');
+          link.className = 'announcement-bar__link';
+          link.href = item.url;
+          link.textContent = item.text;
+          textEl.appendChild(link);
+        } else {
+          textEl.textContent = item.text;
+        }
+
+        root.style.setProperty('--ab-bg', item.bg);
+        root.style.setProperty('--ab-fg', item.fg);
+      }
+
+      function move(step) {
+        clearTimeout(fadeTimer);
+        root.classList.add('is-transitioning');
+
+        fadeTimer = setTimeout(function () {
+          index = (index + step + items.length) % items.length;
+          render(index);
+          root.classList.remove('is-transitioning');
+        }, fade);
+
+        startAuto();
+      }
+
+      function startAuto() {
+        stopAuto();
+        if (!autoplay) return;
+        autoTimer = setInterval(function () {
+          move(1);
+        }, interval);
+      }
+
+      function stopAuto() {
+        if (autoTimer) clearInterval(autoTimer);
+        autoTimer = null;
+      }
+
+      if (prevBtn) {
+        prevBtn.addEventListener('click', function () {
+          move(-1);
+        });
+      }
+
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+          move(1);
+        });
+      }
+
+      if (pauseOnHover) {
+        root.addEventListener('mouseenter', stopAuto);
+        root.addEventListener('mouseleave', startAuto);
+        root.addEventListener('focusin', stopAuto);
+        root.addEventListener('focusout', startAuto);
+      }
+
+      function onVisibility() {
+        if (document.hidden) {
+          stopAuto();
+        } else {
+          startAuto();
+        }
+      }
+      document.addEventListener('visibilitychange', onVisibility);
+
+      startAuto();
+
+      window.__announcementBars['{{ section.id }}'] = function () {
+        stopAuto();
+        clearTimeout(fadeTimer);
+        document.removeEventListener('visibilitychange', onVisibility);
+      };
+    })();
+  </script>
+{%- endif -%}
 
 {% schema %}
 {
-  "name": "t:names.announcement_bar",
-  "blocks": [
-    {
-      "type": "_announcement"
-    }
-  ],
-  "enabled_on": {
-    "groups": ["header"]
-  },
+  "name": "Announcement bar",
+  "tag": "div",
+  "class": "announcement-bar-section",
+  "max_blocks": 10,
   "settings": [
     {
+      "type": "header",
+      "content": "Behaviour"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "label": "Rotate automatically",
+      "default": true
+    },
+    {
       "type": "range",
-      "id": "speed",
-      "label": "t:settings.scroll_speed",
-      "min": 2,
-      "max": 10,
-      "default": 5,
-      "unit": "sec"
+      "id": "rotate_speed",
+      "label": "Seconds between announcements",
+      "min": 3,
+      "max": 15,
+      "step": 1,
+      "unit": "s",
+      "default": 6
+    },
+    {
+      "type": "range",
+      "id": "fade_speed",
+      "label": "Transition speed",
+      "min": 200,
+      "max": 1000,
+      "step": 50,
+      "unit": "ms",
+      "default": 500
+    },
+    {
+      "type": "checkbox",
+      "id": "pause_on_hover",
+      "label": "Pause on hover or focus",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_entrance",
+      "label": "Slide down on page load",
+      "default": true
     },
     {
       "type": "header",
-      "content": "t:content.appearance"
+      "content": "Layout"
     },
     {
-      "type": "select",
-      "id": "section_width",
-      "label": "t:settings.section_width",
-      "options": [
+      "type": "checkbox",
+      "id": "fixed",
+      "label": "Pin to top of viewport",
+      "info": "Off makes the bar scroll away with the page.",
+      "default": true
+    },
+    {
+      "type": "range",
+      "id": "height_mobile",
+      "label": "Height (mobile)",
+      "min": 20,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 26
+    },
+    {
+      "type": "range",
+      "id": "height_desktop",
+      "label": "Height (desktop)",
+      "min": 20,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "default": 29
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Content max width",
+      "min": 800,
+      "max": 1800,
+      "step": 20,
+      "unit": "px",
+      "default": 1400
+    },
+    {
+      "type": "range",
+      "id": "font_size_mobile",
+      "label": "Text size (mobile)",
+      "min": 9,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 11
+    },
+    {
+      "type": "range",
+      "id": "font_size_desktop",
+      "label": "Text size (desktop)",
+      "min": 9,
+      "max": 18,
+      "step": 1,
+      "unit": "px",
+      "default": 12
+    },
+    {
+      "type": "number",
+      "id": "z_index",
+      "label": "Stacking order (z-index)",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "Accessibility labels"
+    },
+    {
+      "type": "text",
+      "id": "aria_label",
+      "label": "Region label",
+      "default": "Ankündigungen"
+    },
+    {
+      "type": "text",
+      "id": "prev_label",
+      "label": "Previous button label",
+      "default": "Vorherige Ankündigung"
+    },
+    {
+      "type": "text",
+      "id": "next_label",
+      "label": "Next button label",
+      "default": "Nächste Ankündigung"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "announcement",
+      "name": "Announcement",
+      "settings": [
         {
-          "value": "page-width",
-          "label": "t:options.page"
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "Kostenloser DHL-Versand & Rücksendung in Deutschland"
         },
         {
-          "value": "full-width",
-          "label": "t:options.full"
+          "type": "url",
+          "id": "link",
+          "label": "Link (optional)"
+        },
+        {
+          "type": "color",
+          "id": "bg_color",
+          "label": "Background",
+          "default": "#FF6B35"
+        },
+        {
+          "type": "color",
+          "id": "text_color",
+          "label": "Text",
+          "default": "#FFFFFF"
         }
-      ],
-      "default": "page-width"
-    },
-    {
-      "type": "color",
-      "id": "background_color",
-      "label": "t:settings.background_color",
-      "placeholder": "t:settings.default"
-    },
-    {
-      "type": "range",
-      "id": "divider_width",
-      "label": "t:settings.divider_thickness",
-      "min": 0,
-      "max": 5,
-      "step": 0.5,
-      "unit": "px",
-      "default": 0
-    },
-    {
-      "type": "color",
-      "id": "divider_color",
-      "label": "t:settings.divider_color",
-      "placeholder": "t:settings.default",
-      "visible_if": "{{ section.settings.divider_width > 0 }}"
-    },
-    {
-      "type": "header",
-      "content": "t:content.padding"
-    },
-    {
-      "type": "range",
-      "id": "padding-block-start",
-      "label": "t:settings.top",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 15
-    },
-    {
-      "type": "range",
-      "id": "padding-block-end",
-      "label": "t:settings.bottom",
-      "min": 0,
-      "max": 100,
-      "step": 1,
-      "unit": "px",
-      "default": 15
+      ]
     }
   ],
   "presets": [
     {
-      "name": "t:names.announcement_bar",
-      "blocks": {
-        "announcement_1": {
-          "type": "_announcement"
+      "name": "Announcement bar",
+      "blocks": [
+        {
+          "type": "announcement",
+          "settings": {
+            "text": "Kostenloser DHL-Versand & Rücksendung in Deutschland",
+            "bg_color": "#FF6B35",
+            "text_color": "#FFFFFF"
+          }
+        },
+        {
+          "type": "announcement",
+          "settings": {
+            "text": "EU: Versand 5,99 € · Rücksendung kostenlos",
+            "bg_color": "#0F1426",
+            "text_color": "#FFFFFF"
+          }
+        },
+        {
+          "type": "announcement",
+          "settings": {
+            "text": "Sichere Zahlung im Checkout",
+            "bg_color": "#FF6B35",
+            "text_color": "#FFFFFF"
+          }
         }
-      },
-      "block_order": ["announcement_1"]
+      ]
     }
   ]
 }
