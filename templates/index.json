@@ -15,21 +15,29 @@
         "slide_wMzkzD": {
           "type": "slide",
           "settings": {
-            "desktop_image": "shopify://shop_images/BANNER_Slider-2_700fc101-7ceb-4bcc-8a20-dc11f89ab4d5.webp",
+            "desktop_image": "shopify://shop_images/banner-slider-1.jpg",
             "mobile_image": "shopify://shop_images/BANNER_Slider_1_-_Mobile.jpg"
           }
         },
         "slide_NkFAba": {
           "type": "slide",
           "settings": {
-            "desktop_image": "shopify://shop_images/BANNER_Slider-3.jpg",
-            "mobile_image": "shopify://shop_images/BANNER_Slider_2_-_Mobile_2.jpg"
+            "desktop_image": "shopify://shop_images/banner-slider-2.jpg",
+            "mobile_image": "shopify://shop_images/BANNER_Slider_3_-_Mobile_1.jpg"
+          }
+        },
+        "slide_hYPdrw": {
+          "type": "slide",
+          "settings": {
+            "desktop_image": "shopify://shop_images/banner-slider-3.jpg",
+            "mobile_image": "shopify://shop_images/BANNER_Slider_1_-_Mobile.jpg"
           }
         }
       },
       "block_order": [
         "slide_wMzkzD",
-        "slide_NkFAba"
+        "slide_NkFAba",
+        "slide_hYPdrw"
       ],
       "name": "Hero Slider",
       "settings": {
