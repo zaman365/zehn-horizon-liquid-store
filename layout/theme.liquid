@@ -45,7 +45,7 @@
     {% if request.design_mode %}
       {%- render 'theme-editor' -%}
     {% endif %}
-
+    {% render 'zehn-cart-sync' %}
     {{ content_for_header }}
   </head>
 
@@ -151,6 +151,5 @@
     {% if settings.quick_add or settings.mobile_quick_add %}
       {% render 'quick-add-modal' %}
     {% endif %}
-    {% render 'zehn-cart-sync' %}
   </body>
 </html>
