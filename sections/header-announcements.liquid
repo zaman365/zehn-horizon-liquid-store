@@ -1,202 +1,228 @@
-{%- comment -%}
-  ZEHN-style Announcement Bar + Header section
-  Drop this file in your theme's /sections folder as "zehn-header.liquid"
-  then add the section to your theme (e.g. in the header group or via the editor).
-{%- endcomment -%}
 
-{%- liquid
-  assign accent = section.settings.accent_color
-  assign ann_bg = section.settings.announcement_bg
-  assign ann_text = section.settings.announcement_text_color
-  assign ink = section.settings.text_color
--%}
 
+{% if section.blocks.size > 1 %}
+  <script
+    src="{{ 'announcement-bar.js' | asset_url }}"
+    type="module"
+    fetchpriority="low"
+  ></script>
+{% endif %}
+
+{% render 'contrast-override', background_color: section.settings.background_color, section_id: section.id %}
+
+<div class="section-background color-custom-{{ section.id }}"></div>
 <aside
-  class="zehn-announcement"
-  aria-live="polite"
-  data-autoplay="{{ section.settings.autoplay_speed | times: 1000 }}"
-  style="--zehn-ann-bg: {{ ann_bg }}; --zehn-ann-text: {{ ann_text }}; height: {{ section.settings.announcement_height }}px;"
+  class="announcement-bar spacing-style section section--{{ section.settings.section_width }} color-custom-{{ section.id }}"
+  style="{% render 'spacing-padding', settings: section.settings %}; --border-bottom-width: {{ section.settings.divider_width }}px;{% if section.settings.divider_color != blank %} --color-border: {{ section.settings.divider_color }};{% endif %}"
 >
-  <div class="zehn-announcement__inner">
-    {%- if section.blocks.size > 1 -%}
-      <button class="zehn-announcement__arrow zehn-announcement__arrow--prev" aria-label="Previous announcement" data-zehn-prev>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
-      </button>
-    {%- endif -%}
+  {% liquid
+    assign autoplay = false
+    assign show_arrows = false
+    if section.blocks.size > 1
+      assign autoplay = true
+      assign show_arrows = true
+    endif
+  %}
 
-    <div class="zehn-announcement__track" data-zehn-track>
-      {%- for block in section.blocks -%}
-        {%- if block.type == 'announcement' -%}
-          <p
-            class="zehn-announcement__text{% if forloop.first %} is-active{% endif %}"
-            data-zehn-slide
-            {{ block.shopify_attributes }}
-          >
-            {%- if block.settings.link != blank -%}
-              <a href="{{ block.settings.link }}" style="color:inherit;text-decoration:none;">{{ block.settings.text }}</a>
-            {%- else -%}
-              {{ block.settings.text }}
-            {%- endif -%}
-          </p>
-        {%- endif -%}
-      {%- endfor -%}
+  <announcement-bar-component
+    class="announcement-bar__slider"
+    {% if autoplay == true %}
+      autoplay="{{ section.settings.speed }}" aria-live="polite"
+    {% endif %}
+  >
+    {% if show_arrows %}
+      {% render 'slideshow-arrows', icon_style: 'chevron' %}
+    {% endif %}
+
+    <div class="announcement-bar__slides">
+      {% content_for 'blocks' %}
     </div>
-
-    {%- if section.blocks.size > 1 -%}
-      <button class="zehn-announcement__arrow zehn-announcement__arrow--next" aria-label="Next announcement" data-zehn-next>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5l7 7-7 7"/></svg>
-      </button>
-    {%- endif -%}
-  </div>
+  </announcement-bar-component>
 </aside>
 
-<header
-  class="zehn-header{% if section.settings.sticky %} zehn-header--sticky{% endif %}"
-  style="top: {{ section.settings.announcement_height }}px;"
->
-  <nav class="zehn-header__nav" style="--zehn-accent: {{ accent }}; --zehn-ink: {{ ink }};">
-    {%- if section.settings.menu != blank -%}
-      <div class="zehn-header__links">
-        {%- for link in linklists[section.settings.menu].links -%}
-          <a class="zehn-header__link" href="{{ link.url }}">{{ link.title }}</a>
-        {%- endfor -%}
-      </div>
-    {%- endif -%}
-
-    <a class="zehn-header__logo" href="{{ routes.root_url }}">
-      {%- if section.settings.logo != blank -%}
-        <img
-          src="{{ section.settings.logo | image_url: width: 300 }}"
-          alt="{{ shop.name | escape }}"
-          width="{{ section.settings.logo.width }}"
-          height="{{ section.settings.logo.height }}"
-          loading="eager"
-        >
-      {%- else -%}
-        <span class="zehn-header__wordmark">{{ shop.name }}</span>
-      {%- endif -%}
-    </a>
-
-    <div class="zehn-header__actions">
-      <button class="zehn-header__icon" aria-label="Suche" type="button">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      </button>
-      <a class="zehn-header__icon" href="{{ routes.account_url }}" aria-label="Konto">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-      </a>
-      {%- if section.settings.show_wishlist -%}
-        <a class="zehn-header__icon" href="{{ section.settings.wishlist_url }}" aria-label="Wunschliste">
-          <svg viewBox="0 0 24 24" fill="{{ accent }}" stroke="{{ accent }}" stroke-width="1.5"><path d="M12 21s-8-5.5-8-11a4.5 4.5 0 0 1 8-2.7A4.5 4.5 0 0 1 20 10c0 5.5-8 11-8 11z"/></svg>
-          {%- if section.settings.wishlist_count > 0 -%}
-            <span class="zehn-header__badge" style="color:{{ accent }};">{{ section.settings.wishlist_count }}</span>
-          {%- endif -%}
-        </a>
-      {%- endif -%}
-      <a class="zehn-header__icon" href="{{ routes.cart_url }}" aria-label="Warenkorb">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
-        {%- if cart.item_count > 0 -%}
-          <span class="zehn-header__badge" style="color:{{ accent }};">{{ cart.item_count }}</span>
-        {%- endif -%}
-      </a>
-    </div>
-  </nav>
-</header>
-
 {% stylesheet %}
-  .zehn-announcement{position:fixed;top:0;left:0;right:0;z-index:70;display:flex;align-items:center;justify-content:center;background:var(--zehn-ann-bg);color:var(--zehn-ann-text);transition:all .5s ease-out;}
-  .zehn-announcement__inner{position:relative;width:100%;max-width:1400px;height:100%;margin:0 auto;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0 44px;}
-  .zehn-announcement__track{position:relative;display:grid;}
-  .zehn-announcement__text{grid-area:1/1;margin:0;font-family:Inter,system-ui,sans-serif;font-size:12px;font-weight:500;letter-spacing:.3px;text-align:center;opacity:0;visibility:hidden;transition:opacity .5s ease,visibility .5s ease;}
-  .zehn-announcement__text.is-active{opacity:1;visibility:visible;}
-  .zehn-announcement__arrow{position:absolute;top:50%;transform:translateY(-50%);background:none;border:0;color:inherit;cursor:pointer;padding:4px;border-radius:9999px;display:flex;transition:background .2s;}
-  .zehn-announcement__arrow:hover{background:rgba(255,255,255,.12);}
-  .zehn-announcement__arrow--prev{left:16px;}
-  .zehn-announcement__arrow--next{right:16px;}
-  .zehn-announcement__arrow svg{width:16px;height:16px;}
-
-  .zehn-header{position:absolute;left:0;right:0;z-index:60;display:flex;justify-content:center;padding:8px 0;font-family:'Archivo',Inter,system-ui,sans-serif;}
-  .zehn-header--sticky{position:fixed;}
-  .zehn-header__nav{position:relative;width:97.5%;max-width:1100px;height:70px;display:flex;align-items:center;padding:0 32px;background:rgba(255,255,255,.4);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:.8px solid rgba(255,255,255,.3);border-radius:8px;box-shadow:0 10px 50px rgba(15,20,38,.12);}
-  .zehn-header__links{display:flex;gap:36px;align-items:center;}
-  .zehn-header__link{font-size:12px;font-weight:500;letter-spacing:3.6px;text-transform:uppercase;color:var(--zehn-ink);opacity:.7;text-decoration:none;white-space:nowrap;transition:color .2s,opacity .2s;}
-  .zehn-header__link:hover{color:var(--zehn-accent);opacity:1;}
-  .zehn-header__logo{position:absolute;left:50%;transform:translateX(-50%);height:48px;display:flex;align-items:center;text-decoration:none;}
-  .zehn-header__logo img{height:48px;width:auto;object-fit:contain;}
-  .zehn-header__wordmark{font-weight:800;font-size:26px;letter-spacing:1px;color:var(--zehn-ink);}
-  .zehn-header__actions{margin-left:auto;display:flex;align-items:center;gap:22px;}
-  .zehn-header__icon{position:relative;display:flex;align-items:center;color:var(--zehn-ink);opacity:.7;background:none;border:0;cursor:pointer;text-decoration:none;transition:color .2s,opacity .2s;}
-  .zehn-header__icon:hover{color:var(--zehn-accent);opacity:1;}
-  .zehn-header__icon svg{width:20px;height:20px;}
-  .zehn-header__badge{position:absolute;top:-8px;right:-9px;font-size:11px;font-weight:700;line-height:1;}
-  @media (max-width:900px){.zehn-header__links{display:none;}.zehn-header__nav{padding:0 18px;}}
-{% endstylesheet %}
-
-{% javascript %}
-  class ZehnAnnouncement {
-    constructor(el){
-      this.el = el;
-      this.slides = Array.from(el.querySelectorAll('[data-zehn-slide]'));
-      this.index = 0;
-      this.speed = parseInt(el.dataset.autoplay, 10) || 5000;
-      if (this.slides.length < 2) return;
-      const next = el.querySelector('[data-zehn-next]');
-      const prev = el.querySelector('[data-zehn-prev]');
-      if (next) next.addEventListener('click', () => this.go(this.index + 1));
-      if (prev) prev.addEventListener('click', () => this.go(this.index - 1));
-      this.start();
-    }
-    go(n){
-      this.slides[this.index].classList.remove('is-active');
-      this.index = (n + this.slides.length) % this.slides.length;
-      this.slides[this.index].classList.add('is-active');
-      this.restart();
-    }
-    start(){ this.timer = setInterval(() => this.go(this.index + 1), this.speed); }
-    restart(){ clearInterval(this.timer); this.start(); }
+  .announcement-bar {
+    border-block-end: var(--border-bottom-width) solid var(--color-border);
   }
-  document.querySelectorAll('.zehn-announcement').forEach((el) => new ZehnAnnouncement(el));
-{% endjavascript %}
+
+  .announcement-bar__slider {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: relative;
+
+    @media screen and (max-width: 749px) {
+      grid-column: 1 / -1;
+    }
+  }
+
+  .announcement-bar__slides {
+    display: grid;
+    grid: [stack] auto / [stack] auto;
+    width: calc(100% - var(--button-size) * 2);
+    max-width: 680px;
+    margin-inline: auto;
+  }
+
+  .announcement-bar__slides > * {
+    grid-area: stack;
+  }
+
+  .announcement-bar__slide {
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+    content-visibility: visible;
+
+    &[aria-hidden='true'] {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+
+  .announcement-bar__slider slideshow-arrows {
+    padding: 0;
+    mix-blend-mode: normal;
+  }
+
+  .announcement-bar__slider slideshow-arrows .slideshow-control {
+    color: var(--color-foreground);
+  }
+
+  .announcement-bar__slider .slideshow-control {
+    display: flex;
+    padding: 0;
+    width: var(--button-size);
+    height: var(--button-size);
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    animation: none;
+
+    @media screen and (min-width: 750px) {
+      --slideshow-control-offset: calc((var(--button-size) - var(--icon-size-xs)) / 2);
+
+      .section--page-width &.slideshow-control--previous {
+        transform: translateX(var(--slideshow-control-offset));
+      }
+    }
+  }
+
+  .announcement-bar__slider .slideshow-control .svg-wrapper {
+    width: var(--icon-size-xs);
+    height: var(--icon-size-xs);
+  }
+
+  .announcement-bar__slide {
+    place-content: center;
+  }
+
+  .announcement-bar__text:first-child {
+    margin: 0;
+  }
+
+  .announcement-bar__link {
+    position: absolute;
+    inset: 0;
+  }
+{% endstylesheet %}
 
 {% schema %}
 {
-  "name": "ZEHN Header",
-  "tag": "section",
-  "class": "zehn-header-section",
-  "settings": [
-    { "type": "header", "content": "Announcement bar" },
-    { "type": "range", "id": "autoplay_speed", "label": "Autoplay speed", "min": 2, "max": 10, "step": 1, "unit": "s", "default": 5 },
-    { "type": "range", "id": "announcement_height", "label": "Bar height", "min": 24, "max": 48, "step": 1, "unit": "px", "default": 29 },
-    { "type": "color", "id": "announcement_bg", "label": "Bar background", "default": "#FF6B35" },
-    { "type": "color", "id": "announcement_text_color", "label": "Bar text", "default": "#FFFFFF" },
-    { "type": "header", "content": "Header" },
-    { "type": "image_picker", "id": "logo", "label": "Logo" },
-    { "type": "link_list", "id": "menu", "label": "Menu", "default": "main-menu" },
-    { "type": "color", "id": "accent_color", "label": "Accent color", "default": "#ff5f1f" },
-    { "type": "color", "id": "text_color", "label": "Header text", "default": "#0F1426" },
-    { "type": "checkbox", "id": "sticky", "label": "Sticky header", "default": true },
-    { "type": "header", "content": "Wishlist" },
-    { "type": "checkbox", "id": "show_wishlist", "label": "Show wishlist icon", "default": true },
-    { "type": "url", "id": "wishlist_url", "label": "Wishlist URL" },
-    { "type": "range", "id": "wishlist_count", "label": "Wishlist badge count", "min": 0, "max": 99, "step": 1, "default": 2 }
-  ],
+  "name": "t:names.announcement_bar",
   "blocks": [
     {
-      "type": "announcement",
-      "name": "Announcement",
-      "settings": [
-        { "type": "text", "id": "text", "label": "Text", "default": "Kostenloser DHL-Versand & Rücksendung in Deutschland" },
-        { "type": "url", "id": "link", "label": "Link" }
-      ]
+      "type": "_announcement"
+    }
+  ],
+  "enabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "range",
+      "id": "speed",
+      "label": "t:settings.scroll_speed",
+      "min": 2,
+      "max": 10,
+      "default": 5,
+      "unit": "sec"
+    },
+    {
+      "type": "header",
+      "content": "t:content.appearance"
+    },
+    {
+      "type": "select",
+      "id": "section_width",
+      "label": "t:settings.section_width",
+      "options": [
+        {
+          "value": "page-width",
+          "label": "t:options.page"
+        },
+        {
+          "value": "full-width",
+          "label": "t:options.full"
+        }
+      ],
+      "default": "page-width"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:settings.background_color",
+      "placeholder": "t:settings.default"
+    },
+    {
+      "type": "range",
+      "id": "divider_width",
+      "label": "t:settings.divider_thickness",
+      "min": 0,
+      "max": 5,
+      "step": 0.5,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "color",
+      "id": "divider_color",
+      "label": "t:settings.divider_color",
+      "placeholder": "t:settings.default",
+      "visible_if": "{{ section.settings.divider_width > 0 }}"
+    },
+    {
+      "type": "header",
+      "content": "t:content.padding"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "t:settings.top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 15
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "t:settings.bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "default": 15
     }
   ],
   "presets": [
     {
-      "name": "ZEHN Header",
-      "blocks": [
-        { "type": "announcement", "settings": { "text": "Kostenloser DHL-Versand & Rücksendung in Deutschland" } },
-        { "type": "announcement", "settings": { "text": "EU: Versand 5,99 € · Rücksendung kostenlos" } },
-        { "type": "announcement", "settings": { "text": "Sichere Zahlung im Checkout" } }
-      ]
+      "name": "t:names.announcement_bar",
+      "blocks": {
+        "announcement_1": {
+          "type": "_announcement"
+        }
+      },
+      "block_order": ["announcement_1"]
     }
   ]
 }
