@@ -1,0 +1,773 @@
+{%- comment -%}
+  ============================================================================
+  ZEHN search modal — Liquid port of components/zehn/SearchModal.tsx
+
+  Install: sections/search-modal.liquid
+  Needs its companion: sections/zehn-predictive-search.liquid
+  Add this one to the "header" section group. The header finds it by
+  [data-zehn-search-modal] and dispatches zehn:search:open.
+
+  Predictive results come from /search/suggest with section_id, so Liquid
+  formats the money and sizes the images.
+
+  Public API: window.ZehnSearchModal.open() / .close()
+  ============================================================================
+{%- endcomment -%}
+
+{%- liquid
+  assign fg = section.settings.text_color
+  assign terms = section.settings.popular_searches | split: ','
+-%}
+
+{%- capture icon_search -%}
+  <svg class="zsm-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+{%- endcapture -%}
+
+{%- style -%}
+  #ZehnSearch-{{ section.id }} {
+    --zsm-fg: {{ fg }};
+    --zsm-fg-70: {{ fg | color_modify: 'alpha', 0.7 }};
+    --zsm-fg-60: {{ fg | color_modify: 'alpha', 0.6 }};
+    --zsm-fg-55: {{ fg | color_modify: 'alpha', 0.55 }};
+    --zsm-fg-50: {{ fg | color_modify: 'alpha', 0.5 }};
+    --zsm-fg-40: {{ fg | color_modify: 'alpha', 0.4 }};
+    --zsm-fg-30: {{ fg | color_modify: 'alpha', 0.3 }};
+    --zsm-fg-10: {{ fg | color_modify: 'alpha', 0.1 }};
+    --zsm-card: {{ section.settings.card_color }};
+    --zsm-muted: {{ section.settings.muted_color }};
+    --zsm-accent: {{ section.settings.accent_color }};
+    --zsm-shadow: {{ fg | color_modify: 'alpha', 0.12 }} 0 10px 50px;
+    --zsm-ease: cubic-bezier(0, 0, 0.2, 1);
+    /* Sits just under the floating navbar, using the header's own stack var. */
+    --zsm-top: calc(var(--zehn-header-stack, 104px) + {{ section.settings.offset }}px);
+  }
+
+  #ZehnSearch-{{ section.id }}[hidden] { display: none; }
+
+  @keyframes zsm-fade-{{ section.id }} {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes zsm-drop-{{ section.id }} {
+    from { opacity: 0; transform: translate(-50%, -12px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: {{ section.settings.z_index }};
+    width: 100%;
+    border: 0;
+    padding: 0;
+    background: rgba(0, 0, 0, 0.3);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    animation: zsm-fade-{{ section.id }} 300ms ease-out forwards;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-wrap {
+    position: fixed;
+    top: var(--zsm-top);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: {{ section.settings.z_index | plus: 1 }};
+    width: 95%;
+    max-width: 1400px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+    color: var(--zsm-fg);
+    animation: zsm-drop-{{ section.id }} 300ms var(--zsm-ease) forwards;
+  }
+
+  #ZehnSearch-{{ section.id }}.is-closing .zsm-backdrop,
+  #ZehnSearch-{{ section.id }}.is-closing .zsm-wrap {
+    animation-direction: reverse;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-card {
+    display: flex;
+    flex-direction: column;
+    height: 80vh;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: var(--zsm-card);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--zsm-shadow);
+  }
+
+  /* ---------- input ---------- */
+  #ZehnSearch-{{ section.id }} .zsm-search {
+    display: flex;
+    flex-shrink: 0;
+    justify-content: center;
+    padding: 20px 0 16px;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-search__inner {
+    width: 100%;
+    padding: 0 16px;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 16px;
+    border-bottom: 2px solid var(--zsm-fg-10);
+    transition: border-color 300ms var(--zsm-ease);
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-field:focus-within {
+    border-bottom-color: {{ fg | color_modify: 'alpha', 0.3 }};
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    display: block;
+    color: var(--zsm-fg-60);
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-input {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    outline: none;
+    box-shadow: none;
+    background: transparent;
+    font-family: inherit;
+    /* 16px keeps iOS from zooming on focus */
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--zsm-fg);
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-input::placeholder { color: var(--zsm-fg-40); }
+  #ZehnSearch-{{ section.id }} .zsm-input::-webkit-search-cancel-button,
+  #ZehnSearch-{{ section.id }} .zsm-input::-webkit-search-decoration { display: none; }
+
+  #ZehnSearch-{{ section.id }} .zsm-clear {
+    flex-shrink: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--zsm-fg-60);
+    cursor: pointer;
+    transition: color 300ms var(--zsm-ease);
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-clear:hover { color: var(--zsm-fg); }
+
+  /* ---------- results shell ---------- */
+  #ZehnSearch-{{ section.id }} .zsm-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-inner {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px 24px;
+    box-sizing: border-box;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-eyebrow {
+    margin: 0 0 16px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--zsm-fg-50);
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-columns {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  /* ---------- popular searches ---------- */
+  #ZehnSearch-{{ section.id }} .zsm-terms {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 0 -16px;
+    padding: 0 16px 8px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-term {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--zsm-fg-70);
+    text-transform: capitalize;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 300ms var(--zsm-ease);
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-term:hover {
+    color: var(--zsm-fg);
+    text-decoration: underline;
+  }
+
+  /* ---------- product grid (also styles the fetched section) ---------- */
+  #ZehnSearch-{{ section.id }} .zsm-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  #ZehnSearch-{{ section.id }} a.zsm-product {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  #ZehnSearch-{{ section.id }} a.zsm-product:hover { text-decoration: none; }
+
+  #ZehnSearch-{{ section.id }} .zsm-product__media {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    overflow: hidden;
+    border-radius: 8px;
+    background: var(--zsm-muted);
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-product__media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 0;
+    transition: transform 600ms var(--zsm-ease);
+  }
+
+  #ZehnSearch-{{ section.id }} a.zsm-product:hover .zsm-product__media img {
+    transform: scale(1.03);
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-product__body { padding: 8px 2px 0; }
+
+  #ZehnSearch-{{ section.id }} .zsm-product__title {
+    margin: 0 0 2px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.35;
+    color: var(--zsm-fg);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-product__price {
+    margin: 0;
+    font-size: 13px;
+    color: var(--zsm-fg-70);
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-product__now { color: var(--zsm-accent); }
+
+  #ZehnSearch-{{ section.id }} .zsm-product__was {
+    margin-left: 6px;
+    color: var(--zsm-fg-55);
+    text-decoration: line-through;
+  }
+
+  /* ---------- empty / loading ---------- */
+  #ZehnSearch-{{ section.id }} .zsm-none {
+    padding: 64px 0;
+    text-align: center;
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-none p { margin: 0; }
+  #ZehnSearch-{{ section.id }} .zsm-none__lead {
+    margin-bottom: 8px;
+    font-size: 16px;
+    color: var(--zsm-fg-70);
+  }
+  #ZehnSearch-{{ section.id }} .zsm-none__hint {
+    font-size: 14px;
+    color: var(--zsm-fg-40);
+  }
+
+  #ZehnSearch-{{ section.id }} .zsm-slot[data-loading='true'] { opacity: 0.5; }
+
+  #ZehnSearch-{{ section.id }} [hidden] { display: none !important; }
+
+  #ZehnSearch-{{ section.id }} :focus-visible {
+    outline: 2px solid var(--zsm-accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------- breakpoints ---------- */
+  @media (min-width: 768px) {
+    #ZehnSearch-{{ section.id }} .zsm-wrap { padding: 0; }
+    #ZehnSearch-{{ section.id }} .zsm-card { height: 82vh; }
+    #ZehnSearch-{{ section.id }} .zsm-search__inner { width: 90%; padding: 0 24px; }
+    #ZehnSearch-{{ section.id }} .zsm-inner { padding: 0 24px 24px; }
+    #ZehnSearch-{{ section.id }} .zsm-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+    #ZehnSearch-{{ section.id }} .zsm-columns--results {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+    }
+
+    #ZehnSearch-{{ section.id }} .zsm-terms {
+      flex-direction: column;
+      gap: 4px;
+      margin: 0;
+      padding: 0;
+      overflow-x: visible;
+    }
+
+    #ZehnSearch-{{ section.id }} .zsm-term {
+      padding: 6px 0;
+      white-space: normal;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    #ZehnSearch-{{ section.id }} .zsm-search__inner { width: 70%; }
+    #ZehnSearch-{{ section.id }} .zsm-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #ZehnSearch-{{ section.id }} .zsm-backdrop,
+    #ZehnSearch-{{ section.id }} .zsm-wrap { animation: none; }
+    #ZehnSearch-{{ section.id }} .zsm-product__media img { transition: none; }
+  }
+{%- endstyle -%}
+
+<div id="ZehnSearch-{{ section.id }}" class="zsm" data-zehn-search-modal hidden>
+  <button
+    type="button"
+    class="zsm-backdrop"
+    data-zsm-close
+    tabindex="-1"
+    aria-label="{{ section.settings.close_label | escape }}"
+  ></button>
+
+  <div
+    class="zsm-wrap"
+    role="dialog"
+    aria-modal="true"
+    aria-label="{{ section.settings.dialog_label | escape }}"
+  >
+    <div class="zsm-card">
+      <div class="zsm-search">
+        <div class="zsm-search__inner">
+          <form action="{{ routes.search_url }}" method="get" role="search" data-zsm-form>
+            <div class="zsm-field">
+              {{ icon_search }}
+              <input
+                type="search"
+                name="q"
+                class="zsm-input"
+                placeholder="{{ section.settings.placeholder | escape }}"
+                autocomplete="off"
+                autocorrect="off"
+                spellcheck="false"
+                aria-label="{{ section.settings.placeholder | escape }}"
+                aria-controls="ZehnSearchResults-{{ section.id }}"
+                data-zsm-input
+              >
+              <button type="button" class="zsm-clear" data-zsm-clear>
+                {{ section.settings.clear_label }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="zsm-scroll">
+        <div class="zsm-inner">
+          <div class="zsm-columns" data-zsm-columns>
+            {%- if terms.size > 0 -%}
+              <div>
+                <h3 class="zsm-eyebrow">{{ section.settings.popular_label }}</h3>
+                <div class="zsm-terms">
+                  {%- for term in terms -%}
+                    {%- assign clean = term | strip -%}
+                    {%- if clean != blank -%}
+                      <button type="button" class="zsm-term" data-zsm-term="{{ clean | escape }}">
+                        {{ clean }}
+                      </button>
+                    {%- endif -%}
+                  {%- endfor -%}
+                </div>
+              </div>
+            {%- endif -%}
+
+            <div
+              class="zsm-slot"
+              id="ZehnSearchResults-{{ section.id }}"
+              data-zsm-slot
+              data-loading="false"
+              aria-live="polite"
+            ></div>
+          </div>
+
+          <div class="zsm-none" data-zsm-none hidden>
+            <p class="zsm-none__lead">
+              {{ section.settings.no_results_text }} &quot;<span data-zsm-echo></span>&quot;
+            </p>
+            <p class="zsm-none__hint">{{ section.settings.no_results_hint }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var root = document.getElementById('ZehnSearch-{{ section.id }}');
+    if (!root) return;
+
+    window.__zehnSearchModals = window.__zehnSearchModals || {};
+    if (window.__zehnSearchModals['{{ section.id }}']) {
+      window.__zehnSearchModals['{{ section.id }}']();
+    }
+
+    var input = root.querySelector('[data-zsm-input]');
+    var slot = root.querySelector('[data-zsm-slot]');
+    var columns = root.querySelector('[data-zsm-columns]');
+    var none = root.querySelector('[data-zsm-none]');
+    var echo = root.querySelector('[data-zsm-echo]');
+
+    var searchUrl = {{ routes.search_url | json }};
+    var resultsSection = 'zehn-predictive-search';
+    var limit = {{ section.settings.results_limit }};
+    var debounceMs = 250;
+
+    var debounceTimer = null;
+    var closeTimer = null;
+    var controller = null;
+    var lastFocused = null;
+
+    function isOpen() {
+      return !root.hasAttribute('hidden');
+    }
+
+    function lockScroll(lock) {
+      document.body.style.overflow = lock ? 'hidden' : '';
+    }
+
+    function open() {
+      if (isOpen()) return;
+      if (closeTimer) clearTimeout(closeTimer);
+      lastFocused = document.activeElement;
+      root.removeAttribute('hidden');
+      root.classList.remove('is-closing');
+      lockScroll(true);
+      // Matches the React 100ms delay: lets the panel paint before focusing,
+      // so mobile keyboards don't fight the entrance animation.
+      setTimeout(function () {
+        if (input) input.focus();
+      }, 100);
+    }
+
+    function close() {
+      if (!isOpen()) return;
+      root.classList.add('is-closing');
+      lockScroll(false);
+      closeTimer = setTimeout(function () {
+        root.setAttribute('hidden', '');
+        root.classList.remove('is-closing');
+      }, 300);
+      if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+    }
+
+    /* ---------- rendering states ---------- */
+    function showState(state, term) {
+      // state: 'idle' | 'results' | 'empty'
+      columns.classList.toggle('zsm-columns--results', state === 'results');
+      slot.hidden = state !== 'results';
+      none.hidden = state !== 'empty';
+      if (state === 'empty' && echo) echo.textContent = term || '';
+      if (state !== 'results') slot.innerHTML = '';
+    }
+
+    function goToSearch(term) {
+      var q = (term || '').trim();
+      if (!q) return;
+      window.location.href = searchUrl + '?q=' + encodeURIComponent(q);
+    }
+
+    function fetchResults(term) {
+      if (controller) controller.abort();
+      controller = new AbortController();
+
+      var url =
+        '/search/suggest?q=' +
+        encodeURIComponent(term) +
+        '&resources[type]=product&resources[limit]=' +
+        limit +
+        '&section_id=' +
+        resultsSection;
+
+      slot.setAttribute('data-loading', 'true');
+
+      fetch(url, {signal: controller.signal})
+        .then(function (res) {
+          return res.text();
+        })
+        .then(function (html) {
+          var parsed = new DOMParser().parseFromString(html, 'text/html');
+          var results = parsed.querySelector('[data-zehn-predictive-results]');
+          var count = results ? Number(results.getAttribute('data-count')) || 0 : 0;
+
+          slot.setAttribute('data-loading', 'false');
+
+          if (count > 0) {
+            slot.innerHTML = results.innerHTML;
+            showState('results');
+          } else {
+            showState('empty', term);
+          }
+        })
+        .catch(function (error) {
+          if (error && error.name === 'AbortError') return;
+          slot.setAttribute('data-loading', 'false');
+          showState('empty', term);
+        });
+    }
+
+    function onInput() {
+      var term = input.value.trim();
+      if (debounceTimer) clearTimeout(debounceTimer);
+
+      if (term.length < 2) {
+        if (controller) controller.abort();
+        showState('idle');
+        return;
+      }
+
+      debounceTimer = setTimeout(function () {
+        fetchResults(term);
+      }, debounceMs);
+    }
+
+    /* ---------- events ---------- */
+    function onClick(event) {
+      if (event.target.closest('[data-zsm-close]')) {
+        event.preventDefault();
+        close();
+        return;
+      }
+
+      if (event.target.closest('[data-zsm-clear]')) {
+        event.preventDefault();
+        input.value = '';
+        showState('idle');
+        input.focus();
+        return;
+      }
+
+      var term = event.target.closest('[data-zsm-term]');
+      if (term) {
+        event.preventDefault();
+        goToSearch(term.getAttribute('data-zsm-term'));
+      }
+    }
+
+    function onKeyDownRoot(event) {
+      if (event.key === 'Enter' && event.target === input) {
+        event.preventDefault();
+        goToSearch(input.value);
+      }
+    }
+
+    function onKeyDown(event) {
+      if (event.key === 'Escape' && isOpen()) close();
+    }
+
+    root.addEventListener('click', onClick);
+    root.addEventListener('keydown', onKeyDownRoot);
+    if (input) input.addEventListener('input', onInput);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('zehn:search:open', open);
+
+    var form = root.querySelector('[data-zsm-form]');
+    if (form) {
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        goToSearch(input.value);
+      });
+    }
+
+    window.ZehnSearchModal = {open: open, close: close};
+
+    window.__zehnSearchModals['{{ section.id }}'] = function () {
+      lockScroll(false);
+      if (closeTimer) clearTimeout(closeTimer);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      if (controller) controller.abort();
+      root.removeEventListener('click', onClick);
+      root.removeEventListener('keydown', onKeyDownRoot);
+      if (input) input.removeEventListener('input', onInput);
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('zehn:search:open', open);
+    };
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "ZEHN search modal",
+  "tag": "div",
+  "class": "zehn-search-modal-section",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Also add sections/zehn-predictive-search.liquid to the theme — this modal fetches its results from it."
+    },
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "text",
+      "id": "placeholder",
+      "label": "Input placeholder",
+      "default": "Wonach suchen Sie?"
+    },
+    {
+      "type": "text",
+      "id": "clear_label",
+      "label": "Clear button",
+      "default": "Löschen"
+    },
+    {
+      "type": "text",
+      "id": "popular_label",
+      "label": "Popular searches heading",
+      "default": "Beliebte Suchbegriffe"
+    },
+    {
+      "type": "text",
+      "id": "popular_searches",
+      "label": "Popular searches",
+      "default": "shirt, jeans, short, cargo, jackets",
+      "info": "Comma separated. Clicking one goes straight to the search results page."
+    },
+    {
+      "type": "text",
+      "id": "no_results_text",
+      "label": "No results message",
+      "default": "Keine Ergebnisse gefunden für"
+    },
+    {
+      "type": "text",
+      "id": "no_results_hint",
+      "label": "No results hint",
+      "default": "Versuchen Sie es mit anderen Suchbegriffen"
+    },
+    {
+      "type": "text",
+      "id": "dialog_label",
+      "label": "Dialog aria-label",
+      "default": "Suche"
+    },
+    {
+      "type": "text",
+      "id": "close_label",
+      "label": "Close button label",
+      "default": "Suche schließen"
+    },
+    {
+      "type": "header",
+      "content": "Behaviour"
+    },
+    {
+      "type": "range",
+      "id": "results_limit",
+      "label": "Products shown",
+      "min": 4,
+      "max": 10,
+      "step": 1,
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "offset",
+      "label": "Gap below navbar",
+      "min": 0,
+      "max": 40,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "number",
+      "id": "z_index",
+      "label": "Stacking order (z-index)",
+      "default": 60
+    },
+    {
+      "type": "header",
+      "content": "Colours"
+    },
+    {
+      "type": "color",
+      "id": "card_color",
+      "label": "Panel background",
+      "default": "#FFFFFF"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text",
+      "default": "#0F1426"
+    },
+    {
+      "type": "color",
+      "id": "muted_color",
+      "label": "Image placeholder",
+      "default": "#F4F4F5"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent",
+      "default": "#FF5F1F"
+    }
+  ],
+  "presets": [
+    {
+      "name": "ZEHN search modal"
+    }
+  ]
+}
+{% endschema %}
