@@ -78,7 +78,7 @@
         "slide_2_text_color": "",
         "slide_3_background_color": "{{ settings.color_palette.color1 }}",
         "slide_3_text_color": "{{ settings.color_palette.background }}",
-        "slide_4_background_color": "",
+        "slide_4_background_color": "{{ settings.color_palette.color1 }}",
         "slide_4_text_color": "",
         "slide_5_background_color": "",
         "slide_5_text_color": "",
