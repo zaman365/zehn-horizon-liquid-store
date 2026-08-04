@@ -1,0 +1,76 @@
+{%- comment -%}
+  ============================================================================
+  ZEHN predictive search results
+
+  Install: sections/zehn-predictive-search.liquid
+
+  Never placed on a page. The search modal fetches it:
+    /search/suggest?q=TERM&resources[type]=product&resources[limit]=8
+      &section_id=zehn-predictive-search
+
+  Renders only the results column. Prices and images go through Liquid, so
+  currency formatting and CDN sizing are handled by the platform instead of
+  being re-implemented in JS.
+  ============================================================================
+{%- endcomment -%}
+
+{%- liquid
+  assign products = predictive_search.resources.products
+  assign count = products.size
+-%}
+
+<div
+  data-zehn-predictive-results
+  data-count="{{ count }}"
+  data-term="{{ predictive_search.terms | escape }}"
+>
+  {%- if predictive_search.performed and count > 0 -%}
+    <h3 class="zsm-eyebrow">
+      {{ section.settings.products_label }} ({{ count }})
+    </h3>
+
+    <div class="zsm-grid">
+      {%- for product in products -%}
+        <a class="zsm-product" href="{{ product.url }}">
+          <div class="zsm-product__media">
+            {%- if product.featured_image -%}
+              {{
+                product.featured_image
+                | image_url: width: 400
+                | image_tag:
+                  loading: 'lazy',
+                  alt: product.featured_image.alt | default: product.title,
+                  widths: '160, 240, 400'
+              }}
+            {%- endif -%}
+          </div>
+          <div class="zsm-product__body">
+            <p class="zsm-product__title">{{ product.title }}</p>
+            <p class="zsm-product__price">
+              {%- if product.compare_at_price > product.price -%}
+                <span class="zsm-product__now">{{ product.price | money }}</span>
+                <span class="zsm-product__was">{{ product.compare_at_price | money }}</span>
+              {%- else -%}
+                {{ product.price | money }}
+              {%- endif -%}
+            </p>
+          </div>
+        </a>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "ZEHN predictive search",
+  "settings": [
+    {
+      "type": "text",
+      "id": "products_label",
+      "label": "Products heading",
+      "default": "Produkte"
+    }
+  ]
+}
+{% endschema %}
