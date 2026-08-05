@@ -51,7 +51,7 @@
         "watermark_asset": "ZEHN_Platinum.svg",
         "watermark_image": "shopify://shop_images/ZEHN_Platinum.svg",
         "watermark_height": 400,
-        "watermark_opacity": 27,
+        "watermark_opacity": 10,
         "show_newsletter": true,
         "newsletter_heading": "Newsletter",
         "newsletter_placeholder": "Ihre E-Mail-Adresse",
