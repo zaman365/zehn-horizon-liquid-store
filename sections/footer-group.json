@@ -18,7 +18,7 @@
           "type": "menu_column",
           "settings": {
             "heading": "",
-            "menu": "main-menu",
+            "menu": "rechtliches",
             "links_text": ""
           }
         },
@@ -26,7 +26,7 @@
           "type": "menu_column",
           "settings": {
             "heading": "",
-            "menu": "main-menu",
+            "menu": "ber-zehn",
             "links_text": ""
           }
         },
@@ -34,7 +34,7 @@
           "type": "menu_column",
           "settings": {
             "heading": "",
-            "menu": "main-menu",
+            "menu": "kundenservice",
             "links_text": ""
           }
         }
@@ -54,8 +54,8 @@
         "watermark_opacity": 10,
         "show_newsletter": true,
         "newsletter_heading": "Newsletter",
-        "newsletter_placeholder": "Ihre E-Mail-Adresse",
-        "newsletter_button_label": "Senden",
+        "newsletter_placeholder": "E-mail Address",
+        "newsletter_button_label": "Join",
         "newsletter_success": "Danke für Ihre Anmeldung.",
         "newsletter_error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
         "newsletter_aria_label": "E-Mail-Adresse für Newsletter",
