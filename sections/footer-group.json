@@ -1,1 +1,155 @@
-{"type":"footer","name":"t:names.footer","sections":{"footer_m9NzUG":{"type":"footer","blocks":{"menu_column_ara8KF":{"type":"menu_column","settings":{"heading":"","menu":"main-menu"}},"menu_column_cGz7c7":{"type":"menu_column","settings":{"heading":"","menu":"main-menu"}},"menu_column_fpKm9i":{"type":"menu_column","settings":{"heading":"","menu":"main-menu"}}},"block_order":["menu_column_ara8KF","menu_column_cGz7c7","menu_column_fpKm9i"],"name":"t:names.footer","settings":{"logo":"shopify:\/\/shop_images\/ZEHN_Wordmark_with_logo.png","logo_asset":"","watermark_asset":"ZEHN_Platinum.svg","watermark_image":"shopify:\/\/shop_images\/ZEHN_Platinum.svg","watermark_opacity":17,"show_newsletter":true,"newsletter_heading":"Newsletter","newsletter_placeholder":"Ihre E-Mail-Adresse","newsletter_button_label":"Senden","newsletter_success":"Danke für Ihre Anmeldung.","social_facebook":"","social_instagram":"","social_tiktok":"","social_linkedin":"","social_youtube":"","social_pinterest":"","show_payment_icons":true,"payment_assets":"","legal_text":"<p>ZEHN ist eine Marke der VINCET GmbH, die den Onlineshop unter https:\/\/zehnfashion.de betreibt.<\/p>","legal_text_mobile":"<p>ZEHN ist eine Marke der VINCET GmbH<\/p>","copyright_text":"VINCET GmbH. Alle Rechte vorbehalten.","max_width":1600,"column_gap":40,"padding_top":96,"padding_bottom":64,"color_bg":"#0f1426","color_text":"#ffffff","color_link":"#b9c0cf","color_accent":"#d6dce5","color_button":"#ffffff","color_error":"#ff8a8a","color_bottom_bg":"#ffffff","color_legal":"#9aa0ac"}},"footer_utilities_jLGE8U":{"type":"footer-utilities","blocks":{"footer_copyright_jweRK8":{"type":"footer-copyright","settings":{"show_powered_by":true,"text_color":"","font_size":"0.75rem","case":"none"},"blocks":{}},"footer_policy_list_VCdnpa":{"type":"footer-policy-list","settings":{"text_color":"","font_size":"0.75rem","case":"none"},"blocks":{}},"social_links_Ew63Kq":{"type":"social-links","settings":{"icon_color":"","facebook_url":"https:\/\/www.facebook.com\/","instagram_url":"https:\/\/www.instagram.com\/","youtube_url":"https:\/\/www.youtube.com\/","tiktok_url":"https:\/\/www.tiktok.com\/","twitter_url":"https:\/\/x.com\/","threads_url":"","linkedin_url":"","bluesky_url":"","snapchat_url":"","pinterest_url":"","tumblr_url":"","vimeo_url":"","custom_url":""},"blocks":{}}},"block_order":["footer_copyright_jweRK8","footer_policy_list_VCdnpa","social_links_Ew63Kq"],"disabled":true,"name":"t:names.utilities","settings":{"section_width":"page-width","gap":24,"background_color":"{{ settings.color_palette.background }}","divider_thickness":1,"divider_color":"{{ settings.color_palette.color2 }}","padding-block-start":20,"padding-block-end":48}}},"order":["footer_m9NzUG","footer_utilities_jLGE8U"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "type": "footer",
+  "name": "t:names.footer",
+  "sections": {
+    "footer_m9NzUG": {
+      "type": "footer",
+      "blocks": {
+        "menu_column_ara8KF": {
+          "type": "menu_column",
+          "settings": {
+            "heading": "",
+            "menu": "main-menu",
+            "links_text": ""
+          }
+        },
+        "menu_column_cGz7c7": {
+          "type": "menu_column",
+          "settings": {
+            "heading": "",
+            "menu": "main-menu",
+            "links_text": ""
+          }
+        },
+        "menu_column_fpKm9i": {
+          "type": "menu_column",
+          "settings": {
+            "heading": "",
+            "menu": "main-menu",
+            "links_text": ""
+          }
+        }
+      },
+      "block_order": [
+        "menu_column_ara8KF",
+        "menu_column_cGz7c7",
+        "menu_column_fpKm9i"
+      ],
+      "name": "t:names.footer",
+      "settings": {
+        "logo": "shopify://shop_images/ZEHN_Wordmark_with_logo.png",
+        "logo_asset": "",
+        "watermark_asset": "ZEHN_Platinum.svg",
+        "watermark_image": "shopify://shop_images/ZEHN_Platinum.svg",
+        "watermark_opacity": 27,
+        "show_newsletter": true,
+        "newsletter_heading": "Newsletter",
+        "newsletter_placeholder": "Ihre E-Mail-Adresse",
+        "newsletter_button_label": "Senden",
+        "newsletter_success": "Danke für Ihre Anmeldung.",
+        "newsletter_error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+        "newsletter_aria_label": "E-Mail-Adresse für Newsletter",
+        "newsletter_button_aria": "Newsletter abonnieren",
+        "social_facebook": "",
+        "social_instagram": "",
+        "social_tiktok": "",
+        "social_linkedin": "",
+        "social_youtube": "",
+        "social_pinterest": "",
+        "show_payment_icons": true,
+        "payment_assets": "",
+        "legal_text": "<p>ZEHN ist eine Marke der VINCET GmbH, die den Onlineshop unter https://zehnfashion.de betreibt.</p>",
+        "legal_text_mobile": "<p>ZEHN ist eine Marke der VINCET GmbH</p>",
+        "copyright_text": "VINCET GmbH. Alle Rechte vorbehalten.",
+        "font_family": "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+        "body_font_size": 14,
+        "grid_breakpoint": 640,
+        "max_width": 1600,
+        "column_gap": 40,
+        "padding_top": 96,
+        "padding_bottom": 64,
+        "color_bg": "#0f1426",
+        "color_text": "#ffffff",
+        "color_accent": "#d6dce5",
+        "color_border": "#8e97a4",
+        "color_card": "#ffffff",
+        "color_button": "#ffffff",
+        "color_error": "#ff8a8a",
+        "color_legal": "#9aa0ac"
+      }
+    },
+    "footer_utilities_jLGE8U": {
+      "type": "footer-utilities",
+      "blocks": {
+        "footer_copyright_jweRK8": {
+          "type": "footer-copyright",
+          "settings": {
+            "show_powered_by": true,
+            "text_color": "",
+            "font_size": "0.75rem",
+            "case": "none"
+          },
+          "blocks": {}
+        },
+        "footer_policy_list_VCdnpa": {
+          "type": "footer-policy-list",
+          "settings": {
+            "text_color": "",
+            "font_size": "0.75rem",
+            "case": "none"
+          },
+          "blocks": {}
+        },
+        "social_links_Ew63Kq": {
+          "type": "social-links",
+          "settings": {
+            "icon_color": "",
+            "facebook_url": "https://www.facebook.com/",
+            "instagram_url": "https://www.instagram.com/",
+            "youtube_url": "https://www.youtube.com/",
+            "tiktok_url": "https://www.tiktok.com/",
+            "twitter_url": "https://x.com/",
+            "threads_url": "",
+            "linkedin_url": "",
+            "bluesky_url": "",
+            "snapchat_url": "",
+            "pinterest_url": "",
+            "tumblr_url": "",
+            "vimeo_url": "",
+            "custom_url": ""
+          },
+          "blocks": {}
+        }
+      },
+      "block_order": [
+        "footer_copyright_jweRK8",
+        "footer_policy_list_VCdnpa",
+        "social_links_Ew63Kq"
+      ],
+      "disabled": true,
+      "name": "t:names.utilities",
+      "settings": {
+        "section_width": "page-width",
+        "gap": 24,
+        "background_color": "{{ settings.color_palette.background }}",
+        "divider_thickness": 1,
+        "divider_color": "{{ settings.color_palette.color2 }}",
+        "padding-block-start": 20,
+        "padding-block-end": 48
+      }
+    }
+  },
+  "order": [
+    "footer_m9NzUG",
+    "footer_utilities_jLGE8U"
+  ]
+}
