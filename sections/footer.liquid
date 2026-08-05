@@ -55,8 +55,11 @@
     --zf-accent: {{ section.settings.color_accent }};
     --zf-link: {{ c_text | color_modify: 'alpha', 0.7 }};
     --zf-chevron: {{ c_text | color_modify: 'alpha', 0.6 }};
-    --zf-rule: {{ c_text | color_modify: 'alpha', 0.2 }};
-    --zf-placeholder: {{ c_text | color_modify: 'alpha', 0.4 }};
+    --zf-rule: {{ c_text | color_modify: 'alpha', 0.23 }};
+    --zf-placeholder: {{ c_text | color_modify: 'alpha', 0.5 }};
+    --zf-field-bg: {{ c_text | color_modify: 'alpha', 0.035 }};
+    --zf-btn-bg: {{ section.settings.color_button_bg }};
+    --zf-btn-text: {{ section.settings.color_button }};
     --zf-divider: {{ c_border | color_modify: 'alpha', 0.2 }};
     --zf-bubble: {{ section.settings.color_card | color_modify: 'alpha', 0.1 }};
     --zf-cols: {{ cols }};
@@ -125,10 +128,10 @@
   #shopify-section-{{ section.id }} .zf__brand { margin-bottom: 24px; }
   #shopify-section-{{ section.id }} .zf__logo {
     display: block;
-    height: 32px;
+    height: 36px;
     width: auto;
     max-width: 100%;
-    margin-bottom: 12px;
+    margin-bottom: 20px;
     border-radius: 0;
   }
   #shopify-section-{{ section.id }} .zf__logo-text {
@@ -141,7 +144,7 @@
   }
 
   /* ---------- newsletter ---------- */
-  #shopify-section-{{ section.id }} .zf__newsletter { margin-bottom: 24px; }
+  #shopify-section-{{ section.id }} .zf__newsletter { margin-bottom: 26px; }
   #shopify-section-{{ section.id }} .zf__label {
     display: block;
     margin: 0 0 12px;
@@ -163,41 +166,47 @@
     white-space: nowrap;
     margin: 0;
   }
-  #shopify-section-{{ section.id }} .zf__form { position: relative; margin: 0; }
-  #shopify-section-{{ section.id }} .zf__input {
+  #shopify-section-{{ section.id }} .zf__form { margin: 0; }
+  #shopify-section-{{ section.id }} .zf__field {
+    display: flex;
+    align-items: stretch;
     width: 100%;
-    padding: 10px 96px 10px 16px;
+    background: var(--zf-field-bg);
+    border: 1px solid var(--zf-rule);
+    border-radius: {{ section.settings.field_radius }}px;
+    overflow: hidden;
+  }
+  #shopify-section-{{ section.id }} .zf__field:focus-within { border-color: var(--zf-accent); }
+  #shopify-section-{{ section.id }} .zf__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px 13px;
     font-family: var(--zf-font);
     font-size: 16px;
     line-height: 1.5;
     color: var(--zf-text);
     background: transparent;
     border: 0;
-    border-bottom: 1px solid var(--zf-rule);
+    border-right: 1px solid var(--zf-rule);
     border-radius: 0;
     -webkit-appearance: none;
     appearance: none;
   }
   #shopify-section-{{ section.id }} .zf__input::placeholder { color: var(--zf-placeholder); }
-  #shopify-section-{{ section.id }} .zf__input:focus {
-    outline: none;
-    box-shadow: none;
-    border-bottom: 2px solid var(--zf-accent);
-  }
+  #shopify-section-{{ section.id }} .zf__input:focus { outline: none; box-shadow: none; }
   #shopify-section-{{ section.id }} .zf__submit {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 6px 16px;
+    flex: 0 0 auto;
+    padding: 0 21px;
     font-family: var(--zf-font);
     font-size: 14px;
-    font-weight: 500;
-    color: {{ section.settings.color_button }};
-    background: transparent;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--zf-btn-text);
+    background: var(--zf-btn-bg);
     border: 0;
+    border-radius: 0;
     cursor: pointer;
-    transition: color 300ms ease;
+    transition: background-color 300ms ease, color 300ms ease;
   }
   #shopify-section-{{ section.id }} .zf__submit:hover { color: var(--zf-accent); }
   #shopify-section-{{ section.id }} .zf__submit:focus-visible { outline: 2px solid var(--zf-accent); outline-offset: 2px; }
@@ -378,8 +387,9 @@
       grid-template-columns: repeat(var(--zf-cols), minmax(0, 1fr));
     }
     #shopify-section-{{ section.id }} .zf__brand { margin-bottom: 0; }
-    #shopify-section-{{ section.id }} .zf__logo { height: 40px; margin-bottom: 16px; }
+    #shopify-section-{{ section.id }} .zf__logo { height: 44px; margin-bottom: 28px; }
     #shopify-section-{{ section.id }} .zf__input { font-size: 14px; }
+    #shopify-section-{{ section.id }} .zf__newsletter { margin-bottom: 26px; }
     #shopify-section-{{ section.id }} .zf__socials { gap: 12px; }
     #shopify-section-{{ section.id }} .zf__social { width: 48px; height: 48px; }
     #shopify-section-{{ section.id }} .zf__social svg { width: 20px; height: 20px; }
@@ -420,7 +430,7 @@
     #shopify-section-{{ section.id }} .zf__main {
       padding-top: {{ section.settings.padding_top }}px;
     }
-    #shopify-section-{{ section.id }} .zf__watermark { height: 400px; }
+    #shopify-section-{{ section.id }} .zf__watermark { height: {{ section.settings.watermark_height }}px; }
     #shopify-section-{{ section.id }} .zf__inner {
       width: min(95vw, var(--zf-max));
       max-width: var(--zf-max);
@@ -485,8 +495,9 @@
                 <label class="zf__visually-hidden" for="zf-email-{{ section.id }}">
                   {{ section.settings.newsletter_aria_label | default: 'E-Mail-Adresse für Newsletter' }}
                 </label>
-                <input
-                  class="zf__input"
+                <div class="zf__field">
+                  <input
+                    class="zf__input"
                   id="zf-email-{{ section.id }}"
                   type="email"
                   name="contact[email]"
@@ -505,6 +516,7 @@
                 >
                   {{ section.settings.newsletter_button_label }}
                 </button>
+                </div>
 
                 {%- if form.errors -%}
                   <p class="zf__message zf__message--error" id="zf-msg-{{ section.id }}" tabindex="-1">
@@ -737,6 +749,17 @@
     { "type": "image_picker", "id": "watermark_image", "label": "Background watermark image" },
     {
       "type": "range",
+      "id": "watermark_height",
+      "label": "Watermark height (desktop)",
+      "min": 200,
+      "max": 700,
+      "step": 10,
+      "unit": "px",
+      "default": 400,
+      "info": "Sized by height, width auto. The reference design uses a WIDE ZEHN wordmark (~3.5:1) at 400px, which spans the full content width. The portrait ZEHN_Platinum.svg will look far narrower."
+    },
+    {
+      "type": "range",
       "id": "watermark_opacity",
       "label": "Watermark opacity",
       "min": 0,
@@ -747,9 +770,9 @@
     },
     { "type": "header", "content": "Newsletter" },
     { "type": "checkbox", "id": "show_newsletter", "label": "Show newsletter form", "default": true },
-    { "type": "text", "id": "newsletter_heading", "label": "Heading", "default": "Newsletter" },
+    { "type": "text", "id": "newsletter_heading", "label": "Heading", "info": "Blank in the reference design — leave empty to match it." },
     { "type": "text", "id": "newsletter_placeholder", "label": "Placeholder", "default": "Ihre E-Mail-Adresse" },
-    { "type": "text", "id": "newsletter_button_label", "label": "Button label", "default": "Senden" },
+    { "type": "text", "id": "newsletter_button_label", "label": "Button label", "default": "Join" },
     {
       "type": "text",
       "id": "newsletter_success",
@@ -830,6 +853,16 @@
     },
     {
       "type": "range",
+      "id": "field_radius",
+      "label": "Newsletter field radius",
+      "min": 0,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 4
+    },
+    {
+      "type": "range",
       "id": "max_width",
       "label": "Content width",
       "min": 1000,
@@ -874,13 +907,8 @@
     { "type": "color", "id": "color_accent", "label": "Accent (hover / focus)", "default": "#FF5F1F" },
     { "type": "color", "id": "color_border", "label": "Accordion divider", "default": "#8E97A4" },
     { "type": "color", "id": "color_card", "label": "Bottom band background", "default": "#FFFFFF" },
-    {
-      "type": "color",
-      "id": "color_button",
-      "label": "Newsletter button text",
-      "default": "#F4F4F5",
-      "info": "The Hydrogen component hard-codes #0F1426 here, which is the same as the panel background — set it to that only if the invisible button is intentional."
-    },
+    { "type": "color", "id": "color_button", "label": "Newsletter button text", "default": "#FFFFFF" },
+    { "type": "color", "id": "color_button_bg", "label": "Newsletter button background", "default": "#2A3044" },
     { "type": "color", "id": "color_error", "label": "Error message", "default": "#F87171" },
     { "type": "color", "id": "color_legal", "label": "Legal text", "default": "#0F1426", "info": "Rendered at 40% opacity." }
   ],
@@ -913,14 +941,14 @@
           "type": "menu_column",
           "settings": {
             "heading": "Rechtliches",
-            "links_text": "Impressum | /pages/impressum\nAGB | /pages/terms\nDatenschutz | /pages/privacy\nCookies | /pages/cookies\nFAQ | /pages/faq\nWiderruf | /pages/widerruf"
+            "links_text": "Impressum | /pages/impressum\nAGB | /pages/terms\nDatenschutz | /pages/privacy\nCookies | /pages/cookies\nFAQ | /pages/faq\nProduktsicherheit | /pages/produktsicherheit\nWiderruf | /pages/widerruf"
           }
         },
         {
           "type": "menu_column",
           "settings": {
             "heading": "Über ZEHN",
-            "links_text": "Unsere Geschichte | /pages/about-us\nNachhaltigkeit | /pages/sustainability\nBlog | /blogs/news\nKundenkonto | /account"
+            "links_text": "Unsere Geschichte | /pages/about-us\nNachhaltigkeit | /pages/sustainability\nZEHN PROTOKOLL | /pages/zehn-protokoll"
           }
         },
         {
