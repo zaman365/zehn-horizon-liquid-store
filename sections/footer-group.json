@@ -37,18 +37,49 @@
             "menu": "kundenservice",
             "links_text": ""
           }
+        },
+        "payment_icon_3eBijm": {
+          "type": "payment_icon",
+          "settings": {
+            "icon": "shopify://shop_images/visa.svg",
+            "alt": ""
+          }
+        },
+        "payment_icon_Mtyfc9": {
+          "type": "payment_icon",
+          "settings": {
+            "icon": "shopify://shop_images/mastercard.svg",
+            "alt": ""
+          }
+        },
+        "payment_icon_EhLYjb": {
+          "type": "payment_icon",
+          "settings": {
+            "icon": "shopify://shop_images/paypal.svg",
+            "alt": ""
+          }
+        },
+        "payment_icon_QzNVAr": {
+          "type": "payment_icon",
+          "settings": {
+            "icon": "shopify://shop_images/klarna.svg",
+            "alt": ""
+          }
         }
       },
       "block_order": [
         "menu_column_ara8KF",
         "menu_column_cGz7c7",
-        "menu_column_fpKm9i"
+        "menu_column_fpKm9i",
+        "payment_icon_3eBijm",
+        "payment_icon_Mtyfc9",
+        "payment_icon_EhLYjb",
+        "payment_icon_QzNVAr"
       ],
       "name": "t:names.footer",
       "settings": {
         "logo": "shopify://shop_images/ZEHN_Wordmark_with_logo.png",
         "logo_asset": "",
-        "watermark_asset": "ZEHN_Platinum.svg",
         "watermark_image": "shopify://shop_images/ZEHN_Platinum.svg",
         "watermark_height": 400,
         "watermark_opacity": 10,
@@ -67,6 +98,7 @@
         "social_youtube": "#",
         "social_pinterest": "#",
         "show_payment_icons": true,
+        "payment_height": 24,
         "payment_assets": "",
         "legal_text": "<p>ZEHN ist eine Marke der VINCET GmbH, die den Onlineshop unter https://zehnfashion.de betreibt.</p>",
         "legal_text_mobile": "<p>ZEHN ist eine Marke der VINCET GmbH</p>",
