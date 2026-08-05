@@ -66,7 +66,7 @@
         "social_linkedin": "#",
         "social_youtube": "#",
         "social_pinterest": "#",
-        "show_payment_icons": false,
+        "show_payment_icons": true,
         "payment_assets": "",
         "legal_text": "<p>ZEHN ist eine Marke der VINCET GmbH, die den Onlineshop unter https://zehnfashion.de betreibt.</p>",
         "legal_text_mobile": "<p>ZEHN ist eine Marke der VINCET GmbH</p>",
