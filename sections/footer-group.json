@@ -49,7 +49,7 @@
         "logo": "shopify://shop_images/ZEHN_Wordmark_with_logo.png",
         "logo_asset": "",
         "watermark_asset": "ZEHN_Platinum.svg",
-        "watermark_image": "shopify://shop_images/ZEHN_Wordmark_with_logo.png",
+        "watermark_image": "shopify://shop_images/ZEHN_Platinum.svg",
         "watermark_height": 400,
         "watermark_opacity": 27,
         "show_newsletter": true,
