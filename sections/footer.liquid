@@ -32,12 +32,7 @@
     assign logo_src = section.settings.logo_asset | asset_url
   endif
 
-  assign watermark_src = ''
-  if section.settings.watermark_asset != blank
-    assign watermark_src = section.settings.watermark_asset | asset_url
-  elsif section.settings.watermark_image != blank
     assign watermark_src = section.settings.watermark_image | image_url: width: 1400
-  endif
 
   assign c_text = section.settings.color_text
   assign c_border = section.settings.color_border
