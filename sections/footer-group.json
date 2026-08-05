@@ -49,7 +49,8 @@
         "logo": "shopify://shop_images/ZEHN_Wordmark_with_logo.png",
         "logo_asset": "",
         "watermark_asset": "ZEHN_Platinum.svg",
-        "watermark_image": "shopify://shop_images/ZEHN_Platinum.svg",
+        "watermark_image": "shopify://shop_images/ZEHN_Wordmark_with_logo.png",
+        "watermark_height": 400,
         "watermark_opacity": 27,
         "show_newsletter": true,
         "newsletter_heading": "Newsletter",
@@ -73,6 +74,7 @@
         "font_family": "'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
         "body_font_size": 14,
         "grid_breakpoint": 640,
+        "field_radius": 4,
         "max_width": 1600,
         "column_gap": 40,
         "padding_top": 96,
@@ -83,6 +85,7 @@
         "color_border": "#8e97a4",
         "color_card": "#ffffff",
         "color_button": "#ffffff",
+        "color_button_bg": "#2a3044",
         "color_error": "#ff8a8a",
         "color_legal": "#9aa0ac"
       }
