@@ -17,11 +17,29 @@
   Assets to upload to /assets:
     ZEHN_Wordmark_with_logo.webp
     ZEHN_Platinum.svg
-    visa.svg  mastercard.svg  paypal.svg  klarna.svg
+    visa.svg  mastercard.svg  paypal.svg  klarna.svg   (only if using the /assets fallback;
+    otherwise upload payment icons through the "Payment icon" blocks in the theme editor)
 {%- endcomment -%}
 
 {%- liquid
-  assign cols = section.blocks.size | plus: 1 | at_most: 4
+  comment
+    Blocks are mixed: menu_column + payment_icon. Count each type separately so the
+    grid column count is not thrown off by payment icon blocks.
+  endcomment
+  assign menu_cols = 0
+  assign icon_count = 0
+  for block in section.blocks
+    case block.type
+      when 'menu_column'
+        assign menu_cols = menu_cols | plus: 1
+      when 'payment_icon'
+        if block.settings.icon != blank
+          assign icon_count = icon_count | plus: 1
+        endif
+    endcase
+  endfor
+
+  assign cols = menu_cols | plus: 1 | at_most: 4
   assign year = 'now' | date: '%Y'
   assign bp = section.settings.grid_breakpoint
 
@@ -32,7 +50,7 @@
     assign logo_src = section.settings.logo_asset | asset_url
   endif
 
-    assign watermark_src = section.settings.watermark_image | image_url: width: 1400
+  assign watermark_src = section.settings.watermark_image | image_url: width: 1400
 
   assign c_text = section.settings.color_text
   assign c_border = section.settings.color_border
@@ -309,7 +327,7 @@
     color: var(--zf-link);
     text-decoration: none;
     transition: all 300ms ease;
-    font-weight:500;
+    font-weight: 500;
   }
   #shopify-section-{{ section.id }} .zf__link:hover { color: var(--zf-accent); text-decoration: none; }
   #shopify-section-{{ section.id }} .zf__link--external {
@@ -338,13 +356,13 @@
   }
   #shopify-section-{{ section.id }} .zf__payment {
     display: block;
-    height: 20px;
+    height: {{ section.settings.payment_height | times: 0.833 | round }}px;
     width: auto;
     border-radius: 0;
     object-fit: contain;
   }
   #shopify-section-{{ section.id }} .zf__payments svg {
-    height: 20px;
+    height: {{ section.settings.payment_height | times: 0.833 | round }}px;
     width: auto;
     display: block;
   }
@@ -353,9 +371,9 @@
     text-align: center;
     font-family: var(--zf-font);
     font-size: 16px;
+    font-weight: 500;
     line-height: 1.6;
     color: {{ section.settings.color_legal }};
-    font-weight:500;
   }
   #shopify-section-{{ section.id }} .zf__legal p { margin: 0; }
   #shopify-section-{{ section.id }} .zf__legal p + p,
@@ -408,8 +426,8 @@
     #shopify-section-{{ section.id }} .zf__links li + li { margin-top: 12px; }
     #shopify-section-{{ section.id }} .zf__payments { gap: 48px; padding: 40px 40px 16px; }
     #shopify-section-{{ section.id }} .zf__payment,
-    #shopify-section-{{ section.id }} .zf__payments svg { height: 24px; }
-    #shopify-section-{{ section.id }} .zf__legal { font-size: 16px; font-weight:500; padding-bottom: 32px; }
+    #shopify-section-{{ section.id }} .zf__payments svg { height: {{ section.settings.payment_height }}px; }
+    #shopify-section-{{ section.id }} .zf__legal { font-size: 16px; font-weight: 500; padding-bottom: 32px; }
     #shopify-section-{{ section.id }} .zf__legal--mobile { display: none; }
     #shopify-section-{{ section.id }} .zf__legal--desktop { display: block; }
   }
@@ -564,6 +582,7 @@
 
         {%- comment -%} ---------- menu columns (accordion on mobile) ---------- {%- endcomment -%}
         {%- for block in section.blocks -%}
+          {%- unless block.type == 'menu_column' -%}{%- continue -%}{%- endunless -%}
           {%- liquid
             assign menu = block.settings.menu
             assign heading = block.settings.heading
@@ -637,7 +656,33 @@
   <div class="zf__bottom">
     {%- if section.settings.show_payment_icons -%}
       <div class="zf__payments">
-        {%- if section.settings.payment_assets != blank -%}
+        {%- if icon_count > 0 -%}
+          {%- for block in section.blocks -%}
+            {%- unless block.type == 'payment_icon' -%}{%- continue -%}{%- endunless -%}
+            {%- assign icon = block.settings.icon -%}
+            {%- if icon == blank -%}{%- continue -%}{%- endif -%}
+            {%- liquid
+              assign icon_h = section.settings.payment_height
+              assign icon_h2x = icon_h | times: 2
+              assign icon_alt = block.settings.alt
+              if icon_alt == blank
+                assign icon_alt = icon.alt
+              endif
+              assign icon_w = icon.aspect_ratio | times: icon_h | round
+            -%}
+            <img
+              class="zf__payment"
+              src="{{ icon | image_url: height: icon_h2x }}"
+              srcset="{{ icon | image_url: height: icon_h }} 1x, {{ icon | image_url: height: icon_h2x }} 2x"
+              alt="{{ icon_alt | escape }}"
+              width="{{ icon_w }}"
+              height="{{ icon_h }}"
+              loading="lazy"
+              decoding="async"
+              {{ block.shopify_attributes }}
+            >
+          {%- endfor -%}
+        {%- elsif section.settings.payment_assets != blank -%}
           {%- assign files = section.settings.payment_assets | split: ',' -%}
           {%- for file in files -%}
             {%- assign filename = file | strip -%}
@@ -722,7 +767,7 @@
   "name": "ZEHN footer",
   "tag": "footer",
   "class": "zehn-footer-section",
-  "max_blocks": 3,
+  "max_blocks": 16,
   "enabled_on": {
     "groups": ["footer"]
   },
@@ -735,13 +780,6 @@
       "label": "Logo asset filename",
       "default": "ZEHN_Wordmark_with_logo.webp",
       "info": "Used if no image is picked above. File must be in /assets."
-    },
-    {
-      "type": "text",
-      "id": "watermark_asset",
-      "label": "Background watermark asset filename",
-      "default": "ZEHN_Platinum.svg",
-      "info": "SVG in /assets. Takes priority over the image below."
     },
     { "type": "image_picker", "id": "watermark_image", "label": "Background watermark image" },
     {
@@ -794,11 +832,21 @@
     { "type": "header", "content": "Payment & legal" },
     { "type": "checkbox", "id": "show_payment_icons", "label": "Show payment icons", "default": true },
     {
+      "type": "range",
+      "id": "payment_height",
+      "label": "Payment icon height",
+      "min": 12,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "default": 24,
+      "info": "Desktop height. Mobile scales to ~83% of this. Width stays proportional."
+    },
+    {
       "type": "text",
       "id": "payment_assets",
-      "label": "Payment icon filenames",
-      "default": "visa.svg, mastercard.svg, paypal.svg, klarna.svg",
-      "info": "Comma separated files in /assets. Leave blank to use the store's enabled payment methods."
+      "label": "Payment icon filenames (fallback)",
+      "info": "Only used when no \"Payment icon\" blocks have an image. Comma separated files in /assets, e.g. visa.svg, mastercard.svg. Leave blank to fall back to the store's enabled payment methods."
     },
     {
       "type": "richtext",
@@ -907,9 +955,27 @@
     { "type": "color", "id": "color_button", "label": "Newsletter button text", "default": "#FFFFFF" },
     { "type": "color", "id": "color_button_bg", "label": "Newsletter button background", "default": "#2A3044" },
     { "type": "color", "id": "color_error", "label": "Error message", "default": "#F87171" },
-    { "type": "color", "id": "color_legal", "label": "Legal text", "default": "#0F1426", "info": "Rendered at 40% opacity." }
+    { "type": "color", "id": "color_legal", "label": "Legal text", "default": "#6B7280" }
   ],
   "blocks": [
+    {
+      "type": "payment_icon",
+      "name": "Payment icon",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "icon",
+          "label": "Icon",
+          "info": "PNG or WebP with a transparent background. SVGs cannot be used here — put those in /assets and use the fallback field in Payment & legal instead."
+        },
+        {
+          "type": "text",
+          "id": "alt",
+          "label": "Alt text",
+          "info": "Card or provider name, e.g. Visa. Falls back to the image's own alt text."
+        }
+      ]
+    },
     {
       "type": "menu_column",
       "name": "Menu column",
@@ -954,7 +1020,11 @@
             "heading": "Kundenservice",
             "links_text": "Bestellung verfolgen | /pages/track-order\nKontakt | /pages/contact\nLieferung & Rückgabe | /pages/shipping\nZahlung & Sicherheit | /pages/payment\nStoffpflege | /pages/care\nFitguide | /pages/fitguide"
           }
-        }
+        },
+        { "type": "payment_icon", "settings": { "alt": "Visa" } },
+        { "type": "payment_icon", "settings": { "alt": "Mastercard" } },
+        { "type": "payment_icon", "settings": { "alt": "PayPal" } },
+        { "type": "payment_icon", "settings": { "alt": "Klarna" } }
       ]
     }
   ]
