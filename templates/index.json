@@ -63,6 +63,63 @@
         "edge_fade": 80
       }
     },
+    "category_nav_cb8yPA": {
+      "type": "category-nav",
+      "blocks": {
+        "category_bCCPfN": {
+          "type": "category",
+          "settings": {
+            "collection": "shorts",
+            "label": "",
+            "subcategories": []
+          }
+        },
+        "category_wiykbk": {
+          "type": "category",
+          "settings": {
+            "collection": "hosen-1",
+            "label": "",
+            "subcategories": []
+          }
+        },
+        "category_YENawz": {
+          "type": "category",
+          "settings": {
+            "collection": "jeans",
+            "label": "",
+            "subcategories": []
+          }
+        },
+        "category_FUbNjX": {
+          "type": "category",
+          "settings": {
+            "collection": "jacke",
+            "label": "",
+            "subcategories": []
+          }
+        },
+        "category_kVyKzx": {
+          "type": "category",
+          "settings": {
+            "collection": "tops",
+            "label": "",
+            "subcategories": []
+          }
+        }
+      },
+      "block_order": [
+        "category_bCCPfN",
+        "category_wiykbk",
+        "category_YENawz",
+        "category_FUbNjX",
+        "category_kVyKzx"
+      ],
+      "name": "Category nav",
+      "settings": {
+        "nav_label": "Kategorien",
+        "sub_nav_label": "Unterkategorien"
+      }
+    },
     "homepage_product_sliders_AqiiTc": {
       "type": "homepage-product-sliders",
       "blocks": {
@@ -72,7 +129,8 @@
             "heading": "Sommerseite",
             "collection": "sommerseite",
             "products_to_show": 12,
-            "dedupe_by_title": true
+            "dedupe_by_title": true,
+            "eager_images": 2
           }
         },
         "slider_aqE3Fq": {
@@ -81,7 +139,8 @@
             "heading": "Bein für Bein",
             "collection": "bestseller",
             "products_to_show": 12,
-            "dedupe_by_title": true
+            "dedupe_by_title": true,
+            "eager_images": 2
           }
         }
       },
@@ -182,6 +241,7 @@
   },
   "order": [
     "hero_slider_dac8Wd",
+    "category_nav_cb8yPA",
     "homepage_product_sliders_AqiiTc",
     "zehn_highlights_bento_6VBnqE"
   ]
