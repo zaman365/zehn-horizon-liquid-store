@@ -1,120 +1,893 @@
-{%- doc -%}
-  This snippet is used to render a product card.
-  It is used in the product block, featured product block, and the product card block.
-  The product object is null or when placeholders are rendered.
+{%- comment -%}
+  ============================================================
+  snippets/product-card.liquid
+  Liquid port of app/components/ProductItem.tsx — self-contained
+  (markup + CSS + JS in this one file).
 
-  @param {object} product - The product object
-  @param {object} children - The children of the product card
-  @param {object} [block] - The block object
-  @param {number} [product_card_gap] - The gap between the product card children (overrides block settings)
-  @param {string} [product_view_context] - The context in which the product card is being rendered. Used for standard events.
-{%- enddoc -%}
+  1) Emit the CSS/JS ONCE per page, before any cards:
+       {% render 'product-card', assets_only: true %}
 
-{% assign block_settings = block.settings %}
+  2) Then render cards as many times as needed:
+       {% render 'product-card', product: product, index: forloop.index0,
+          loading: 'lazy', image_sizes: '(min-width: 640px) 280px, 240px' %}
+
+  The assets_only branch prints no markup, so it is safe to call it at
+  the top of any section that uses the card.
+  ============================================================
+{%- endcomment -%}
+
+{%- if assets_only -%}
 
 {% style %}
-  {% if request.visual_preview_mode %}
-    product-card[data-product-transition] {
-      width: 100%;
-      min-width: 250px;
-    }
-  {% endif %}
+/* ---------- tokens -------------------------------------------------- */
+.pc {
+  --pc-card: #ffffff;                    /* bg-card */
+  --pc-white: #ffffff;
+  --pc-foreground: var(--color-foreground, #0f1426);
+  --pc-primary: var(--color-primary, #0f1426);
+  --pc-primary-foreground: var(--color-primary-foreground, #f4f4f5);
+  --pc-accent: var(--color-accent, #ff5f1f);
+  --pc-accent-foreground: var(--color-accent-foreground, #f4f4f5);
+  --pc-muted: var(--color-muted, #8e97a4);
+  --pc-destructive: #dc2626;             /* not in app.css — confirm in tailwind.config */
+  --pc-red-500: #ef4444;
+
+  /* .boty-shadow */
+  --pc-boty-shadow:
+    rgba(14, 63, 126, 0.04) 0 0 0 1px, rgba(42, 51, 69, 0.04) 0 1px 1px -0.5px,
+    rgba(42, 51, 70, 0.04) 0 3px 3px -1.5px, rgba(42, 51, 70, 0.04) 0 6px 6px -3px,
+    rgba(14, 63, 126, 0.04) 0 12px 12px -6px, rgba(14, 63, 126, 0.04) 0 24px 24px -12px;
+
+  display: block;
+  opacity: 1;
+  transform: scale(1);
+  text-decoration: none;
+  color: var(--pc-foreground);
+  transition: all 500ms cubic-bezier(0, 0, 0.2, 1); /* transition-all duration-500 ease-out */
+}
+
+.pc:hover { text-decoration: none; }
+
+/* isVisible === false (used by ProductGrid during category transitions) */
+.pc[data-pc-hidden='true'] {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* ---------- card box ------------------------------------------------ */
+.pc-card {
+  background-color: var(--pc-card);
+  border-radius: 1.5rem; /* rounded-3xl */
+  overflow: hidden;
+  box-shadow: var(--pc-boty-shadow);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* .boty-transition */
+}
+
+@media (min-width: 1024px) {
+  .pc:hover .pc-card { transform: scale(1.02); } /* lg:group-hover:scale-[1.02] */
+}
+
+/* ---------- media --------------------------------------------------- */
+.pc-media {
+  position: relative;
+  aspect-ratio: 7 / 10;
+  background-color: var(--pc-white);
+  overflow: hidden;
+}
+
+.pc-skeleton {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(142, 151, 164, 0.4); /* bg-muted/40 */
+  transition: opacity 300ms;
+  opacity: 1;
+}
+
+.pc-skeleton[data-pc-loaded='true'] { opacity: 0; }
+
+.pc-img-wrap { position: absolute; inset: 0; }
+
+.pc-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0; /* beats the global `img { border-radius: 4px }` */
+  transition: opacity 700ms cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+}
+
+.pc-img--empty { background-color: rgba(142, 151, 164, 0.4); }
+
+/* ---------- colour image carousel arrows ---------------------------- */
+.pc-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  display: none; /* only shown when the active set has > 1 image */
+  align-items: center;
+  justify-content: center;
+  width: 2rem; /* w-8 h-8 */
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  color: var(--pc-foreground);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 200ms;
+}
+
+.pc-nav--prev { left: 0.75rem; }
+.pc-nav--next { right: 0.75rem; }
+
+.pc[data-pc-multi='true'] .pc-nav { display: flex; }
+
+@media (hover: hover) {
+  .pc[data-pc-multi='true']:hover .pc-nav {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .pc-nav:hover { background-color: var(--pc-white); }
+}
+
+.pc-nav-icon { width: 1rem; height: 1rem; }
+
+/* ---------- badge --------------------------------------------------- */
+.pc-badge {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0.025em; /* tracking-wide */
+  background-color: var(--pc-accent);
+  color: var(--pc-accent-foreground);
+}
+
+.pc-badge--sale {
+  background-color: rgba(220, 38, 38, 0.1);
+  color: var(--pc-destructive);
+}
+
+.pc-badge--new {
+  background-color: rgba(15, 20, 38, 0.1);
+  color: var(--pc-primary);
+}
+
+/* ---------- wishlist ------------------------------------------------ */
+.pc-wish {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem; /* w-11 h-11 */
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.8);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+@media (min-width: 1024px) {
+  .pc-wish:hover { background-color: var(--pc-white); }
+  .pc-wish:hover .pc-heart { color: var(--pc-red-500); }
+}
+
+.pc-heart {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: rgba(0, 0, 0, 0.4); /* text-black/40 */
+  fill: none;
+  transition: color 150ms, fill 150ms;
+}
+
+.pc-wish[data-pc-active='true'] .pc-heart {
+  color: var(--pc-red-500);
+  fill: var(--pc-red-500);
+}
+
+/* ---------- quick add ----------------------------------------------- */
+.pc-add {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem; /* w-12 h-12 */
+  height: 3rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background-color: var(--pc-accent);
+  color: var(--pc-primary-foreground);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.5rem);
+  transition: all 300ms;
+}
+
+.pc-add:hover { background-color: color-mix(in srgb, var(--pc-accent) 90%, transparent); }
+
+@media (min-width: 1024px) {
+  .pc:hover .pc-add {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}
+
+/* touchmove > 12px reveals it for 1800ms below lg */
+@media (max-width: 1023px) {
+  .pc[data-pc-touch-add='true'] .pc-add {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+}
+
+.pc-add-icon { width: 1.25rem; height: 1.25rem; }
+
+/* ---------- swatches ------------------------------------------------ */
+.pc-swatches {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem; /* gap-1.5 */
+  min-height: 2rem; /* min-h-[32px] */
+  padding: 0.625rem 0.25rem 0; /* px-1 pt-2.5 */
+}
+
+.pc-swatch {
+  position: relative;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 200ms;
+}
+
+.pc-swatch:hover {
+  border-color: var(--pc-foreground);
+  transform: scale(1.1);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.pc-swatch:active { transform: scale(1.05); }
+
+.pc-swatch-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+}
+
+.pc-swatch-tip {
+  position: absolute;
+  bottom: -1.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  background-color: #000;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms;
+}
+
+.pc-swatch:hover .pc-swatch-tip { opacity: 1; }
+
+.pc-swatch-more {
+  margin-left: 0.125rem;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(142, 151, 164, 0.7); /* text-muted/70 */
+}
+
+/* ---------- title + price ------------------------------------------- */
+.pc-info {
+  padding: 0.5rem 0.25rem 0; /* px-1 pt-2 */
+  text-align: left;
+}
+
+.pc-title {
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif); /* font-sans */
+  font-size: 1rem; /* text-base */
+  font-weight: 700;
+  line-height: 1.25; /* leading-tight */
+  color: var(--pc-foreground);
+  margin: 0 0 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pc-prices {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.pc-price {
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 600;
+  color: var(--pc-foreground);
+}
+
+.pc-price--sale { color: var(--pc-accent); }
+
+.pc-compare {
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+  font-size: 0.75rem;
+  color: rgba(15, 20, 38, 0.55);
+  text-decoration: line-through;
+  text-decoration-color: rgba(15, 20, 38, 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc,
+  .pc-card,
+  .pc-add,
+  .pc-nav,
+  .pc-swatch { transition: none; }
+  .pc:hover .pc-card { transform: none; }
+}
 {% endstyle %}
 
-{% liquid
-  assign has_quick_add = false
-  if settings.quick_add and product.available
-    assign has_quick_add = true
+<script>
+(function () {
+  if (window.ZehnProductCard) return;
+
+  var WISHLIST_KEY = 'zehn:wishlist';
+  var TOUCH_ADD_TIMEOUT = 1800;
+  var TOUCH_MOVE_THRESHOLD = 12;
+  var WIDTHS = [240, 280, 360, 480, 560, 720];
+
+  var isTouchDevice =
+    'ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0;
+
+  /* ---------- wishlist store (localStorage) ------------------------- */
+  function readWishlist() {
+    try {
+      var raw = window.localStorage.getItem(WISHLIST_KEY);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function writeWishlist(items) {
+    try {
+      window.localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
+    } catch (error) {
+      /* storage unavailable — keep the in-page state only */
+    }
+    document.dispatchEvent(
+      new CustomEvent('zehn:wishlist-change', {detail: {items: items}})
+    );
+  }
+
+  function isInWishlist(handle) {
+    return readWishlist().some(function (item) {
+      return item && item.handle === handle;
+    });
+  }
+
+  function toggleWishlistItem(card, button) {
+    var handle = card.dataset.pcHandle;
+    var items = readWishlist();
+    var next = items.filter(function (item) {
+      return !item || item.handle !== handle;
+    });
+
+    if (next.length === items.length) {
+      next.push({
+        id: card.dataset.pcId,
+        variantId: button.dataset.pcVariant,
+        handle: handle,
+        title: button.dataset.pcTitle,
+        imageUrl: button.dataset.pcImage,
+        price: button.dataset.pcPrice,
+        currencyCode: button.dataset.pcCurrency
+      });
+    }
+
+    writeWishlist(next);
+  }
+
+  function paintWishlist(card) {
+    var button = card.querySelector('[data-pc-wish]');
+    if (!button) return;
+
+    var active = isInWishlist(card.dataset.pcHandle);
+    button.dataset.pcActive = active ? 'true' : 'false';
+    button.setAttribute(
+      'aria-label',
+      active ? button.dataset.labelRemove : button.dataset.labelAdd
+    );
+  }
+
+  /* ---------- image helpers ----------------------------------------- */
+  function withWidth(url, width) {
+    if (!url) return url;
+    if (/([?&])width=\d+/.test(url)) {
+      return url.replace(/([?&])width=\d+/, '$1width=' + width);
+    }
+    return url + (url.indexOf('?') === -1 ? '?' : '&') + 'width=' + width;
+  }
+
+  function buildSrcset(url) {
+    return WIDTHS.map(function (width) {
+      return withWidth(url, width) + ' ' + width + 'w';
+    }).join(', ');
+  }
+
+  /* ---------- card --------------------------------------------------- */
+  function initCard(card) {
+    if (card.dataset.pcInit === 'true') return;
+    card.dataset.pcInit = 'true';
+
+    var media = {all: [], colors: {}};
+    try {
+      media = JSON.parse(card.dataset.pcImages || '{}');
+    } catch (error) {
+      media = {all: [], colors: {}};
+    }
+    media.all = media.all || [];
+    media.colors = media.colors || {};
+
+    var img = card.querySelector('[data-pc-img]');
+    var skeleton = card.querySelector('[data-pc-skeleton]');
+    var activeColor = null;
+    var imageIndex = 0;
+
+    function currentSet() {
+      var set = activeColor ? media.colors[activeColor] : null;
+      if (set && set.length) return set;
+      return media.all;
+    }
+
+    function paintImage() {
+      var set = currentSet();
+      card.dataset.pcMulti = set.length > 1 ? 'true' : 'false';
+      if (!img || !set.length) return;
+
+      if (imageIndex >= set.length) imageIndex = 0;
+      var next = set[imageIndex];
+      if (!next || !next.u) return;
+
+      img.setAttribute('src', withWidth(next.u, 560));
+      img.setAttribute('srcset', buildSrcset(next.u));
+      img.setAttribute('alt', next.a || '');
+    }
+
+    function activateColor(name) {
+      activeColor = name;
+      imageIndex = 0;
+      paintImage();
+    }
+
+    /* skeleton */
+    if (skeleton && img) {
+      if (img.complete) {
+        skeleton.dataset.pcLoaded = 'true';
+      } else {
+        img.addEventListener('load', function () {
+          skeleton.dataset.pcLoaded = 'true';
+        });
+        img.addEventListener('error', function () {
+          skeleton.dataset.pcLoaded = 'true';
+        });
+      }
+    }
+
+    /* colour image carousel */
+    card.querySelectorAll('[data-pc-nav]').forEach(function (button) {
+      button.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        var set = currentSet();
+        if (set.length <= 1) return;
+
+        imageIndex =
+          button.dataset.pcNav === 'prev'
+            ? (imageIndex === 0 ? set.length - 1 : imageIndex - 1)
+            : (imageIndex + 1) % set.length;
+
+        paintImage();
+      });
+    });
+
+    /* swatches */
+    card.querySelectorAll('[data-pc-swatch]').forEach(function (swatch) {
+      var name = swatch.dataset.pcSwatch;
+
+      swatch.addEventListener('mouseenter', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!isTouchDevice) activateColor(name);
+      });
+
+      swatch.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!isTouchDevice) return;
+
+        if (activeColor === name) {
+          activeColor = null;
+          imageIndex = 0;
+          paintImage();
+        } else {
+          activateColor(name);
+        }
+      });
+    });
+
+    /* wishlist */
+    var wish = card.querySelector('[data-pc-wish]');
+    if (wish) {
+      var lastTouchToggle = 0;
+
+      wish.addEventListener('pointerdown', function (event) {
+        if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
+        event.preventDefault();
+        event.stopPropagation();
+        lastTouchToggle = Date.now();
+        toggleWishlistItem(card, wish);
+      });
+
+      wish.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (Date.now() - lastTouchToggle < 750) return;
+        toggleWishlistItem(card, wish);
+      });
+
+      paintWishlist(card);
+    }
+
+    /* quick add */
+    var add = card.querySelector('[data-pc-add]');
+    if (add) {
+      add.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        document.dispatchEvent(
+          new CustomEvent('zehn:quick-add', {
+            detail: {handle: card.dataset.pcHandle, productId: card.dataset.pcId}
+          })
+        );
+      });
+    }
+
+    /* touch reveal for quick add */
+    var cardBox = card.querySelector('[data-pc-card]');
+    if (cardBox) {
+      var touchStartY = null;
+      var touchTimer = null;
+
+      var endTouch = function () {
+        touchStartY = null;
+        if (touchTimer !== null) window.clearTimeout(touchTimer);
+        touchTimer = window.setTimeout(function () {
+          card.dataset.pcTouchAdd = 'false';
+          touchTimer = null;
+        }, TOUCH_ADD_TIMEOUT);
+      };
+
+      cardBox.addEventListener('touchstart', function (event) {
+        touchStartY = event.touches[0] ? event.touches[0].clientY : null;
+      }, {passive: true});
+
+      cardBox.addEventListener('touchmove', function (event) {
+        var currentY = event.touches[0] ? event.touches[0].clientY : undefined;
+        if (touchStartY === null || currentY === undefined) return;
+        if (Math.abs(currentY - touchStartY) > TOUCH_MOVE_THRESHOLD) {
+          card.dataset.pcTouchAdd = 'true';
+        }
+      }, {passive: true});
+
+      cardBox.addEventListener('touchend', endTouch, {passive: true});
+      cardBox.addEventListener('touchcancel', endTouch, {passive: true});
+    }
+
+    paintImage();
+  }
+
+  function initAll(scope) {
+    (scope || document).querySelectorAll('[data-pc]').forEach(initCard);
+  }
+
+  document.addEventListener('zehn:wishlist-change', function () {
+    document.querySelectorAll('[data-pc]').forEach(paintWishlist);
+  });
+
+  document.addEventListener('shopify:section:load', function (event) {
+    initAll(event.target);
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      initAll();
+    });
+  } else {
+    initAll();
+  }
+
+  window.ZehnProductCard = {init: initAll};
+})();
+</script>
+
+{%- else -%}
+
+{%- liquid
+  assign index = index | default: 0
+  assign loading = loading | default: 'lazy'
+  assign is_eager = false
+  if loading == 'eager'
+    assign is_eager = true
+  endif
+  assign image_sizes = image_sizes | default: '(min-width: 640px) 280px, 240px'
+
+  # badge: product.tags.find(tag => ['Bestseller','New','Sale'].includes(tag))
+  assign badge = ''
+  if product.tags contains 'Bestseller'
+    assign badge = 'Bestseller'
+  endif
+  if product.tags contains 'New'
+    assign badge = 'New'
+  endif
+  if product.tags contains 'Sale'
+    assign badge = 'Sale'
   endif
 
-  assign has_mobile_quick_add = false
-  if has_quick_add and settings.mobile_quick_add
-    assign has_mobile_quick_add = true
-  endif
-
-  assign product_card_id = 'product-card-link-' | append: block.id | append: '-' | append: product.id
-  assign product_card_gap_value = product_card_gap | default: block_settings.product_card_gap
-
-  # variant_to_link drives the featured image used by the main-product view transition.
-  assign variant_to_link = product.selected_or_first_available_variant
-
-  if settings.transition_to_main_product
-    assign featured_image = variant_to_link.featured_image
-    if featured_image == blank
-      assign featured_image = product.featured_media.preview_image
+  # isColorOptionName(option.name)
+  assign color_option = nil
+  for opt in product.options_with_values
+    assign opt_name = opt.name | downcase | strip
+    if opt_name == 'color' or opt_name == 'colour' or opt_name == 'farbe'
+      assign color_option = opt
+      break
     endif
+  endfor
 
-    if featured_image != blank
-      assign featured_media_url = featured_image | image_url: width: 500
-    endif
+  assign compare_at = product.compare_at_price_min | default: 0
+  assign price_now = product.price_min
+  assign is_on_sale = false
+  if compare_at > 0 and compare_at > price_now
+    assign is_on_sale = true
   endif
+-%}
 
-  assign onboarding = false
-  if product.id == empty or product == blank
-    assign onboarding = true
-  endif
+{%- comment -%} colorSwatches = colorOption.optionValues.slice(0, 4), filtered to those with a swatch {%- endcomment -%}
+{%- assign swatch_values = '' -%}
+{%- if color_option -%}
+  {%- for value in color_option.values limit: 4 -%}
+    {%- if value.swatch.color or value.swatch.image -%}
+      {%- assign swatch_values = swatch_values | append: '|' | append: value.name -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
 
-  if block_settings.background_color != blank
-    render 'contrast-override', background_color: block_settings.background_color, text_color: block_settings.text_color, section_id: block.id
-  endif
-%}
+{%- comment -%} getAllProductImages + getProductImagesForColor, serialised for the client {%- endcomment -%}
+{%- capture images_json -%}
+{"all":[
+{%- for img in product.images -%}
+{%- unless forloop.first -%},{%- endunless -%}
+{"u":{{ img | image_url | json }},"a":{{ img.alt | default: product.title | json }},"w":{{ img.width }},"h":{{ img.height }}}
+{%- endfor -%}
+],"colors":{
+{%- assign color_emitted = 0 -%}
+{%- if color_option -%}
+  {%- for value in color_option.values limit: 4 -%}
+    {%- assign seen_media = '|' -%}
+    {%- capture color_images -%}
+      {%- assign img_emitted = 0 -%}
+      {%- for variant in product.variants -%}
+        {%- if variant.options contains value.name and variant.featured_media.preview_image -%}
+          {%- assign media_key = '|' | append: variant.featured_media.id | append: '|' -%}
+          {%- unless seen_media contains media_key -%}
+            {%- assign seen_media = seen_media | append: variant.featured_media.id | append: '|' -%}
+            {%- if img_emitted > 0 -%},{%- endif -%}
+            {%- assign pimg = variant.featured_media.preview_image -%}
+            {"u":{{ pimg | image_url | json }},"a":{{ variant.featured_media.alt | default: value.name | json }},"w":{{ pimg.width }},"h":{{ pimg.height }}}
+            {%- assign img_emitted = img_emitted | plus: 1 -%}
+          {%- endunless -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endcapture -%}
+    {%- if color_images != blank -%}
+      {%- if color_emitted > 0 -%},{%- endif -%}
+      {{ value.name | json }}:[{{ color_images | strip }}]
+      {%- assign color_emitted = color_emitted | plus: 1 -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
+}}
+{%- endcapture -%}
 
-<product-card
-  class="product-card size-style"
-  style="{% render 'size-style', settings: block_settings %}"
-  data-product-id="{{ product.id }}"
-  id="product-card-{{ block.id }}"
-  {% if settings.transition_to_main_product %}
-    data-product-transition="true"
-    data-featured-media-url="{{ featured_media_url }}"
-    on:click="/handleViewTransition"
-  {% endif %}
-  {{ block.shopify_attributes }}
-  {% if onboarding %}
-    data-placeholder="true"
-  {% endif %}
-  {%- unless onboarding -%}
-    {% # theme-check-disable-next-line UnknownFilter %}
-    view-event-payload="{{ product | standard_event_data: 'view', context: product_view_context | escape }}"
-  {%- endunless -%}
+<a
+  class="pc{% if is_eager %} pc--eager{% endif %}"
+  href="{{ product.url }}"
+  data-pc
+  data-pc-handle="{{ product.handle }}"
+  data-pc-id="{{ product.id }}"
+  data-pc-images="{{ images_json | strip | escape }}"
+  style="transition-delay: {% if is_eager %}0ms{% else %}{{ index | times: 60 }}ms{% endif %};"
 >
-  <a
-    id="{{ product_card_id | md5 }}"
-    {% unless onboarding %}
-      {% # Link to product.url so algorithmic variant relevance and tracking params are maintained. %}
-      href="{{ product.url }}"
-    {% endunless %}
-    class="product-card__link"
-    ref="productCardLink"
-    aria-label="{{ product.title | escape }}"
-  ></a>
-  <div
-    class="
-      product-card__content
-      layout-panel-flex
-      layout-panel-flex--column
-      product-grid__card
-      spacing-style
-      border-style
-      gap-style
-      {% if block_settings.background_color != blank %} color-custom-{{ block.id }}{% endif %}
-    "
-    style="
-      {% render 'border-override', settings: block_settings %}
-      {% render 'layout-panel-style', settings: block_settings %}
-      {% render 'spacing-style', settings: block_settings %}
-      {% render 'gap-style', value: product_card_gap_value, name: 'product-card-gap' %}
-      --quick-add-display: {% if has_quick_add %}flex{% else %}none{% endif %};
-      --quick-add-mobile-display: {% if has_mobile_quick_add %}flex{% else %}none{% endif %};
-      --quick-add-mobile-opacity: {% if has_mobile_quick_add %}1{% else %}0{% endif %};
-      {% if block_settings.padding-inline-start > 0 %}--zoom-out-padding-inline-start: min(var(--padding-xs), {{ block_settings.padding-inline-start | times: 0.7}}px);{% endif %}
-      {% if block_settings.padding-inline-end > 0 %}--zoom-out-padding-inline-end: min(var(--padding-xs), {{ block_settings.padding-inline-end | times: 0.7}}px);{% endif %}
-      {% if block_settings.padding-block-start > 0 %}--zoom-out-padding-block-start: min(var(--padding-xs), {{ block_settings.padding-block-start | times: 0.7}}px);{% endif %}
-      {% if block_settings.padding-block-end > 0 %}--zoom-out-padding-block-end: min(var(--padding-xs), {{ block_settings.padding-block-end | times: 0.7}}px);{% endif %}
-    "
-  >
-    {{ children }}
-  </div>
-</product-card>
+  <div class="pc-card" data-pc-card>
+    {%- comment -%} Image {%- endcomment -%}
+    <div class="pc-media">
+      {%- unless is_eager -%}
+        <div class="pc-skeleton" data-pc-skeleton></div>
+      {%- endunless -%}
 
-{% render 'product-card-styles' %}
+      <div class="pc-img-wrap">
+        {%- if product.featured_image -%}
+          <img
+            class="pc-img"
+            data-pc-img
+            src="{{ product.featured_image | image_url: width: 560 }}"
+            srcset="
+              {{ product.featured_image | image_url: width: 240 }} 240w,
+              {{ product.featured_image | image_url: width: 280 }} 280w,
+              {{ product.featured_image | image_url: width: 360 }} 360w,
+              {{ product.featured_image | image_url: width: 480 }} 480w,
+              {{ product.featured_image | image_url: width: 560 }} 560w,
+              {{ product.featured_image | image_url: width: 720 }} 720w
+            "
+            sizes="{{ image_sizes }}"
+            alt="{{ product.featured_image.alt | default: product.title | escape }}"
+            width="{{ product.featured_image.width }}"
+            height="{{ product.featured_image.height }}"
+            loading="{{ loading }}"
+            {% if is_eager %}fetchpriority="high"{% endif %}
+            decoding="async"
+          >
+        {%- else -%}
+          <div class="pc-img pc-img--empty" aria-hidden="true"></div>
+        {%- endif -%}
+      </div>
+
+      {%- comment -%} Colour image carousel (hover, only when the set has > 1 image) {%- endcomment -%}
+      <button
+        type="button"
+        class="pc-nav pc-nav--prev"
+        data-pc-nav="prev"
+        aria-label="Vorheriges Bild"
+        tabindex="-1"
+      >
+        <svg class="pc-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <button
+        type="button"
+        class="pc-nav pc-nav--next"
+        data-pc-nav="next"
+        aria-label="Nächstes Bild"
+        tabindex="-1"
+      >
+        <svg class="pc-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+
+      {%- comment -%} Badge {%- endcomment -%}
+      {%- if badge != blank -%}
+        <span class="pc-badge pc-badge--{{ badge | downcase }}">{{ badge }}</span>
+      {%- endif -%}
+
+      {%- comment -%} Wishlist Heart {%- endcomment -%}
+      <button
+        type="button"
+        class="pc-wish"
+        data-pc-wish
+        aria-label="Zur Wunschliste hinzufügen"
+        data-label-add="Zur Wunschliste hinzufügen"
+        data-label-remove="Von Wunschliste entfernen"
+        data-pc-title="{{ product.title | escape }}"
+        data-pc-image="{{ product.featured_image | image_url: width: 300 }}"
+        data-pc-price="{{ product.price_min | divided_by: 100.0 }}"
+        data-pc-currency="{{ cart.currency.iso_code }}"
+        data-pc-variant="{{ product.selected_or_first_available_variant.id }}"
+      >
+        <svg class="pc-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+        </svg>
+      </button>
+
+      {%- comment -%} Quick add {%- endcomment -%}
+      <button
+        type="button"
+        class="pc-add"
+        data-pc-add
+        aria-label="In den Warenkorb"
+      >
+        <svg class="pc-add-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  {%- comment -%} Color Swatches {%- endcomment -%}
+  <div class="pc-swatches">
+    {%- if swatch_values != blank -%}
+      {%- for value in color_option.values limit: 4 -%}
+        {%- if value.swatch.color or value.swatch.image -%}
+          <button
+            type="button"
+            class="pc-swatch"
+            data-pc-swatch="{{ value.name | escape }}"
+            title="{{ value.name | escape }}"
+            aria-label="Farbe: {{ value.name | escape }}"
+            style="background-color: {% if value.swatch.color %}{{ value.swatch.color }}{% else %}transparent{% endif %};"
+            tabindex="-1"
+          >
+            {%- if value.swatch.image -%}
+              <img
+                src="{{ value.swatch.image | image_url: width: 44 }}"
+                alt="{{ value.name | escape }}"
+                width="22"
+                height="22"
+                loading="lazy"
+                decoding="async"
+                class="pc-swatch-img"
+              >
+            {%- endif -%}
+            <span class="pc-swatch-tip">{{ value.name }}</span>
+          </button>
+        {%- endif -%}
+      {%- endfor -%}
+
+      {%- if color_option.values.size > 4 -%}
+        <span class="pc-swatch-more">+{{ color_option.values.size | minus: 4 }}</span>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} Title + Price below product card {%- endcomment -%}
+  <div class="pc-info">
+    <h3 class="pc-title">{{ product.title }}</h3>
+
+    <div class="pc-prices">
+      <span class="pc-price{% if is_on_sale %} pc-price--sale{% endif %}">
+        {{ price_now | money }}
+      </span>
+      {%- if is_on_sale -%}
+        <span class="pc-compare">{{ compare_at | money }}</span>
+      {%- endif -%}
+    </div>
+  </div>
+</a>
+
+{%- endif -%}
