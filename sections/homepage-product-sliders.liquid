@@ -4,14 +4,15 @@
   Liquid port of app/components/zehn/HomepageProductSliders.tsx
 
   One block = one entry of the `sections` prop.
-  Requires: snippets/product-card.liquid (self-contained: markup + CSS + JS)
+  Requires: snippets/product-card.liquid (markup + CSS + JS + quick-add sheet)
+            templates/product.quick-add.liquid (quick-add options fragment)
   ============================================================
 {%- endcomment -%}
 
-{%- comment -%} Emits the card CSS + JS once for the page (prints no markup). {%- endcomment -%}
+{%- comment -%} Card CSS + JS + shared quick-add sheet. Prints no markup. {%- endcomment -%}
 {%- render 'product-card', assets_only: true -%}
 
-<div class="hps-root" data-hps-root>
+<div class="hps-root">
   <div class="hps-sliders">
     {%- for block in section.blocks -%}
       {%- liquid
@@ -19,6 +20,10 @@
         assign limit = block.settings.products_to_show
         assign dedupe = block.settings.dedupe_by_title
         assign heading = block.settings.heading
+        assign eager_count = 0
+        if forloop.first
+          assign eager_count = block.settings.eager_images
+        endif
       -%}
 
       {%- comment -%} Pass 1: build the cards so an empty slider can be dropped (React returned null). {%- endcomment -%}
@@ -44,16 +49,20 @@
             {%- assign seen_keys = seen_keys | append: uniq_key | append: '|' -%}
           {%- endif -%}
 
+          {%- liquid
+            assign card_loading = 'lazy'
+            if card_index < eager_count
+              assign card_loading = 'eager'
+            endif
+          -%}
+
           <div class="hps-item">
-            <div class="hps-card-shell" data-hps-card>
-              <div class="hps-card-skeleton" aria-hidden="true"></div>
-              {%- render 'product-card',
-                product: product,
-                index: card_index,
-                loading: 'lazy',
-                image_sizes: '(min-width: 640px) 280px, 240px'
-              -%}
-            </div>
+            {%- render 'product-card',
+              product: product,
+              index: card_index,
+              loading: card_loading,
+              image_sizes: '(min-width: 640px) 280px, 240px'
+            -%}
           </div>
 
           {%- assign card_index = card_index | plus: 1 -%}
@@ -61,12 +70,7 @@
       {%- endcapture -%}
 
       {%- if cards != blank -%}
-        <section
-          class="hps-slider"
-          data-hps-slider
-          {% if forloop.first %}data-hps-ready="true"{% endif %}
-          {{ block.shopify_attributes }}
-        >
+        <section class="hps-slider" data-hps-slider {{ block.shopify_attributes }}>
           <div class="hps-head">
             <h2 class="hps-title">{{ heading }}</h2>
 
@@ -91,7 +95,6 @@
           </div>
 
           <div class="hps-rail intentional-horizontal-scroll scrollbar-hide" data-hps-rail>
-            <div class="hps-rail-skeleton" aria-hidden="true"></div>
             {{ cards }}
           </div>
         </section>
@@ -101,18 +104,12 @@
 </div>
 
 {% stylesheet %}
-/* ---------- tokens -------------------------------------------------- */
 .hps-root {
   --hps-card: #ffffff;                       /* bg-card */
-  --hps-card-30: rgba(255, 255, 255, 0.3);   /* bg-card/30 */
   --hps-border-20: rgba(142, 151, 164, 0.2); /* border-border/20 */
   --hps-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 
   margin-bottom: 1.25rem; /* mb-5 */
-}
-
-@supports (background: color-mix(in srgb, red 30%, transparent)) {
-  .hps-root { --hps-card-30: color-mix(in srgb, var(--hps-card) 30%, transparent); }
 }
 
 .hps-sliders {
@@ -121,17 +118,20 @@
   gap: 2rem; /* space-y-8 */
 }
 
-/* ---------- slider shell ------------------------------------------- */
+/* Offscreen sliders and cards skip layout/paint entirely — this is what the
+   two IntersectionObservers in the React version were emulating. */
 .hps-slider {
   border-top: 1px solid var(--hps-border-20);
-  padding: 0.75rem 0 0; /* pt-3, also neutralises the global `section { padding: 1rem 0 }` */
+  padding: 0.75rem 0 0; /* pt-3; also neutralises the global `section { padding: 1rem 0 }` */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
 }
 
 .hps-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;      /* gap-4 */
+  gap: 1rem;
   margin-bottom: 1rem; /* mb-4 */
 }
 
@@ -145,12 +145,7 @@
   margin: 0;
 }
 
-.hps-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
+.hps-nav { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
 
 .hps-arrow {
   display: flex;
@@ -180,7 +175,6 @@
 
 .hps-icon { width: 1.25rem; height: 1.25rem; }
 
-/* ---------- rail ---------------------------------------------------- */
 .hps-rail {
   display: flex;
   gap: 0.75rem; /* gap-3 */
@@ -190,7 +184,7 @@
   scroll-behavior: smooth;
   padding-bottom: 0.75rem; /* pb-3 */
 
-  /* .intentional-horizontal-scroll + .scrollbar-hide inlined */
+  /* .intentional-horizontal-scroll + .scrollbar-hide, inlined */
   overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y pinch-zoom;
@@ -204,54 +198,20 @@
   width: 240px; /* w-[240px] */
   flex-shrink: 0;
   scroll-snap-align: start;
-}
-
-.hps-card-shell {
-  position: relative;
   min-height: 390px; /* min-h-[390px] */
+  content-visibility: auto;
+  contain-intrinsic-size: 240px 390px;
 }
 
-/* ---------- deferred render (IntersectionObserver parity) ----------- */
-.hps-rail-skeleton,
-.hps-card-skeleton {
-  display: none;
-  background-color: var(--hps-card-30);
-}
-
-[data-hps-root][data-hps-js='true'] [data-hps-slider]:not([data-hps-ready='true']) .hps-item {
-  display: none;
-}
-
-[data-hps-root][data-hps-js='true'] [data-hps-slider]:not([data-hps-ready='true']) .hps-rail-skeleton {
-  display: block;
-  width: 100%;
-  height: 390px;         /* h-[390px] */
-  border-radius: 1.5rem; /* rounded-3xl */
-}
-
-[data-hps-root][data-hps-js='true'] [data-hps-card]:not([data-hps-card-ready='true']) .pc {
-  visibility: hidden;
-}
-
-[data-hps-root][data-hps-js='true'] [data-hps-card]:not([data-hps-card-ready='true']) .hps-card-skeleton {
-  display: block;
-  position: absolute;
-  inset: 0 0 auto;
-  aspect-ratio: 7 / 10;  /* aspect-[7/10] */
-  border-radius: 1.5rem;
-}
-
-/* ---------- sm: 640px ----------------------------------------------- */
 @media (min-width: 640px) {
   .hps-root { margin-bottom: 1.75rem; }                /* sm:mb-7 */
   .hps-sliders { gap: 2.5rem; }                        /* sm:space-y-10 */
   .hps-slider { padding-top: 1rem; }                   /* sm:pt-4 */
   .hps-title { font-size: 1.5rem; line-height: 2rem; } /* sm:text-2xl */
-  .hps-item { width: 280px; }                          /* sm:w-[280px] */
-  .hps-card-shell { min-height: 450px; }               /* sm:min-h-[450px] */
-
-  [data-hps-root][data-hps-js='true'] [data-hps-slider]:not([data-hps-ready='true']) .hps-rail-skeleton {
-    height: 450px; /* sm:h-[450px] */
+  .hps-item {
+    width: 280px;                                      /* sm:w-[280px] */
+    min-height: 450px;                                 /* sm:min-h-[450px] */
+    contain-intrinsic-size: 280px 450px;
   }
 }
 
@@ -262,86 +222,20 @@
 {% endstylesheet %}
 
 {% javascript %}
-(function () {
-  var SCROLL_STEP = 340; // scrollBy({left: ±340})
+/* One delegated listener for every slider on the page. */
+document.addEventListener('click', function (event) {
+  var button = event.target.closest && event.target.closest('[data-hps-scroll]');
+  if (!button) return;
 
-  function initRoot(root) {
-    if (!root || root.dataset.hpsInit === 'true') return;
-    root.dataset.hpsInit = 'true';
+  var slider = button.closest('[data-hps-slider]');
+  var rail = slider && slider.querySelector('[data-hps-rail]');
+  if (!rail) return;
 
-    var supportsIO = typeof IntersectionObserver !== 'undefined';
-    root.dataset.hpsJs = 'true';
-
-    root.querySelectorAll('[data-hps-slider]').forEach(function (slider) {
-      var rail = slider.querySelector('[data-hps-rail]');
-      if (!rail) return;
-
-      slider.querySelectorAll('[data-hps-scroll]').forEach(function (button) {
-        button.addEventListener('click', function () {
-          rail.scrollBy({
-            left: button.dataset.hpsScroll === 'left' ? -SCROLL_STEP : SCROLL_STEP,
-            behavior: 'smooth'
-          });
-        });
-      });
-
-      function revealCards() {
-        var cards = rail.querySelectorAll('[data-hps-card]');
-
-        if (!supportsIO) {
-          cards.forEach(function (card) { card.dataset.hpsCardReady = 'true'; });
-          return;
-        }
-
-        // {root: sliderRef.current, rootMargin: '0px 160px'}
-        var cardObserver = new IntersectionObserver(
-          function (entries) {
-            entries.forEach(function (entry) {
-              if (!entry.isIntersecting) return;
-              entry.target.dataset.hpsCardReady = 'true';
-              cardObserver.unobserve(entry.target);
-            });
-          },
-          {root: rail, rootMargin: '0px 160px'}
-        );
-
-        cards.forEach(function (card) { cardObserver.observe(card); });
-      }
-
-      if (slider.dataset.hpsReady === 'true' || !supportsIO) {
-        slider.dataset.hpsReady = 'true';
-        revealCards();
-        return;
-      }
-
-      // {rootMargin: '200px 0px'}
-      var sectionObserver = new IntersectionObserver(
-        function (entries) {
-          if (!entries[0] || !entries[0].isIntersecting) return;
-          slider.dataset.hpsReady = 'true';
-          sectionObserver.disconnect();
-          revealCards();
-        },
-        {rootMargin: '200px 0px'}
-      );
-      sectionObserver.observe(slider);
-    });
-  }
-
-  function initAll(scope) {
-    (scope || document).querySelectorAll('[data-hps-root]').forEach(initRoot);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { initAll(); });
-  } else {
-    initAll();
-  }
-
-  document.addEventListener('shopify:section:load', function (event) {
-    initAll(event.target);
+  rail.scrollBy({
+    left: button.dataset.hpsScroll === 'left' ? -340 : 340, // scrollBy({left: ±340})
+    behavior: 'smooth'
   });
-})();
+});
 {% endjavascript %}
 
 {% schema %}
@@ -382,6 +276,16 @@
           "label": "Hide duplicate titles",
           "info": "Matches dedupeByTitle in the Hydrogen component.",
           "default": true
+        },
+        {
+          "type": "range",
+          "id": "eager_images",
+          "label": "Images loaded immediately",
+          "info": "Only applies to the first slider. Use 2 if it sits near the top of the page, 0 if it is below the fold.",
+          "min": 0,
+          "max": 4,
+          "step": 1,
+          "default": 2
         }
       ]
     }
