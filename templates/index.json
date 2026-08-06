@@ -63,6 +63,45 @@
         "edge_fade": 80
       }
     },
+    "homepage_product_sliders_AqiiTc": {
+      "type": "homepage-product-sliders",
+      "blocks": {
+        "slider_8FfzkE": {
+          "type": "slider",
+          "settings": {
+            "heading": "Neu eingetroffen",
+            "collection": "shorts",
+            "products_to_show": 12,
+            "dedupe_by_title": true
+          }
+        },
+        "slider_aqE3Fq": {
+          "type": "slider",
+          "settings": {
+            "heading": "Neu eingetroffen",
+            "collection": "hosen-1",
+            "products_to_show": 12,
+            "dedupe_by_title": true
+          }
+        },
+        "slider_gETVDU": {
+          "type": "slider",
+          "settings": {
+            "heading": "Neu eingetroffen",
+            "collection": "jacke",
+            "products_to_show": 12,
+            "dedupe_by_title": true
+          }
+        }
+      },
+      "block_order": [
+        "slider_8FfzkE",
+        "slider_aqE3Fq",
+        "slider_gETVDU"
+      ],
+      "name": "Product sliders",
+      "settings": {}
+    },
     "zehn_highlights_bento_6VBnqE": {
       "type": "zehn-highlights-bento",
       "blocks": {
@@ -153,6 +192,7 @@
   },
   "order": [
     "hero_slider_dac8Wd",
+    "homepage_product_sliders_AqiiTc",
     "zehn_highlights_bento_6VBnqE"
   ]
 }
