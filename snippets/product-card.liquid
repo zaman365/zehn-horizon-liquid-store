@@ -1,36 +1,38 @@
 {%- comment -%}
   ============================================================
   snippets/product-card.liquid
-  Liquid port of app/components/ProductItem.tsx — self-contained
-  (markup + CSS + JS in this one file).
+  Liquid port of ProductItem.tsx + QuickAddModal.tsx
+  (markup + CSS + JS + modal shell, all in this one file)
 
-  1) Emit the CSS/JS ONCE per page, before any cards:
+  1) Once per page, before any cards:
        {% render 'product-card', assets_only: true %}
+     -> emits the CSS, the shared quick-add modal shell and the JS.
 
-  2) Then render cards as many times as needed:
+  2) Then per product:
        {% render 'product-card', product: product, index: forloop.index0,
           loading: 'lazy', image_sizes: '(min-width: 640px) 280px, 240px' %}
 
-  The assets_only branch prints no markup, so it is safe to call it at
-  the top of any section that uses the card.
+  Quick add needs templates/product.quick-add.liquid, which is fetched
+  as /products/{handle}?view=quick-add when the sheet opens.
   ============================================================
 {%- endcomment -%}
 
 {%- if assets_only -%}
 
 {% style %}
-/* ---------- tokens -------------------------------------------------- */
+/* ==================== product card ================================== */
 .pc {
   --pc-card: #ffffff;                    /* bg-card */
   --pc-white: #ffffff;
+  --pc-background: var(--color-background, #f4f4f5);
   --pc-foreground: var(--color-foreground, #0f1426);
   --pc-primary: var(--color-primary, #0f1426);
   --pc-primary-foreground: var(--color-primary-foreground, #f4f4f5);
   --pc-accent: var(--color-accent, #ff5f1f);
   --pc-accent-foreground: var(--color-accent-foreground, #f4f4f5);
   --pc-muted: var(--color-muted, #8e97a4);
+  --pc-border: var(--color-border, #8e97a4);
   --pc-destructive: #dc2626;             /* not in app.css — confirm in tailwind.config */
-  --pc-red-500: #ef4444;
 
   /* .boty-shadow */
   --pc-boty-shadow:
@@ -39,61 +41,48 @@
     rgba(14, 63, 126, 0.04) 0 12px 12px -6px, rgba(14, 63, 126, 0.04) 0 24px 24px -12px;
 
   display: block;
-  opacity: 1;
-  transform: scale(1);
   text-decoration: none;
   color: var(--pc-foreground);
-  transition: all 500ms cubic-bezier(0, 0, 0.2, 1); /* transition-all duration-500 ease-out */
 }
 
 .pc:hover { text-decoration: none; }
 
-/* isVisible === false (used by ProductGrid during category transitions) */
-.pc[data-pc-hidden='true'] {
-  opacity: 0;
-  transform: scale(0.95);
-}
-
-/* ---------- card box ------------------------------------------------ */
 .pc-card {
   background-color: var(--pc-card);
   border-radius: 1.5rem; /* rounded-3xl */
   overflow: hidden;
   box-shadow: var(--pc-boty-shadow);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* .boty-transition */
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* .boty-transition, narrowed to transform */
 }
 
 @media (min-width: 1024px) {
   .pc:hover .pc-card { transform: scale(1.02); } /* lg:group-hover:scale-[1.02] */
 }
 
-/* ---------- media --------------------------------------------------- */
 .pc-media {
   position: relative;
   aspect-ratio: 7 / 10;
   background-color: var(--pc-white);
   overflow: hidden;
+  contain: layout paint;
 }
 
+/* Skeleton sits behind the image, so the opaque image covers it on load
+   without needing a per-card load listener. */
 .pc-skeleton {
   position: absolute;
   inset: 0;
+  z-index: 0;
   background-color: rgba(142, 151, 164, 0.4); /* bg-muted/40 */
-  transition: opacity 300ms;
-  opacity: 1;
 }
 
-.pc-skeleton[data-pc-loaded='true'] { opacity: 0; }
-
-.pc-img-wrap { position: absolute; inset: 0; }
+.pc-img-wrap { position: absolute; inset: 0; z-index: 1; }
 
 .pc-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 0; /* beats the global `img { border-radius: 4px }` */
-  transition: opacity 700ms cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 1;
 }
 
 .pc-img--empty { background-color: rgba(142, 151, 164, 0.4); }
@@ -104,7 +93,7 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 20;
-  display: none; /* only shown when the active set has > 1 image */
+  display: none; /* only when the active set has > 1 image */
   align-items: center;
   justify-content: center;
   width: 2rem; /* w-8 h-8 */
@@ -119,7 +108,7 @@
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: all 200ms;
+  transition: opacity 200ms, background-color 200ms;
 }
 
 .pc-nav--prev { left: 0.75rem; }
@@ -128,10 +117,7 @@
 .pc[data-pc-multi='true'] .pc-nav { display: flex; }
 
 @media (hover: hover) {
-  .pc[data-pc-multi='true']:hover .pc-nav {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  .pc[data-pc-multi='true']:hover .pc-nav { opacity: 1; pointer-events: auto; }
   .pc-nav:hover { background-color: var(--pc-white); }
 }
 
@@ -142,6 +128,7 @@
   position: absolute;
   top: 1rem;
   left: 1rem;
+  z-index: 10;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.75rem;
@@ -151,54 +138,8 @@
   color: var(--pc-accent-foreground);
 }
 
-.pc-badge--sale {
-  background-color: rgba(220, 38, 38, 0.1);
-  color: var(--pc-destructive);
-}
-
-.pc-badge--new {
-  background-color: rgba(15, 20, 38, 0.1);
-  color: var(--pc-primary);
-}
-
-/* ---------- wishlist ------------------------------------------------ */
-.pc-wish {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem; /* w-11 h-11 */
-  height: 2.75rem;
-  padding: 0;
-  border: 0;
-  border-radius: 9999px;
-  background-color: rgba(255, 255, 255, 0.8);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
-  cursor: pointer;
-  transition: background-color 150ms;
-}
-
-@media (min-width: 1024px) {
-  .pc-wish:hover { background-color: var(--pc-white); }
-  .pc-wish:hover .pc-heart { color: var(--pc-red-500); }
-}
-
-.pc-heart {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: rgba(0, 0, 0, 0.4); /* text-black/40 */
-  fill: none;
-  transition: color 150ms, fill 150ms;
-}
-
-.pc-wish[data-pc-active='true'] .pc-heart {
-  color: var(--pc-red-500);
-  fill: var(--pc-red-500);
-}
+.pc-badge--sale { background-color: rgba(220, 38, 38, 0.1); color: var(--pc-destructive); }
+.pc-badge--new  { background-color: rgba(15, 20, 38, 0.1); color: var(--pc-primary); }
 
 /* ---------- quick add ----------------------------------------------- */
 .pc-add {
@@ -217,23 +158,16 @@
   background-color: var(--pc-accent);
   color: var(--pc-primary-foreground);
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  -webkit-backdrop-filter: blur(4px);
-  backdrop-filter: blur(4px);
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
   transform: translateY(0.5rem);
-  transition: all 300ms;
+  transition: opacity 300ms, transform 300ms, background-color 300ms;
 }
 
-.pc-add:hover { background-color: color-mix(in srgb, var(--pc-accent) 90%, transparent); }
-
 @media (min-width: 1024px) {
-  .pc:hover .pc-add {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-  }
+  .pc:hover .pc-add { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .pc-add:hover { background-color: color-mix(in srgb, var(--pc-accent) 90%, transparent); }
 }
 
 /* touchmove > 12px reveals it for 1800ms below lg */
@@ -266,7 +200,7 @@
   border-radius: 9999px;
   overflow: hidden;
   cursor: pointer;
-  transition: all 200ms;
+  transition: transform 200ms, border-color 200ms, box-shadow 200ms;
 }
 
 .pc-swatch:hover {
@@ -277,12 +211,7 @@
 
 .pc-swatch:active { transform: scale(1.05); }
 
-.pc-swatch-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 0;
-}
+.pc-swatch-img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
 
 .pc-swatch-tip {
   position: absolute;
@@ -312,16 +241,13 @@
 }
 
 /* ---------- title + price ------------------------------------------- */
-.pc-info {
-  padding: 0.5rem 0.25rem 0; /* px-1 pt-2 */
-  text-align: left;
-}
+.pc-info { padding: 0.5rem 0.25rem 0; text-align: left; } /* px-1 pt-2 */
 
 .pc-title {
   font-family: var(--font-body, 'Inter', system-ui, sans-serif); /* font-sans */
-  font-size: 1rem; /* text-base */
+  font-size: 1rem;    /* text-base */
   font-weight: 700;
-  line-height: 1.25; /* leading-tight */
+  line-height: 1.25;  /* leading-tight */
   color: var(--pc-foreground);
   margin: 0 0 0.25rem;
   display: -webkit-box;
@@ -330,11 +256,7 @@
   overflow: hidden;
 }
 
-.pc-prices {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-}
+.pc-prices { display: flex; align-items: center; gap: 0.375rem; }
 
 .pc-price {
   font-family: var(--font-body, 'Inter', system-ui, sans-serif);
@@ -353,300 +275,789 @@
   text-decoration-color: rgba(15, 20, 38, 0.4);
 }
 
+/* ==================== quick add sheet =============================== */
+.qa {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms;
+}
+
+.qa[data-qa-open='true'] { opacity: 1; pointer-events: auto; }
+.qa[hidden] { display: none; }
+
+.qa-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+
+.qa-card {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  background-color: var(--color-background, #f4f4f5);
+  border-radius: 1.5rem 1.5rem 0 0; /* rounded-t-3xl */
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25); /* shadow-2xl */
+  overflow: hidden;
+  transform: translateY(100%);
+  opacity: 0;
+  transition: transform 300ms cubic-bezier(0, 0, 0.2, 1), opacity 300ms;
+}
+
+.qa[data-qa-open='true'] .qa-card { transform: translateY(0); opacity: 1; }
+
+@media (min-width: 640px) {
+  .qa-card { max-width: 28rem; } /* sm:max-w-md */
+}
+
+.qa-handle { display: flex; justify-content: center; padding-top: 0.75rem; }
+.qa-handle > span {
+  display: block;
+  width: 2.5rem;
+  height: 0.25rem;
+  border-radius: 9999px;
+  background-color: var(--color-border, #8e97a4);
+}
+
+@media (min-width: 640px) { .qa-handle { display: none; } }
+
+.qa-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  color: var(--color-foreground, #0f1426);
+  cursor: pointer;
+  transition: background-color 200ms, color 200ms;
+}
+
+.qa-close:hover {
+  background-color: var(--color-foreground, #0f1426);
+  color: var(--color-primary-foreground, #f4f4f5);
+}
+
+.qa-close svg { width: 1rem; height: 1rem; }
+
+.qa-content {
+  padding: 1rem 1.5rem 1.5rem;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 640px) { .qa-content { padding-top: 1.5rem; } }
+
+.qa-header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1.5rem; }
+
+.qa-thumb {
+  flex-shrink: 0;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 0.75rem;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.qa-thumb img { width: 100%; height: 100%; object-fit: contain; border-radius: 0; }
+
+.qa-meta { flex: 1 1 0%; min-width: 0; padding-top: 0.25rem; }
+
+.qa-title {
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--color-foreground, #0f1426);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.qa-prices {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+  font-size: 0.875rem;
+}
+
+.qa-price { font-weight: 500; color: var(--color-foreground, #0f1426); }
+.qa-price[data-qa-sale='true'] { color: var(--color-accent, #ff5f1f); }
+
+.qa-compare {
+  font-size: 0.75rem;
+  color: rgba(15, 20, 38, 0.55);
+  text-decoration: line-through;
+  text-decoration-color: rgba(15, 20, 38, 0.4);
+}
+
+.qa-compare:empty { display: none; }
+
+.qa-loading,
+.qa-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 8rem;
+  font-size: 0.875rem;
+  color: var(--color-muted, #8e97a4);
+  text-align: center;
+}
+
+.qa-spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  animation: qa-spin 1s linear infinite;
+}
+
+@keyframes qa-spin { to { transform: rotate(360deg); } }
+
+/* option groups (from templates/product.quick-add.liquid) */
+.qa-field {
+  display: block;
+  border: 0;
+  margin: 0 0 1.25rem;
+  padding: 0;
+}
+
+.qa-legend {
+  display: block;
+  margin-bottom: 0.625rem;
+  padding: 0;
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+  font-size: 0.75rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted, #8e97a4);
+}
+
+.qa-legend-value {
+  margin-left: 0.375rem;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--color-foreground, #0f1426);
+}
+
+.qa-values { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.qa-values--color { gap: 0.625rem; }
+
+.qa-swatch {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 2px solid rgba(142, 151, 164, 0.5);
+  border-radius: 9999px;
+  background: none;
+  cursor: pointer;
+  transition: transform 200ms, border-color 200ms;
+}
+
+.qa-swatch:hover { border-color: rgba(15, 20, 38, 0.4); }
+
+.qa-swatch[aria-pressed='true'] {
+  border-color: var(--color-foreground, #0f1426);
+  transform: scale(1.1);
+}
+
+.qa-swatch[data-qa-unavailable='true'] {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.qa-swatch-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+.qa-swatch-visual--letter {
+  background-color: var(--color-muted, #8e97a4);
+  color: var(--color-primary-foreground, #f4f4f5);
+  font-size: 0.75rem;
+}
+
+.qa-swatch-check {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-foreground, #f4f4f5);
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.4));
+}
+
+.qa-swatch-check svg { width: 1rem; height: 1rem; }
+.qa-swatch[aria-pressed='true'] .qa-swatch-check { display: flex; }
+
+.qa-swatch-slash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: none;
+  width: 2px;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: rgba(15, 20, 38, 0.4);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.qa-swatch[data-qa-unavailable='true'] .qa-swatch-slash { display: block; }
+
+.qa-pill {
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(142, 151, 164, 0.5);
+  border-radius: 9999px;
+  background-color: #ffffff;
+  color: var(--color-foreground, #0f1426);
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 200ms, background-color 200ms, color 200ms;
+}
+
+.qa-pill:hover { border-color: rgba(15, 20, 38, 0.4); }
+
+.qa-pill[aria-pressed='true'] {
+  background-color: var(--color-foreground, #0f1426);
+  color: var(--color-primary-foreground, #f4f4f5);
+  border-color: var(--color-foreground, #0f1426);
+}
+
+.qa-pill[data-qa-unavailable='true'] {
+  opacity: 0.3;
+  text-decoration: line-through;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.qa-submit-wrap { margin-top: 1.5rem; }
+
+.qa-submit {
+  width: 100%;
+  padding: 1rem 0;
+  border: 0;
+  border-radius: 9999px;
+  background-color: var(--color-accent, #ff5f1f);
+  color: var(--color-accent-foreground, #f4f4f5);
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background-color 200ms, transform 200ms;
+}
+
+.qa-submit:active { transform: scale(0.98); }
+.qa-submit:hover { background-color: color-mix(in srgb, var(--color-accent, #ff5f1f) 90%, transparent); }
+
+.qa-submit[data-qa-state='disabled'],
+.qa-submit[data-qa-state='soldout'] {
+  background-color: rgba(15, 20, 38, 0.2);
+  color: rgba(15, 20, 38, 0.4);
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+}
+
+.qa-submit[data-qa-state='added'] {
+  background-color: #16a34a; /* bg-green-600 */
+  color: #ffffff;
+  pointer-events: none;
+}
+
+.qa-submit[data-qa-state='loading'] { pointer-events: none; }
+
+.qa-submit-label { display: inline-flex; align-items: center; gap: 0.5rem; }
+.qa-submit-label svg { width: 1rem; height: 1rem; }
+
 @media (prefers-reduced-motion: reduce) {
-  .pc,
-  .pc-card,
-  .pc-add,
-  .pc-nav,
-  .pc-swatch { transition: none; }
+  .pc-card, .pc-add, .pc-nav, .pc-swatch, .qa, .qa-card, .qa-submit { transition: none; }
   .pc:hover .pc-card { transform: none; }
+  .qa-spinner { animation: none; }
 }
 {% endstyle %}
+
+{%- comment -%} Shared quick-add sheet — one per page, not one per card. {%- endcomment -%}
+<div class="qa" data-qa hidden>
+  <button type="button" class="qa-backdrop" data-qa-close aria-label="Schnellansicht schließen"></button>
+
+  <div class="qa-card" role="dialog" aria-modal="true" aria-label="Schnellansicht" data-qa-card>
+    <div class="qa-handle" aria-hidden="true"><span></span></div>
+
+    <button type="button" class="qa-close" data-qa-close aria-label="Schließen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+
+    <div class="qa-content">
+      <div class="qa-header">
+        <div class="qa-thumb"><img data-qa-image src="" alt="" width="80" height="80" decoding="async"></div>
+        <div class="qa-meta">
+          <h2 class="qa-title" data-qa-title></h2>
+          <div class="qa-prices">
+            <span class="qa-price" data-qa-price></span>
+            <span class="qa-compare" data-qa-compare></span>
+          </div>
+        </div>
+      </div>
+
+      <div data-qa-body></div>
+    </div>
+  </div>
+</div>
 
 <script>
 (function () {
   if (window.ZehnProductCard) return;
 
-  var WISHLIST_KEY = 'zehn:wishlist';
   var TOUCH_ADD_TIMEOUT = 1800;
   var TOUCH_MOVE_THRESHOLD = 12;
-  var WIDTHS = [240, 280, 360, 480, 560, 720];
+  var CLOSE_DELAY = 800;
+  var WIDTHS = [240, 360, 480, 720];
 
-  var isTouchDevice =
-    'ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0;
-
-  /* ---------- wishlist store (localStorage) ------------------------- */
-  function readWishlist() {
-    try {
-      var raw = window.localStorage.getItem(WISHLIST_KEY);
-      var parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
-      return [];
-    }
-  }
-
-  function writeWishlist(items) {
-    try {
-      window.localStorage.setItem(WISHLIST_KEY, JSON.stringify(items));
-    } catch (error) {
-      /* storage unavailable — keep the in-page state only */
-    }
-    document.dispatchEvent(
-      new CustomEvent('zehn:wishlist-change', {detail: {items: items}})
-    );
-  }
-
-  function isInWishlist(handle) {
-    return readWishlist().some(function (item) {
-      return item && item.handle === handle;
-    });
-  }
-
-  function toggleWishlistItem(card, button) {
-    var handle = card.dataset.pcHandle;
-    var items = readWishlist();
-    var next = items.filter(function (item) {
-      return !item || item.handle !== handle;
-    });
-
-    if (next.length === items.length) {
-      next.push({
-        id: card.dataset.pcId,
-        variantId: button.dataset.pcVariant,
-        handle: handle,
-        title: button.dataset.pcTitle,
-        imageUrl: button.dataset.pcImage,
-        price: button.dataset.pcPrice,
-        currencyCode: button.dataset.pcCurrency
-      });
-    }
-
-    writeWishlist(next);
-  }
-
-  function paintWishlist(card) {
-    var button = card.querySelector('[data-pc-wish]');
-    if (!button) return;
-
-    var active = isInWishlist(card.dataset.pcHandle);
-    button.dataset.pcActive = active ? 'true' : 'false';
-    button.setAttribute(
-      'aria-label',
-      active ? button.dataset.labelRemove : button.dataset.labelAdd
-    );
-  }
+  var isTouch = 'ontouchstart' in window || (navigator.maxTouchPoints || 0) > 0;
+  var state = new WeakMap();
+  var fragmentCache = {};
+  var preloaded = {};
 
   /* ---------- image helpers ----------------------------------------- */
   function withWidth(url, width) {
     if (!url) return url;
-    if (/([?&])width=\d+/.test(url)) {
-      return url.replace(/([?&])width=\d+/, '$1width=' + width);
-    }
+    if (/([?&])width=\d+/.test(url)) return url.replace(/([?&])width=\d+/, '$1width=' + width);
     return url + (url.indexOf('?') === -1 ? '?' : '&') + 'width=' + width;
   }
 
-  function buildSrcset(url) {
-    return WIDTHS.map(function (width) {
-      return withWidth(url, width) + ' ' + width + 'w';
-    }).join(', ');
+  function srcsetFor(url) {
+    return WIDTHS.map(function (w) { return withWidth(url, w) + ' ' + w + 'w'; }).join(', ');
   }
 
-  /* ---------- card --------------------------------------------------- */
-  function initCard(card) {
-    if (card.dataset.pcInit === 'true') return;
-    card.dataset.pcInit = 'true';
+  /* Warm the browser cache using the same srcset/sizes the <img> uses, so
+     the candidate that gets picked on swap is already downloaded. */
+  function preload(url, sizes) {
+    if (!url || preloaded[url]) return;
+    preloaded[url] = true;
+    var pre = new Image();
+    if (sizes) pre.sizes = sizes;
+    pre.srcset = srcsetFor(url);
+    pre.src = withWidth(url, 560);
+  }
+
+  function cardState(card) {
+    var existing = state.get(card);
+    if (existing) return existing;
 
     var media = {all: [], colors: {}};
     try {
-      media = JSON.parse(card.dataset.pcImages || '{}');
-    } catch (error) {
-      media = {all: [], colors: {}};
+      media = JSON.parse(card.dataset.pcImages || '{"all":[],"colors":{}}');
+    } catch (error) { /* keep the empty default */ }
+
+    var next = {
+      media: {all: media.all || [], colors: media.colors || {}},
+      img: card.querySelector('[data-pc-img]'),
+      color: null,
+      index: 0
+    };
+    state.set(card, next);
+    return next;
+  }
+
+  function activeSet(s) {
+    var set = s.color ? s.media.colors[s.color] : null;
+    return set && set.length ? set : s.media.all;
+  }
+
+  function warmSet(card) {
+    var s = cardState(card);
+    var key = s.color || '*';
+    if (s.warmed === key) return;
+    s.warmed = key;
+
+    var set = activeSet(s);
+    var sizes = s.img ? s.img.getAttribute('sizes') : null;
+    for (var i = 0; i < set.length; i++) preload(set[i].u, sizes);
+  }
+
+  function paint(card) {
+    var s = cardState(card);
+    var set = activeSet(s);
+    card.dataset.pcMulti = set.length > 1 ? 'true' : 'false';
+    if (!s.img || !set.length) return;
+
+    if (s.index >= set.length) s.index = 0;
+    var next = set[s.index];
+    if (!next || !next.u) return;
+
+    s.img.srcset = srcsetFor(next.u);
+    s.img.src = withWidth(next.u, 560);
+    s.img.alt = next.a || '';
+  }
+
+  /* ---------- delegated card interaction ---------------------------- */
+  document.addEventListener('pointerover', function (event) {
+    var card = event.target.closest && event.target.closest('[data-pc]');
+    if (card) warmSet(card); /* preload before the first click, not after */
+  }, {passive: true});
+
+  document.addEventListener('click', function (event) {
+    var target = event.target;
+    if (!target.closest) return;
+
+    var nav = target.closest('[data-pc-nav]');
+    if (nav) {
+      event.preventDefault();
+      event.stopPropagation();
+      var navCard = nav.closest('[data-pc]');
+      var navState = cardState(navCard);
+      var navSet = activeSet(navState);
+      if (navSet.length <= 1) return;
+
+      navState.index = nav.dataset.pcNav === 'prev'
+        ? (navState.index === 0 ? navSet.length - 1 : navState.index - 1)
+        : (navState.index + 1) % navSet.length;
+
+      paint(navCard);
+      return;
     }
-    media.all = media.all || [];
-    media.colors = media.colors || {};
 
-    var img = card.querySelector('[data-pc-img]');
-    var skeleton = card.querySelector('[data-pc-skeleton]');
-    var activeColor = null;
-    var imageIndex = 0;
+    var swatch = target.closest('[data-pc-swatch]');
+    if (swatch) {
+      event.preventDefault();
+      event.stopPropagation();
+      if (!isTouch) return; /* pointer devices switch on hover */
 
-    function currentSet() {
-      var set = activeColor ? media.colors[activeColor] : null;
-      if (set && set.length) return set;
-      return media.all;
-    }
-
-    function paintImage() {
-      var set = currentSet();
-      card.dataset.pcMulti = set.length > 1 ? 'true' : 'false';
-      if (!img || !set.length) return;
-
-      if (imageIndex >= set.length) imageIndex = 0;
-      var next = set[imageIndex];
-      if (!next || !next.u) return;
-
-      img.setAttribute('src', withWidth(next.u, 560));
-      img.setAttribute('srcset', buildSrcset(next.u));
-      img.setAttribute('alt', next.a || '');
-    }
-
-    function activateColor(name) {
-      activeColor = name;
-      imageIndex = 0;
-      paintImage();
-    }
-
-    /* skeleton */
-    if (skeleton && img) {
-      if (img.complete) {
-        skeleton.dataset.pcLoaded = 'true';
-      } else {
-        img.addEventListener('load', function () {
-          skeleton.dataset.pcLoaded = 'true';
-        });
-        img.addEventListener('error', function () {
-          skeleton.dataset.pcLoaded = 'true';
-        });
-      }
-    }
-
-    /* colour image carousel */
-    card.querySelectorAll('[data-pc-nav]').forEach(function (button) {
-      button.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        var set = currentSet();
-        if (set.length <= 1) return;
-
-        imageIndex =
-          button.dataset.pcNav === 'prev'
-            ? (imageIndex === 0 ? set.length - 1 : imageIndex - 1)
-            : (imageIndex + 1) % set.length;
-
-        paintImage();
-      });
-    });
-
-    /* swatches */
-    card.querySelectorAll('[data-pc-swatch]').forEach(function (swatch) {
+      var swCard = swatch.closest('[data-pc]');
+      var swState = cardState(swCard);
       var name = swatch.dataset.pcSwatch;
 
-      swatch.addEventListener('mouseenter', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!isTouchDevice) activateColor(name);
-      });
-
-      swatch.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!isTouchDevice) return;
-
-        if (activeColor === name) {
-          activeColor = null;
-          imageIndex = 0;
-          paintImage();
-        } else {
-          activateColor(name);
-        }
-      });
-    });
-
-    /* wishlist */
-    var wish = card.querySelector('[data-pc-wish]');
-    if (wish) {
-      var lastTouchToggle = 0;
-
-      wish.addEventListener('pointerdown', function (event) {
-        if (event.pointerType !== 'touch' && event.pointerType !== 'pen') return;
-        event.preventDefault();
-        event.stopPropagation();
-        lastTouchToggle = Date.now();
-        toggleWishlistItem(card, wish);
-      });
-
-      wish.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (Date.now() - lastTouchToggle < 750) return;
-        toggleWishlistItem(card, wish);
-      });
-
-      paintWishlist(card);
+      swState.color = swState.color === name ? null : name;
+      swState.index = 0;
+      paint(swCard);
+      warmSet(swCard);
+      return;
     }
 
-    /* quick add */
-    var add = card.querySelector('[data-pc-add]');
+    var add = target.closest('[data-pc-add]');
     if (add) {
-      add.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        document.dispatchEvent(
-          new CustomEvent('zehn:quick-add', {
-            detail: {handle: card.dataset.pcHandle, productId: card.dataset.pcId}
-          })
-        );
-      });
+      event.preventDefault();
+      event.stopPropagation();
+      openSheet(add.closest('[data-pc]'));
     }
-
-    /* touch reveal for quick add */
-    var cardBox = card.querySelector('[data-pc-card]');
-    if (cardBox) {
-      var touchStartY = null;
-      var touchTimer = null;
-
-      var endTouch = function () {
-        touchStartY = null;
-        if (touchTimer !== null) window.clearTimeout(touchTimer);
-        touchTimer = window.setTimeout(function () {
-          card.dataset.pcTouchAdd = 'false';
-          touchTimer = null;
-        }, TOUCH_ADD_TIMEOUT);
-      };
-
-      cardBox.addEventListener('touchstart', function (event) {
-        touchStartY = event.touches[0] ? event.touches[0].clientY : null;
-      }, {passive: true});
-
-      cardBox.addEventListener('touchmove', function (event) {
-        var currentY = event.touches[0] ? event.touches[0].clientY : undefined;
-        if (touchStartY === null || currentY === undefined) return;
-        if (Math.abs(currentY - touchStartY) > TOUCH_MOVE_THRESHOLD) {
-          card.dataset.pcTouchAdd = 'true';
-        }
-      }, {passive: true});
-
-      cardBox.addEventListener('touchend', endTouch, {passive: true});
-      cardBox.addEventListener('touchcancel', endTouch, {passive: true});
-    }
-
-    paintImage();
-  }
-
-  function initAll(scope) {
-    (scope || document).querySelectorAll('[data-pc]').forEach(initCard);
-  }
-
-  document.addEventListener('zehn:wishlist-change', function () {
-    document.querySelectorAll('[data-pc]').forEach(paintWishlist);
   });
 
-  document.addEventListener('shopify:section:load', function (event) {
-    initAll(event.target);
-  });
+  /* swatch hover switching (pointerover bubbles, mouseenter does not) */
+  document.addEventListener('pointerover', function (event) {
+    if (isTouch) return;
+    var swatch = event.target.closest && event.target.closest('[data-pc-swatch]');
+    if (!swatch) return;
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      initAll();
+    var card = swatch.closest('[data-pc]');
+    var s = cardState(card);
+    if (s.color === swatch.dataset.pcSwatch) return;
+
+    s.color = swatch.dataset.pcSwatch;
+    s.index = 0;
+    paint(card);
+    warmSet(card);
+  }, {passive: true});
+
+  /* touch reveal for the quick-add button */
+  var touchY = null;
+  var touchTimers = new WeakMap();
+
+  document.addEventListener('touchstart', function (event) {
+    var card = event.target.closest && event.target.closest('[data-pc]');
+    if (!card) return;
+    touchY = event.touches[0] ? event.touches[0].clientY : null;
+  }, {passive: true});
+
+  document.addEventListener('touchmove', function (event) {
+    var card = event.target.closest && event.target.closest('[data-pc]');
+    if (!card || touchY === null) return;
+    var y = event.touches[0] ? event.touches[0].clientY : undefined;
+    if (y === undefined) return;
+    if (Math.abs(y - touchY) > TOUCH_MOVE_THRESHOLD) card.dataset.pcTouchAdd = 'true';
+  }, {passive: true});
+
+  function endTouch(event) {
+    var card = event.target.closest && event.target.closest('[data-pc]');
+    touchY = null;
+    if (!card) return;
+
+    var timer = touchTimers.get(card);
+    if (timer) window.clearTimeout(timer);
+    touchTimers.set(card, window.setTimeout(function () {
+      card.dataset.pcTouchAdd = 'false';
+      touchTimers.delete(card);
+    }, TOUCH_ADD_TIMEOUT));
+  }
+
+  document.addEventListener('touchend', endTouch, {passive: true});
+  document.addEventListener('touchcancel', endTouch, {passive: true});
+
+  /* ================= quick add sheet =============================== */
+  var sheet = document.querySelector('[data-qa]');
+  var body = sheet && sheet.querySelector('[data-qa-body]');
+  var titleEl = sheet && sheet.querySelector('[data-qa-title]');
+  var priceEl = sheet && sheet.querySelector('[data-qa-price]');
+  var compareEl = sheet && sheet.querySelector('[data-qa-compare]');
+  var imageEl = sheet && sheet.querySelector('[data-qa-image]');
+  var cardEl = sheet && sheet.querySelector('[data-qa-card]');
+
+  var openHandle = null;
+  var scrollLock = '';
+  var closeTimer = null;
+  var current = null; /* {variants, names, selections} */
+
+  var SPINNER = '<svg class="qa-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>';
+  var CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
+
+  function openSheet(card) {
+    if (!sheet || !card) return;
+
+    var handle = card.dataset.pcHandle;
+    var title = card.querySelector('.pc-title');
+    var price = card.querySelector('.pc-price');
+    var compare = card.querySelector('.pc-compare');
+    var img = card.querySelector('[data-pc-img]');
+
+    titleEl.textContent = title ? title.textContent.trim() : '';
+    priceEl.textContent = price ? price.textContent.trim() : '';
+    priceEl.dataset.qaSale = price && price.classList.contains('pc-price--sale') ? 'true' : 'false';
+    compareEl.textContent = compare ? compare.textContent.trim() : '';
+    cardEl.setAttribute('aria-label', titleEl.textContent + ' – Schnellansicht');
+
+    if (img) {
+      imageEl.src = withWidth(img.currentSrc || img.src, 160);
+      imageEl.alt = img.alt || '';
+    }
+
+    body.innerHTML = '<div class="qa-loading">' + SPINNER + 'Produktoptionen werden geladen…</div>';
+
+    sheet.hidden = false;
+    scrollLock = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { sheet.dataset.qaOpen = 'true'; });
     });
-  } else {
-    initAll();
+
+    openHandle = handle;
+    loadFragment(handle);
   }
 
-  window.ZehnProductCard = {init: initAll};
+  function closeSheet() {
+    if (!sheet || sheet.hidden) return;
+    sheet.dataset.qaOpen = 'false';
+    document.body.style.overflow = scrollLock;
+    openHandle = null;
+    current = null;
+
+    window.setTimeout(function () {
+      if (sheet.dataset.qaOpen !== 'true') sheet.hidden = true;
+    }, 300);
+  }
+
+  function loadFragment(handle) {
+    var cached = fragmentCache[handle];
+    if (cached) { injectFragment(handle, cached); return; }
+
+    fetch('/products/' + encodeURIComponent(handle) + '?view=quick-add', {
+      headers: {'X-Requested-With': 'fetch'}
+    })
+      .then(function (response) {
+        if (!response.ok) throw new Error('bad status');
+        return response.text();
+      })
+      .then(function (html) {
+        fragmentCache[handle] = html;
+        injectFragment(handle, html);
+      })
+      .catch(function () {
+        if (openHandle !== handle) return;
+        body.innerHTML =
+          '<p class="qa-error">Die Produktoptionen konnten nicht geladen werden. Bitte öffnen Sie die Produktseite.</p>';
+      });
+  }
+
+  function injectFragment(handle, html) {
+    if (openHandle !== handle) return;
+    body.innerHTML = html;
+
+    var fragment = body.querySelector('[data-qa-fragment]');
+    if (!fragment) return;
+
+    var variants = [];
+    var names = [];
+    try {
+      variants = JSON.parse(fragment.dataset.qaVariants || '[]');
+      names = JSON.parse(fragment.dataset.qaOptionNames || '[]');
+    } catch (error) { /* leave empty */ }
+
+    var defaultId = String(fragment.dataset.qaDefault || '');
+    var defaultVariant =
+      variants.filter(function (v) { return String(v.id) === defaultId; })[0] || variants[0];
+
+    var selections = {};
+    if (defaultVariant) {
+      names.forEach(function (name, i) { selections[name] = defaultVariant.o[i]; });
+    }
+
+    current = {variants: variants, names: names, selections: selections, handle: handle};
+    paintSheet();
+  }
+
+  function matchVariant(selections) {
+    if (!current) return null;
+    return current.variants.filter(function (variant) {
+      return current.names.every(function (name, i) { return selections[name] === variant.o[i]; });
+    })[0] || null;
+  }
+
+  function valueAvailable(name, value) {
+    var test = {};
+    Object.keys(current.selections).forEach(function (key) { test[key] = current.selections[key]; });
+    test[name] = value;
+
+    return current.variants.some(function (variant) {
+      return variant.a && current.names.every(function (n, i) { return test[n] === variant.o[i]; });
+    });
+  }
+
+  function paintSheet() {
+    if (!current) return;
+
+    body.querySelectorAll('[data-qa-value]').forEach(function (button) {
+      var name = button.dataset.qaOptionName;
+      var value = button.dataset.qaValue;
+      var selected = current.selections[name] === value;
+
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      button.dataset.qaUnavailable = valueAvailable(name, value) ? 'false' : 'true';
+    });
+
+    body.querySelectorAll('[data-qa-option]').forEach(function (field) {
+      var label = field.querySelector('[data-qa-legend-value]');
+      var value = current.selections[field.dataset.qaOption];
+      if (label) label.textContent = value ? '— ' + value : '';
+    });
+
+    var variant = matchVariant(current.selections);
+    if (variant) {
+      priceEl.textContent = variant.p;
+      priceEl.dataset.qaSale = variant.c ? 'true' : 'false';
+      compareEl.textContent = variant.c || '';
+    }
+
+    var submit = body.querySelector('[data-qa-submit]');
+    if (!submit) return;
+
+    submit.dataset.qaVariant = variant ? variant.id : '';
+    if (!variant) {
+      setSubmit(submit, 'disabled', 'In den Warenkorb');
+    } else if (!variant.a) {
+      setSubmit(submit, 'soldout', 'Ausverkauft');
+    } else {
+      setSubmit(submit, 'ready', 'In den Warenkorb');
+    }
+  }
+
+  function setSubmit(submit, state, label, icon) {
+    submit.dataset.qaState = state;
+    var span = submit.querySelector('[data-qa-submit-label]');
+    if (span) span.innerHTML = (icon || '') + label;
+  }
+
+  function addToCart(submit) {
+    var id = submit.dataset.qaVariant;
+    if (!id) return;
+
+    setSubmit(submit, 'loading', 'Wird hinzugefügt…', SPINNER);
+
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', Accept: 'application/json'},
+      body: JSON.stringify({items: [{id: Number(id), quantity: 1}]})
+    })
+      .then(function (response) {
+        if (!response.ok) throw new Error('add failed');
+        return response.json();
+      })
+      .then(function (data) {
+        setSubmit(submit, 'added', 'Hinzugefügt!', CHECK);
+
+        /* fireMetaAddToCart(...) hook */
+        document.dispatchEvent(new CustomEvent('zehn:add-to-cart', {
+          detail: {handle: current && current.handle, variantId: id, cart: data}
+        }));
+        /* let the theme's cart drawer/bubble refresh */
+        document.dispatchEvent(new CustomEvent('cart:refresh', {bubbles: true}));
+
+        if (closeTimer) window.clearTimeout(closeTimer);
+        closeTimer = window.setTimeout(function () {
+          closeTimer = null;
+          closeSheet();
+        }, CLOSE_DELAY);
+      })
+      .catch(function () {
+        setSubmit(submit, 'ready', 'In den Warenkorb');
+      });
+  }
+
+  if (sheet) {
+    sheet.addEventListener('click', function (event) {
+      if (event.target.closest('[data-qa-close]')) {
+        closeSheet();
+        return;
+      }
+
+      var value = event.target.closest('[data-qa-value]');
+      if (value && current) {
+        current.selections[value.dataset.qaOptionName] = value.dataset.qaValue;
+        paintSheet();
+        return;
+      }
+
+      var submit = event.target.closest('[data-qa-submit]');
+      if (submit) addToCart(submit);
+    });
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && sheet.dataset.qaOpen === 'true') closeSheet();
+    });
+  }
+
+  window.ZehnProductCard = {open: openSheet, close: closeSheet};
 })();
 </script>
 
@@ -689,40 +1100,52 @@
   if compare_at > 0 and compare_at > price_now
     assign is_on_sale = true
   endif
+
+  assign image_count = product.images.size
 -%}
 
-{%- comment -%} colorSwatches = colorOption.optionValues.slice(0, 4), filtered to those with a swatch {%- endcomment -%}
-{%- assign swatch_values = '' -%}
+{%- comment -%} colorSwatches = first 4 option values that carry a swatch {%- endcomment -%}
+{%- assign swatch_count = 0 -%}
 {%- if color_option -%}
   {%- for value in color_option.values limit: 4 -%}
     {%- if value.swatch.color or value.swatch.image -%}
-      {%- assign swatch_values = swatch_values | append: '|' | append: value.name -%}
+      {%- assign swatch_count = swatch_count | plus: 1 -%}
     {%- endif -%}
   {%- endfor -%}
 {%- endif -%}
 
-{%- comment -%} getAllProductImages + getProductImagesForColor, serialised for the client {%- endcomment -%}
-{%- capture images_json -%}
+{%- comment -%}
+  getAllProductImages + getProductImagesForColor, serialised for the client.
+  Only emitted when it can actually be used (2+ images, or swatches present),
+  and capped at 6 images per set to keep the document small.
+{%- endcomment -%}
+{%- assign needs_media_json = false -%}
+{%- if image_count > 1 or swatch_count > 0 -%}
+  {%- assign needs_media_json = true -%}
+{%- endif -%}
+
+{%- if needs_media_json -%}
+  {%- capture images_json -%}
 {"all":[
-{%- for img in product.images -%}
+{%- for img in product.images limit: 6 -%}
 {%- unless forloop.first -%},{%- endunless -%}
-{"u":{{ img | image_url | json }},"a":{{ img.alt | default: product.title | json }},"w":{{ img.width }},"h":{{ img.height }}}
+{"u":{{ img | image_url | json }},"a":{{ img.alt | default: product.title | json }}}
 {%- endfor -%}
 ],"colors":{
 {%- assign color_emitted = 0 -%}
-{%- if color_option -%}
+{%- if swatch_count > 0 -%}
   {%- for value in color_option.values limit: 4 -%}
     {%- assign seen_media = '|' -%}
     {%- capture color_images -%}
       {%- assign img_emitted = 0 -%}
       {%- for variant in product.variants -%}
+        {%- if img_emitted >= 6 -%}{%- break -%}{%- endif -%}
         {%- if variant.options contains value.name and variant.featured_media.preview_image -%}
           {%- assign media_key = '|' | append: variant.featured_media.id | append: '|' -%}
           {%- unless seen_media contains media_key -%}
             {%- assign seen_media = seen_media | append: variant.featured_media.id | append: '|' -%}
             {%- if img_emitted > 0 -%},{%- endif -%}
-            {%- assign pimg = variant.featured_media.preview_image -%}
-            {"u":{{ pimg | image_url | json }},"a":{{ variant.featured_media.alt | default: value.name | json }},"w":{{ pimg.width }},"h":{{ pimg.height }}}
+            {"u":{{ variant.featured_media.preview_image | image_url | json }},"a":{{ variant.featured_media.alt | default: value.name | json }}}
             {%- assign img_emitted = img_emitted | plus: 1 -%}
           {%- endunless -%}
         {%- endif -%}
@@ -736,22 +1159,22 @@
   {%- endfor -%}
 {%- endif -%}
 }}
-{%- endcapture -%}
+  {%- endcapture -%}
+{%- endif -%}
 
 <a
-  class="pc{% if is_eager %} pc--eager{% endif %}"
+  class="pc"
   href="{{ product.url }}"
   data-pc
   data-pc-handle="{{ product.handle }}"
-  data-pc-id="{{ product.id }}"
-  data-pc-images="{{ images_json | strip | escape }}"
-  style="transition-delay: {% if is_eager %}0ms{% else %}{{ index | times: 60 }}ms{% endif %};"
+  {% if image_count > 1 %}data-pc-multi="true"{% endif %}
+  {% if needs_media_json %}data-pc-images="{{ images_json | strip | escape }}"{% endif %}
 >
-  <div class="pc-card" data-pc-card>
+  <div class="pc-card">
     {%- comment -%} Image {%- endcomment -%}
     <div class="pc-media">
       {%- unless is_eager -%}
-        <div class="pc-skeleton" data-pc-skeleton></div>
+        <div class="pc-skeleton"></div>
       {%- endunless -%}
 
       <div class="pc-img-wrap">
@@ -762,10 +1185,8 @@
             src="{{ product.featured_image | image_url: width: 560 }}"
             srcset="
               {{ product.featured_image | image_url: width: 240 }} 240w,
-              {{ product.featured_image | image_url: width: 280 }} 280w,
               {{ product.featured_image | image_url: width: 360 }} 360w,
               {{ product.featured_image | image_url: width: 480 }} 480w,
-              {{ product.featured_image | image_url: width: 560 }} 560w,
               {{ product.featured_image | image_url: width: 720 }} 720w
             "
             sizes="{{ image_sizes }}"
@@ -782,22 +1203,10 @@
       </div>
 
       {%- comment -%} Colour image carousel (hover, only when the set has > 1 image) {%- endcomment -%}
-      <button
-        type="button"
-        class="pc-nav pc-nav--prev"
-        data-pc-nav="prev"
-        aria-label="Vorheriges Bild"
-        tabindex="-1"
-      >
+      <button type="button" class="pc-nav pc-nav--prev" data-pc-nav="prev" aria-label="Vorheriges Bild" tabindex="-1">
         <svg class="pc-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6"/></svg>
       </button>
-      <button
-        type="button"
-        class="pc-nav pc-nav--next"
-        data-pc-nav="next"
-        aria-label="Nächstes Bild"
-        tabindex="-1"
-      >
+      <button type="button" class="pc-nav pc-nav--next" data-pc-nav="next" aria-label="Nächstes Bild" tabindex="-1">
         <svg class="pc-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg>
       </button>
 
@@ -806,32 +1215,8 @@
         <span class="pc-badge pc-badge--{{ badge | downcase }}">{{ badge }}</span>
       {%- endif -%}
 
-      {%- comment -%} Wishlist Heart {%- endcomment -%}
-      <button
-        type="button"
-        class="pc-wish"
-        data-pc-wish
-        aria-label="Zur Wunschliste hinzufügen"
-        data-label-add="Zur Wunschliste hinzufügen"
-        data-label-remove="Von Wunschliste entfernen"
-        data-pc-title="{{ product.title | escape }}"
-        data-pc-image="{{ product.featured_image | image_url: width: 300 }}"
-        data-pc-price="{{ product.price_min | divided_by: 100.0 }}"
-        data-pc-currency="{{ cart.currency.iso_code }}"
-        data-pc-variant="{{ product.selected_or_first_available_variant.id }}"
-      >
-        <svg class="pc-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-          <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
-        </svg>
-      </button>
-
       {%- comment -%} Quick add {%- endcomment -%}
-      <button
-        type="button"
-        class="pc-add"
-        data-pc-add
-        aria-label="In den Warenkorb"
-      >
+      <button type="button" class="pc-add" data-pc-add aria-label="In den Warenkorb">
         <svg class="pc-add-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
           <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
         </svg>
@@ -841,7 +1226,7 @@
 
   {%- comment -%} Color Swatches {%- endcomment -%}
   <div class="pc-swatches">
-    {%- if swatch_values != blank -%}
+    {%- if swatch_count > 0 -%}
       {%- for value in color_option.values limit: 4 -%}
         {%- if value.swatch.color or value.swatch.image -%}
           <button
@@ -854,15 +1239,7 @@
             tabindex="-1"
           >
             {%- if value.swatch.image -%}
-              <img
-                src="{{ value.swatch.image | image_url: width: 44 }}"
-                alt="{{ value.name | escape }}"
-                width="22"
-                height="22"
-                loading="lazy"
-                decoding="async"
-                class="pc-swatch-img"
-              >
+              <img class="pc-swatch-img" src="{{ value.swatch.image | image_url: width: 44 }}" alt="{{ value.name | escape }}" width="22" height="22" loading="lazy" decoding="async">
             {%- endif -%}
             <span class="pc-swatch-tip">{{ value.name }}</span>
           </button>
@@ -880,9 +1257,7 @@
     <h3 class="pc-title">{{ product.title }}</h3>
 
     <div class="pc-prices">
-      <span class="pc-price{% if is_on_sale %} pc-price--sale{% endif %}">
-        {{ price_now | money }}
-      </span>
+      <span class="pc-price{% if is_on_sale %} pc-price--sale{% endif %}">{{ price_now | money }}</span>
       {%- if is_on_sale -%}
         <span class="pc-compare">{{ compare_at | money }}</span>
       {%- endif -%}
