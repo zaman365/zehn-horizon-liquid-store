@@ -1,0 +1,112 @@
+{%- comment -%}
+  ============================================================
+  templates/product.quick-add.liquid
+
+  Liquid equivalent of the `/api/product-options/:handle` route that
+  QuickAddModalWithOptions fetches. Returns an HTML fragment only.
+
+  Fetched as: /products/{handle}?view=quick-add
+  ============================================================
+{%- endcomment -%}
+{%- layout none -%}
+{%- liquid
+  assign default_variant = product.selected_or_first_available_variant | default: product.first_available_variant | default: product.variants.first
+
+  # hasRealOptions(): more than just "Default Title"
+  assign real_options = 0
+  for option in product.options_with_values
+    if option.values.size > 1
+      assign real_options = real_options | plus: 1
+    endif
+  endfor
+-%}
+
+<div
+  class="qa-fragment"
+  data-qa-fragment
+  data-qa-default="{{ default_variant.id }}"
+  data-qa-option-names="{% capture qa_names %}[{% for option in product.options_with_values %}{% unless forloop.first %},{% endunless %}{{ option.name | json }}{% endfor %}]{% endcapture %}{{ qa_names | strip | escape }}"
+  data-qa-variants="{% capture qa_variants %}[
+    {%- for variant in product.variants -%}
+      {%- unless forloop.first -%},{%- endunless -%}
+      {"id":{{ variant.id }},"o":{{ variant.options | json }},"a":{{ variant.available }},"p":{{ variant.price | money | json }},"c":{% if variant.compare_at_price > variant.price %}{{ variant.compare_at_price | money | json }}{% else %}null{% endif %}}
+    {%- endfor -%}
+  ]{% endcapture %}{{ qa_variants | strip | escape }}"
+>
+  {%- if real_options > 0 -%}
+    {%- for option in product.options_with_values -%}
+      {%- comment -%} Skip options with only one value {%- endcomment -%}
+      {%- if option.values.size <= 1 -%}{%- continue -%}{%- endif -%}
+
+      {%- liquid
+        assign option_name = option.name | downcase | strip
+        assign is_color = false
+        if option_name == 'color' or option_name == 'colour' or option_name == 'farbe'
+          assign is_color = true
+        endif
+      -%}
+
+      <fieldset class="qa-field" data-qa-option="{{ option.name | escape }}">
+        <legend class="qa-legend">
+          {{ option.name }}
+          <span class="qa-legend-value" data-qa-legend-value></span>
+        </legend>
+
+        <div
+          class="qa-values{% if is_color %} qa-values--color{% endif %}"
+          role="radiogroup"
+          aria-label="{{ option.name | escape }}"
+        >
+          {%- for value in option.values -%}
+            {%- if is_color -%}
+              <button
+                type="button"
+                class="qa-swatch"
+                data-qa-value="{{ value.name | escape }}"
+                data-qa-option-name="{{ option.name | escape }}"
+                aria-label="{{ option.name | escape }}: {{ value.name | escape }}"
+                aria-pressed="false"
+              >
+                {%- if value.swatch.image -%}
+                  <img
+                    class="qa-swatch-visual qa-swatch-visual--img"
+                    src="{{ value.swatch.image | image_url: width: 88 }}"
+                    alt="{{ value.name | escape }}"
+                    width="32"
+                    height="32"
+                    loading="lazy"
+                    decoding="async"
+                  >
+                {%- elsif value.swatch.color -%}
+                  <span class="qa-swatch-visual" style="background-color: {{ value.swatch.color }};"></span>
+                {%- else -%}
+                  <span class="qa-swatch-visual qa-swatch-visual--letter">{{ value.name | slice: 0 | upcase }}</span>
+                {%- endif -%}
+
+                <span class="qa-swatch-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M20 6 9 17l-5-5"/></svg>
+                </span>
+                <span class="qa-swatch-slash" aria-hidden="true"></span>
+              </button>
+            {%- else -%}
+              <button
+                type="button"
+                class="qa-pill"
+                data-qa-value="{{ value.name | escape }}"
+                data-qa-option-name="{{ option.name | escape }}"
+                aria-label="{{ option.name | escape }}: {{ value.name | escape }}"
+                aria-pressed="false"
+              >{{ value.name }}</button>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+      </fieldset>
+    {%- endfor -%}
+  {%- endif -%}
+
+  <div class="qa-submit-wrap">
+    <button type="button" class="qa-submit" data-qa-submit>
+      <span class="qa-submit-label" data-qa-submit-label>In den Warenkorb</span>
+    </button>
+  </div>
+</div>
