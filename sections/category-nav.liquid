@@ -1,0 +1,330 @@
+{%- comment -%}
+  ============================================================
+  sections/category-nav.liquid
+  Liquid port of the category nav in ProductGrid.tsx (lines 330-376),
+  using the classes from lib/category-nav-styles.ts.
+
+  Add one block per main category (MAIN_CATEGORY_MAP). The subcategory
+  row appears only when the current collection belongs to one of the
+  blocks, matching `currentSubcategories.size > 0` in React.
+
+  Pure links — no JS.
+  ============================================================
+{%- endcomment -%}
+
+{%- liquid
+  assign current_handle = collection.handle | default: ''
+  assign has_sub_row = false
+-%}
+
+{%- comment -%} Pass 1: main chips, and the sub row for whichever block is active. {%- endcomment -%}
+{%- capture main_chips -%}
+  {%- for block in section.blocks -%}
+    {%- liquid
+      assign main_collection = block.settings.collection
+      assign main_handle = main_collection.handle
+      assign label = block.settings.label | default: main_collection.title
+      assign is_active = false
+
+      if current_handle != '' and current_handle == main_handle
+        assign is_active = true
+      endif
+    -%}
+
+    {%- unless is_active -%}
+      {%- for sub in block.settings.subcategories -%}
+        {%- if sub.handle == current_handle -%}
+          {%- assign is_active = true -%}
+          {%- break -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endunless -%}
+
+    <a
+      class="cn-chip{% if is_active %} cn-chip--active{% endif %}"
+      href="{{ main_collection.url | default: '/collections/all' }}"
+      {% if is_active %}aria-current="page"{% endif %}
+    >{{ label | upcase }}</a>
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- capture sub_row -%}
+  {%- for block in section.blocks -%}
+    {%- liquid
+      assign main_handle = block.settings.collection.handle
+      assign is_active = false
+
+      if current_handle != '' and current_handle == main_handle
+        assign is_active = true
+      endif
+    -%}
+
+    {%- unless is_active -%}
+      {%- for sub in block.settings.subcategories -%}
+        {%- if sub.handle == current_handle -%}
+          {%- assign is_active = true -%}
+          {%- break -%}
+        {%- endif -%}
+      {%- endfor -%}
+    {%- endunless -%}
+
+    {%- if is_active and block.settings.subcategories.count > 0 -%}
+      {%- for sub in block.settings.subcategories -%}
+        <a
+          class="cn-sub{% if sub.handle == current_handle %} cn-sub--active{% endif %}"
+          href="{{ sub.url }}"
+          {% if sub.handle == current_handle %}aria-current="page"{% endif %}
+        >{{ sub.title | upcase }}</a>
+      {%- endfor -%}
+      {%- break -%}
+    {%- endif -%}
+  {%- endfor -%}
+{%- endcapture -%}
+
+{%- if sub_row != blank -%}{%- assign has_sub_row = true -%}{%- endif -%}
+
+{%- if main_chips != blank -%}
+  <div class="cn-group{% if has_sub_row %} cn-group--with-sub{% endif %}">
+    <nav
+      class="cn-list"
+      style="--cn-cols: {{ section.blocks.size }};"
+      aria-label="{{ section.settings.nav_label | escape }}"
+    >
+      {{ main_chips }}
+    </nav>
+
+    {%- if has_sub_row -%}
+      <div class="cn-sub-wrap">
+        <nav class="cn-sub-list" aria-label="{{ section.settings.sub_nav_label | escape }}">
+          {{ sub_row }}
+        </nav>
+      </div>
+    {%- endif -%}
+  </div>
+{%- endif -%}
+
+{% stylesheet %}
+/* mx-auto mb-4 sm:mb-5 w-full max-w-none px-1 sm:w-fit sm:max-w-full
+   sm:px-4 lg:min-w-[44rem] lg:px-4 xl:px-5 py-2 sm:py-4.5 */
+.cn-group {
+  margin: 0 auto 1rem;
+  width: 100%;
+  max-width: none;
+  padding: 0.5rem 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .cn-group {
+    margin-bottom: 1.25rem;
+    width: fit-content;
+    max-width: 100%;
+    padding: 1.125rem 1rem; /* sm:py-4.5 sm:px-4 */
+  }
+  .cn-group--with-sub { padding-top: 0.875rem; padding-bottom: 0.875rem; } /* sm:py-3.5 */
+}
+
+@media (min-width: 1024px) {
+  .cn-group { min-width: 44rem; padding-left: 1rem; padding-right: 1rem; }
+}
+
+@media (min-width: 1280px) {
+  .cn-group { padding-left: 1.25rem; padding-right: 1.25rem; }
+}
+
+/* grid grid-cols-5 gap-1 sm:flex sm:flex-wrap sm:justify-center sm:gap-2 */
+.cn-list {
+  display: grid;
+  grid-template-columns: repeat(var(--cn-cols, 5), minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .cn-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+}
+
+/* MAIN_CATEGORY_NAV_CHIP_CLASS */
+.cn-chip {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.25rem;
+  border-radius: 9999px;
+  font-family: var(--font-display, 'Archivo', 'Inter', system-ui, sans-serif);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+
+  /* INACTIVE: bg-card text-foreground shadow-md hover:bg-card/80 */
+  background-color: #ffffff;
+  color: var(--color-foreground, #0f1426);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: all 300ms;
+}
+
+.cn-chip:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+}
+
+/* ACTIVE: bg-primary text-primary-foreground shadow-lg sm:scale-105 */
+.cn-chip--active {
+  background-color: var(--color-primary, #0f1426);
+  color: var(--color-primary-foreground, #f4f4f5);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.cn-chip--active:hover { background-color: var(--color-primary, #0f1426); }
+
+@media (min-width: 640px) {
+  .cn-chip {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;   /* sm:text-base */
+    line-height: 1.5rem;
+  }
+  .cn-chip:hover { transform: scale(1.05); }
+  .cn-chip--active { transform: scale(1.05); }
+}
+
+/* SUB_CATEGORY_NAV_WRAP_CLASS */
+.cn-sub-wrap {
+  margin-top: 0.75rem;
+  border-top: 1px solid rgba(142, 151, 164, 0.2);
+  padding-top: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .cn-sub-wrap { margin-top: 0.875rem; padding-top: 0.75rem; }
+}
+
+/* SUB_CATEGORY_NAV_LIST_CLASS */
+.cn-sub-list {
+  display: flex;
+  min-height: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.375rem;
+}
+
+@media (min-width: 640px) { .cn-sub-list { gap: 0.75rem; } }
+
+.cn-sub {
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-family: var(--font-display, 'Archivo', 'Inter', system-ui, sans-serif);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 300ms;
+
+  /* unselected */
+  background-color: transparent;
+  color: rgba(15, 20, 38, 0.55);
+  box-shadow: none;
+}
+
+.cn-sub:hover { text-decoration: none; }
+
+/* selected: bg-card text-foreground shadow-sm ring-1 ring-border/40 */
+.cn-sub--active {
+  background-color: #ffffff;
+  color: var(--color-foreground, #0f1426);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 0 0 1px rgba(142, 151, 164, 0.4);
+}
+
+@media (min-width: 640px) {
+  .cn-sub {
+    padding: 3px 0.75rem;
+    font-size: 13px;
+    background-color: rgba(255, 255, 255, 0.5);
+    color: rgba(15, 20, 38, 0.7);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  .cn-sub:hover { transform: scale(1.05); }
+  .cn-sub--active {
+    background-color: #ffffff;
+    color: var(--color-foreground, #0f1426);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 0 0 1px rgba(142, 151, 164, 0.4);
+  }
+}
+
+.cn-chip:focus-visible,
+.cn-sub:focus-visible {
+  outline: 2px solid var(--color-foreground, #0f1426);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cn-chip, .cn-sub { transition: none; }
+  .cn-chip:hover, .cn-sub:hover { transform: none; }
+}
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Category nav",
+  "tag": "div",
+  "class": "category-nav",
+  "max_blocks": 8,
+  "settings": [
+    {
+      "type": "text",
+      "id": "nav_label",
+      "label": "Accessible label",
+      "default": "Kategorien"
+    },
+    {
+      "type": "text",
+      "id": "sub_nav_label",
+      "label": "Accessible label (subcategories)",
+      "default": "Unterkategorien"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "category",
+      "name": "Category",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "info": "Leave empty to use the collection title. Always shown uppercase."
+        },
+        {
+          "type": "collection_list",
+          "id": "subcategories",
+          "label": "Subcategories",
+          "limit": 6,
+          "info": "Shown as a second row when this category (or one of its subcategories) is the current collection."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Category nav",
+      "blocks": [
+        { "type": "category" },
+        { "type": "category" },
+        { "type": "category" },
+        { "type": "category" },
+        { "type": "category" }
+      ]
+    }
+  ]
+}
+{% endschema %}
