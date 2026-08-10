@@ -15,6 +15,7 @@
   {% render 'zehn-static-page', path: request.path %}
 {% else %}
 <div
+  data-zehn-request-path="{{ request.path | escape }}"
   class="section-background{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
 ></div>
 <div
