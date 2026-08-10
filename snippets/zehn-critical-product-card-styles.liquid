@@ -1,0 +1,174 @@
+{% comment %}
+  Critical product-card fallback styles.
+
+  Horizon compiles component `{% stylesheet %}` blocks into a generated asset.
+  Keep this small safety layer inline so collection cards, recommendations,
+  search results, and resource lists remain usable if that generated asset is
+  delayed, stale, or rejected by an older browser. The normal Horizon styles
+  load later and remain the source of truth when available.
+{% endcomment %}
+
+<style>
+  product-card.product-card {
+    position: relative;
+    display: grid;
+    min-width: 0;
+    height: 100%;
+  }
+
+  product-card .product-card__link {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  product-card .product-card__content {
+    position: relative;
+    display: flex;
+    flex-flow: column nowrap;
+    gap: var(--product-card-gap, 4px);
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  product-card .card-gallery,
+  product-card .product-card-gallery {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  product-card slideshow-component,
+  product-card slideshow-container,
+  product-card slideshow-slides,
+  product-card slideshow-slide,
+  product-card .product-media-container {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  product-card slideshow-slide[aria-hidden='true'] {
+    display: none;
+  }
+
+  product-card .product-media-container {
+    aspect-ratio: var(--gallery-aspect-ratio, 2 / 3);
+  }
+
+  product-card .product-media-container :is(img, svg),
+  product-card .card-gallery :is(img, svg) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  product-card slideshow-controls {
+    display: none;
+  }
+
+  product-card swatches-variant-picker-component {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+  }
+
+  product-card swatches-variant-picker-component form,
+  product-card .variant-option--swatches {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  product-card .variant-option--swatches overflow-list {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  product-card .variant-option--swatches overflow-list::part(list) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 3px;
+    list-style: none;
+  }
+
+  product-card .variant-option__swatch {
+    display: block;
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  product-card .variant-option__button-label--has-swatch {
+    position: relative;
+    display: block;
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    margin: 0;
+    padding: 2px;
+    overflow: hidden;
+    border: 1px solid rgb(15 20 38 / 20%);
+    border-radius: 999px;
+    background: #fff;
+    cursor: pointer;
+  }
+
+  product-card .variant-option__button-label--has-swatch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  product-card .variant-option__button-label--has-swatch .swatch {
+    display: block;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--swatch-background, #d5d7da) center / cover no-repeat;
+  }
+
+  product-card .variant-option__button-label--has-swatch:has(:checked) {
+    outline: 2px solid var(--zehn-indigo, #0f1426);
+    outline-offset: 1px;
+  }
+
+  product-card .visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  product-card :is(h3, h4, .h4, .product-title) {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  product-card :is(.price, .price-item, .product-card__price) {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+</style>
