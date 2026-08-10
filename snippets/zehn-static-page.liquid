@@ -225,6 +225,10 @@
     }
   </style>
 
+  <script>
+    document.title = {{ page_title | append: ' – ' | append: shop.name | json }};
+  </script>
+
   {% if page_variant == 'cookies' %}
     <script>
       (() => {
@@ -249,20 +253,29 @@
           api.setTrackingConsent({
             analytics: field('analytics').checked,
             preferences: field('preferences').checked,
-            marketing: field('marketing').checked,
-            sale_of_data: false
+            marketing: field('marketing').checked
           }, () => { status.textContent = 'Ihre Einstellungen wurden gespeichert.'; });
         });
         root.querySelector('[data-cookie-reset]').addEventListener('click', () => {
           ['analytics', 'preferences', 'marketing'].forEach((name) => { field(name).checked = false; });
           const api = privacy();
           if (api?.setTrackingConsent) {
-            api.setTrackingConsent({analytics: false, preferences: false, marketing: false, sale_of_data: false}, () => {
+            api.setTrackingConsent({analytics: false, preferences: false, marketing: false}, () => {
               status.textContent = 'Optionale Cookies wurden deaktiviert.';
             });
           }
         });
-        sync();
+        if (privacy()) {
+          sync();
+        } else if (window.Shopify?.loadFeatures) {
+          window.Shopify.loadFeatures([{name: 'consent-tracking-api', version: '0.1'}], (error) => {
+            if (error) {
+              status.textContent = 'Die Cookie-Einstellungen konnten nicht geladen werden.';
+              return;
+            }
+            sync();
+          });
+        }
       })();
     </script>
   {% elsif path == '/pages/track-order' %}
