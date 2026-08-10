@@ -1,23 +1,36 @@
 {% liquid
-  assign zehn_static_routes = '|/zehn-club|/pages/impressum|/pages/terms|/pages/privacy|/pages/cookies|/pages/faq|/blogs/produktsicherheit|/pages/widerruf|/about-us|/pages/sustainability|/protokoll|/pages/track-order|/pages/shipping|/pages/payment|/pages/care|/pages/fitguide|'
-  assign zehn_request_token = '|' | append: request.path | append: '|'
-  assign zehn_is_static_route = false
-  if zehn_static_routes contains zehn_request_token
-    assign zehn_is_static_route = true
-  endif
-
   if section.settings.background_color != blank
     render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
   endif
 %}
 
-{% if zehn_is_static_route %}
-  {% render 'zehn-static-page', path: request.path %}
-{% else %}
+<script>
+  (() => {
+    const routes = {
+      '/zehn-club': '/pages/contact?view=zehn-club',
+      '/pages/impressum': '/policies/legal-notice',
+      '/pages/terms': '/policies/terms-of-service',
+      '/pages/privacy': '/policies/privacy-policy',
+      '/pages/cookies': '/pages/contact?view=cookies',
+      '/pages/faq': '/pages/contact?view=faq',
+      '/blogs/produktsicherheit': '/pages/contact?view=produktsicherheit',
+      '/pages/widerruf': '/policies/refund-policy',
+      '/about-us': '/pages/contact?view=about-us',
+      '/pages/sustainability': '/pages/contact?view=sustainability',
+      '/protokoll': '/pages/contact?view=protokoll',
+      '/pages/track-order': '/pages/contact?view=track-order',
+      '/pages/shipping': '/policies/shipping-policy',
+      '/pages/payment': '/pages/contact?view=payment',
+      '/pages/care': '/pages/contact?view=care',
+      '/pages/fitguide': '/pages/contact?view=fitguide'
+    };
+    const destination = routes[window.location.pathname];
+    if (destination) window.location.replace(destination);
+  })();
+</script>
+
 <div
   class="section-background{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
-  data-zehn-request-path="{{ request.path | escape }}"
-  data-zehn-request-page-type="{{ request.page_type | escape }}"
 ></div>
 <div
   class="
@@ -43,7 +56,6 @@
     </div>
   </div>
 </div>
-{% endif %}
 
 {% schema %}
 {
