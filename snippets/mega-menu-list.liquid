@@ -91,8 +91,12 @@
       assign zehn_category_token = '|' | append: zehn_category_key | append: '|'
       assign zehn_parent_keys = '|shorts|hosen|jacken|tops|'
       assign zehn_has_sublinks = false
+      assign zehn_is_shop_category = false
       if link.links == blank and zehn_parent_keys contains zehn_category_token
         assign zehn_has_sublinks = true
+      endif
+      if parent_link_key == 'shop-all' and zehn_category_key == 'jeans'
+        assign zehn_is_shop_category = true
       endif
 
       # Decide whether to open a column span, and how many columns of the grid to span
@@ -126,7 +130,7 @@
     <div>
       <a
         href="{{ link.url }}"
-        class="mega-menu__link {% if link.links != blank or zehn_has_sublinks %}mega-menu__link--parent{% endif %}"
+        class="mega-menu__link {% if link.links != blank or zehn_has_sublinks or zehn_is_shop_category %}mega-menu__link--parent{% endif %}"
       >
         {% if menu_content_type == 'collection_images' %}
           {%- capture collection_image_sizes -%}
