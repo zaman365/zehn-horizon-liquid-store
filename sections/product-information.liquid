@@ -216,8 +216,6 @@
 
   #shopify-section-{{ section.id }} .pp__main-image {
     position: relative;
-    grid-column: 2;
-    grid-row: 1;
     margin-bottom: 1rem;
     aspect-ratio: 2 / 3;
     max-width: 100%;
@@ -238,15 +236,15 @@
       justify-self: center;
     }
   }
-  #shopify-section-{{ section.id }} .pp__main-image img {
+  #shopify-section-{{ section.id }} .pp__main-image img,
+  #shopify-section-{{ section.id }} .pp__main-image .pp__placeholder-img {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: none;
+    display: block;
   }
-  #shopify-section-{{ section.id }} .pp__main-image img.is-active { display: block; }
 
   #shopify-section-{{ section.id }} .pp__dots {
     display: flex;
@@ -906,10 +904,9 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: none;
+    display: block;
     border-radius: 0;
   }
-  #shopify-section-{{ section.id }} .pp__viewer-frame img.is-active { display: block; }
   #shopify-section-{{ section.id }} .pp__viewer-nav {
     position: absolute;
     top: 50%;
@@ -1002,74 +999,7 @@
       <div class="pp__layout">
 
         {%- comment -%} ================= GALLERY ================= {%- endcomment -%}
-        <div class="pp__gallery">
-          <div class="pp__gallery-grid">
-
-            <div class="pp__thumbs" data-pp-thumbs {% if product.media.size <= 1 %}hidden{% endif %}>
-              <button type="button" class="pp__thumb-nav pp__thumb-nav--up" data-pp-thumb-scroll="up" aria-label="Vorherige Bilder anzeigen" hidden>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
-              </button>
-              <div class="pp__thumb-rail" data-pp-thumb-rail>
-                {%- for media in product.media -%}
-                  <button
-                    type="button"
-                    class="pp__thumb{% if forloop.first %} is-active{% endif %}"
-                    data-pp-thumb
-                    data-index="{{ forloop.index0 }}"
-                    data-media-id="{{ media.id }}"
-                    aria-label="Bild {{ forloop.index }} anzeigen"
-                  >
-                    <img
-                      src="{{ media.preview_image | image_url: width: 160 }}"
-                      alt="{{ media.alt | default: product.title | escape }}"
-                      loading="lazy"
-                      width="80"
-                      height="120"
-                    >
-                  </button>
-                {%- endfor -%}
-              </div>
-              <button type="button" class="pp__thumb-nav pp__thumb-nav--down" data-pp-thumb-scroll="down" aria-label="Weitere Bilder anzeigen" {% if product.media.size <= 4 %}hidden{% endif %}>
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-              </button>
-            </div>
-
-            <div class="pp__main-image" data-pp-main-image role="button" tabindex="0" aria-label="Produktbild in Vollbild öffnen">
-              {%- for media in product.media -%}
-                <img
-                  class="pp__gallery-img{% if forloop.first %} is-active{% endif %}"
-                  data-pp-main-img
-                  data-index="{{ forloop.index0 }}"
-                  src="{{ media.preview_image | image_url: width: 1200 }}"
-                  srcset="
-                    {{ media.preview_image | image_url: width: 400 }} 400w,
-                    {{ media.preview_image | image_url: width: 600 }} 600w,
-                    {{ media.preview_image | image_url: width: 800 }} 800w,
-                    {{ media.preview_image | image_url: width: 1200 }} 1200w
-                  "
-                  sizes="(min-width: 1024px) 547px, 100vw"
-                  alt="{{ media.alt | default: product.title | escape }}"
-                  loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
-                  width="{{ media.preview_image.width }}"
-                  height="{{ media.preview_image.height }}"
-                >
-              {%- else -%}
-                {{ 'product-1' | placeholder_svg_tag: 'pp__gallery-img is-active' }}
-              {%- endfor -%}
-
-              <button type="button" class="pp__wishlist" data-pp-wishlist aria-label="Zur Wunschliste hinzufügen">
-                <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>
-              </button>
-            </div>
-
-            <div class="pp__dots" data-pp-dots {% if product.media.size <= 1 %}hidden{% endif %}>
-              {%- for media in product.media -%}
-                <button type="button" class="pp__dot{% if forloop.first %} is-active{% endif %}" data-pp-dot data-index="{{ forloop.index0 }}" aria-label="Bild {{ forloop.index }} anzeigen"></button>
-              {%- endfor -%}
-            </div>
-
-          </div>
-        </div>
+        {%- render 'product-media-gallery', product: product, current_variant: current_variant -%}
 
         {%- comment -%} ================= PRODUCT INFO ================= {%- endcomment -%}
         <div class="pp__info">
@@ -1132,7 +1062,7 @@
                           {% unless value.available %}disabled{% endunless %}
                         >
                         {%- if is_color -%}
-                          {%- assign swatch_img = value.swatch.image | default: value.variant.featured_media.preview_image -%}
+                          {%- assign swatch_img = value.swatch.image | default: value.variant.featured_image -%}
                           <span class="pp__swatch{% unless value.available %} is-unavailable{% endunless %}" data-pp-value data-value="{{ value.name | escape }}">
                             {%- if swatch_img -%}
                               <img src="{{ swatch_img | image_url: width: 88 }}" alt="{{ value.name | escape }}" loading="lazy" width="44" height="44">
@@ -1313,17 +1243,17 @@
       <div class="pp__modal-body">
         <div class="pp__details-html" data-pp-details-html></div>
 
-        <div class="pp__modal-slider-wrap" data-pp-modal-slider-wrap {% if product.media.size == 0 %}hidden{% endif %}>
-          <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--prev" data-pp-modal-slide="left" aria-label="Vorherige Produktfotos" {% if product.media.size <= 1 %}hidden{% endif %}>
+        <div class="pp__modal-slider-wrap" data-pp-modal-slider-wrap {% if product.images.size == 0 %}hidden{% endif %}>
+          <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--prev" data-pp-modal-slide="left" aria-label="Vorherige Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
-          <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--next" data-pp-modal-slide="right" aria-label="Weitere Produktfotos" {% if product.media.size <= 1 %}hidden{% endif %}>
+          <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--next" data-pp-modal-slide="right" aria-label="Weitere Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
           </button>
           <div class="pp__modal-slider" data-pp-modal-slider>
-            {%- for media in product.media -%}
+            {%- for image in product.images -%}
               <div class="pp__modal-slide">
-                <img src="{{ media.preview_image | image_url: width: 900 }}" alt="{{ media.alt | default: product.title | escape }}" loading="lazy">
+                <img src="{{ image | image_url: width: 900 }}" alt="{{ image.alt | default: product.title | escape }}" loading="lazy">
               </div>
             {%- endfor -%}
           </div>
@@ -1345,42 +1275,6 @@
     </div>
   </div>
 
-  {%- comment -%} ================= FULLSCREEN IMAGE VIEWER ================= {%- endcomment -%}
-  <div class="pp__viewer" data-pp-viewer aria-hidden="true">
-    <div class="pp__viewer-frame" data-pp-viewer-frame role="dialog" aria-modal="true" aria-label="Produktbild Vollbildansicht">
-      {%- for media in product.media -%}
-        <img
-          class="pp__viewer-img{% if forloop.first %} is-active{% endif %}"
-          data-pp-viewer-img
-          data-index="{{ forloop.index0 }}"
-          src="{{ media.preview_image | image_url: width: 1200 }}"
-          alt="{{ media.alt | default: product.title | escape }}"
-          loading="lazy"
-        >
-      {%- endfor -%}
-
-      <button type="button" class="pp__viewer-nav pp__viewer-nav--prev" data-pp-viewer-prev aria-label="Vorheriges Produktbild" {% if product.media.size <= 1 %}hidden{% endif %}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-      </button>
-      <button type="button" class="pp__viewer-nav pp__viewer-nav--next" data-pp-viewer-next aria-label="Nächstes Produktbild" {% if product.media.size <= 1 %}hidden{% endif %}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-      </button>
-
-      <button type="button" class="pp__wishlist pp__wishlist--floating" data-pp-wishlist aria-label="Zur Wunschliste hinzufügen">
-        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>
-      </button>
-
-      <button type="button" class="pp__viewer-bag" data-pp-viewer-bag aria-label="Farbe und Größe auswählen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        <span class="pp__sr-only">Farbe und Größe auswählen</span>
-      </button>
-
-      <button type="button" class="pp__viewer-close" data-pp-close-viewer aria-label="Vollbildansicht schließen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-  </div>
-
   {%- comment -%} ================= JSON-LD ================= {%- endcomment -%}
   <script type="application/ld+json">
     {
@@ -1388,7 +1282,7 @@
       "@type": "Product",
       "name": {{ product.title | json }},
       "description": {{ product.description | strip_html | json }},
-      "image": [{% for media in product.media %}{{ media.preview_image | image_url: width: 1200 | prepend: "https:" | json }}{% unless forloop.last %},{% endunless %}{% endfor %}],
+      "image": [{% for image in product.images %}{{ image | image_url: width: 1200 | prepend: "https:" | json }}{% unless forloop.last %},{% endunless %}{% endfor %}],
       "sku": {{ current_variant.sku | json }},
       "brand": {
         "@type": "Brand",
@@ -1454,24 +1348,35 @@
 
       /* ================= GALLERY ================= */
       var Gallery = (function () {
-        var mainImgs = Array.prototype.slice.call(root.querySelectorAll('[data-pp-main-img]'));
+        var galleryJsonEl = root.querySelector('[data-pp-gallery-json]');
+        var galleryData = galleryJsonEl ? JSON.parse(galleryJsonEl.textContent) : [];
+        var mainImg = root.querySelector('[data-pp-main-img]');
+        var viewerImg = root.querySelector('[data-pp-viewer-img]');
         var thumbBtns = Array.prototype.slice.call(root.querySelectorAll('[data-pp-thumb]'));
         var dots = Array.prototype.slice.call(root.querySelectorAll('[data-pp-dot]'));
-        var viewerImgs = Array.prototype.slice.call(root.querySelectorAll('[data-pp-viewer-img]'));
-        var mediaAlt = (productData.media || []).map(function (m) { return m.alt || ''; });
         var mainImageEl = root.querySelector('[data-pp-main-image]');
         var thumbRail = root.querySelector('[data-pp-thumb-rail]');
-        var visible = mainImgs.map(function (_, i) { return i; });
+        var visible = galleryData.map(function (_, i) { return i; });
         var current = 0;
         var autoTimer = null;
         var didSwipe = false;
         var touchStartX = 0;
 
+        function applyImage(imgEl, item, sizesAttr) {
+          if (!imgEl || !item) return;
+          imgEl.src = item.src1200;
+          imgEl.srcset = item.src400 + ' 400w, ' + item.src600 + ' 600w, ' + item.src800 + ' 800w, ' + item.src1200 + ' 1200w';
+          if (sizesAttr) imgEl.sizes = sizesAttr;
+          imgEl.alt = item.alt || '';
+        }
+
         function show(index) {
+          if (!galleryData.length) return;
           if (visible.indexOf(index) === -1) index = visible[0] || 0;
           current = index;
-          mainImgs.forEach(function (img) { img.classList.toggle('is-active', Number(img.dataset.index) === index); });
-          viewerImgs.forEach(function (img) { img.classList.toggle('is-active', Number(img.dataset.index) === index); });
+          var item = galleryData[index];
+          applyImage(mainImg, item, '(min-width: 1024px) 547px, 100vw');
+          applyImage(viewerImg, item, null);
           thumbBtns.forEach(function (btn) { btn.classList.toggle('is-active', Number(btn.dataset.index) === index); });
           dots.forEach(function (dot) { dot.classList.toggle('is-active', Number(dot.dataset.index) === index); });
           var activeThumb = thumbRail && thumbRail.querySelector('[data-index="' + index + '"]');
@@ -1480,14 +1385,14 @@
 
         function filterByColor(colorValue) {
           if (!colorValue) {
-            visible = mainImgs.map(function (_, i) { return i; });
+            visible = galleryData.map(function (_, i) { return i; });
           } else {
             var lower = colorValue.toLowerCase();
             var matches = [];
-            mediaAlt.forEach(function (alt, i) {
-              if (alt.toLowerCase().indexOf(lower) !== -1) matches.push(i);
+            galleryData.forEach(function (item, i) {
+              if ((item.alt || '').toLowerCase().indexOf(lower) !== -1) matches.push(i);
             });
-            visible = matches.length ? matches : mainImgs.map(function (_, i) { return i; });
+            visible = matches.length ? matches : galleryData.map(function (_, i) { return i; });
           }
           thumbBtns.forEach(function (btn, i) { btn.style.display = visible.indexOf(i) === -1 ? 'none' : ''; });
           dots.forEach(function (dot, i) { dot.style.display = visible.indexOf(i) === -1 ? 'none' : ''; });
@@ -1496,10 +1401,12 @@
         }
 
         function next() {
+          if (!visible.length) return;
           var pos = visible.indexOf(current);
           show(visible[(pos + 1) % visible.length]);
         }
         function prev() {
+          if (!visible.length) return;
           var pos = visible.indexOf(current);
           show(visible[(pos - 1 + visible.length) % visible.length]);
         }
