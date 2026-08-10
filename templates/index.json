@@ -31,6 +31,13 @@
         "transition_speed": 1800
       }
     },
+    "category_explorer": {
+      "type": "zehn-category-explorer",
+      "settings": {
+        "accessibility_label": "Kategorien und Produkte entdecken",
+        "eyebrow": "KATEGORIE"
+      }
+    },
     "product_rails": {
       "type": "zehn-product-rails",
       "blocks": {
@@ -86,5 +93,5 @@
       }
     }
   },
-  "order": ["hero_slider", "product_rails", "highlights", "protokoll", "contact"]
+  "order": ["hero_slider", "category_explorer", "product_rails", "highlights", "protokoll", "contact"]
 }

@@ -1,0 +1,32 @@
+<div
+  class="zehn-category-results-payload"
+  data-zehn-category-products
+  data-collection-handle="{{ collection.handle }}"
+>
+  {%- if collection != blank and collection.products_count > 0 -%}
+    <ul class="zehn-category-explorer__products" role="list">
+      {%- for product in collection.products limit: 8 -%}
+        <li class="zehn-category-explorer__product">
+          {% render 'zehn-product-card', product: product, loading: 'lazy' %}
+        </li>
+      {%- endfor -%}
+    </ul>
+  {%- else -%}
+    <div class="zehn-category-explorer__empty">
+      <p>Für diese Kategorie sind aktuell keine Produkte verfügbar.</p>
+      {%- if collection != blank -%}
+        <a href="{{ collection.url }}">Kategorie öffnen</a>
+      {%- endif -%}
+    </div>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "ZEHN category results",
+  "settings": [],
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  }
+}
+{% endschema %}

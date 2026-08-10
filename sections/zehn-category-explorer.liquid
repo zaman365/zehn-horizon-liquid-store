@@ -1,0 +1,114 @@
+{%- assign collections_base = routes.collections_url -%}
+
+<section
+  class="zehn-category-explorer"
+  data-zehn-category-explorer
+  aria-label="{{ section.settings.accessibility_label | escape }}"
+>
+  <div class="zehn-category-explorer__inner zehn-page-width">
+    <nav class="zehn-category-explorer__nav" aria-label="Produktkategorien">
+      <div class="zehn-category-explorer__main" role="list">
+        <a
+          class="zehn-category-explorer__main-link"
+          href="{{ collections_base }}/shorts"
+          data-zehn-category-link
+          data-zehn-category-level="main"
+          data-zehn-category-handle="shorts"
+          data-zehn-category-label="SHORTS"
+          aria-expanded="false"
+        >SHORTS</a>
+        <a
+          class="zehn-category-explorer__main-link"
+          href="{{ collections_base }}/hosen"
+          data-zehn-category-link
+          data-zehn-category-level="main"
+          data-zehn-category-handle="hosen"
+          data-zehn-category-label="HOSEN"
+          aria-expanded="false"
+        >HOSEN</a>
+        <a
+          class="zehn-category-explorer__main-link"
+          href="{{ collections_base }}/jeans"
+          data-zehn-category-link
+          data-zehn-category-level="main"
+          data-zehn-category-handle="jeans"
+          data-zehn-category-label="JEANS"
+          aria-expanded="false"
+        >JEANS</a>
+        <a
+          class="zehn-category-explorer__main-link"
+          href="{{ collections_base }}/jacken"
+          data-zehn-category-link
+          data-zehn-category-level="main"
+          data-zehn-category-handle="jacken"
+          data-zehn-category-label="JACKEN"
+          aria-expanded="false"
+        >JACKEN</a>
+        <a
+          class="zehn-category-explorer__main-link"
+          href="{{ collections_base }}/tops"
+          data-zehn-category-link
+          data-zehn-category-level="main"
+          data-zehn-category-handle="tops"
+          data-zehn-category-label="TOPS"
+          aria-expanded="false"
+        >TOPS</a>
+      </div>
+
+      <div class="zehn-category-explorer__subnav" data-zehn-category-subnav hidden>
+        <div class="zehn-category-explorer__subgroup" data-zehn-category-subgroup="shorts" hidden>
+          <a class="zehn-category-explorer__sub-link" href="{{ collections_base }}/cargo-shorts" data-zehn-category-link data-zehn-category-level="sub" data-zehn-category-handle="cargo-shorts" data-zehn-category-label="CARGO-SHORTS">CARGO-SHORTS</a>
+          <a class="zehn-category-explorer__sub-link" href="{{ collections_base }}/chino-shorts" data-zehn-category-link data-zehn-category-level="sub" data-zehn-category-handle="chino-shorts" data-zehn-category-label="CHINO-SHORTS">CHINO-SHORTS</a>
+        </div>
+        <div class="zehn-category-explorer__subgroup" data-zehn-category-subgroup="hosen" hidden>
+          <a class="zehn-category-explorer__sub-link" href="{{ collections_base }}/cargohosen" data-zehn-category-link data-zehn-category-level="sub" data-zehn-category-handle="cargohosen" data-zehn-category-label="CARGOHOSEN">CARGOHOSEN</a>
+          <a class="zehn-category-explorer__sub-link" href="{{ collections_base }}/chinohosen" data-zehn-category-link data-zehn-category-level="sub" data-zehn-category-handle="chinohosen" data-zehn-category-label="CHINOHOSEN">CHINOHOSEN</a>
+          <a class="zehn-category-explorer__sub-link" href="{{ collections_base }}/jeans" data-zehn-category-link data-zehn-category-level="sub" data-zehn-category-handle="jeans" data-zehn-category-label="JEANS">JEANS</a>
+        </div>
+        <div class="zehn-category-explorer__subgroup" data-zehn-category-subgroup="jacken" hidden>
+          <a class="zehn-category-explorer__sub-link" href="{{ collections_base }}/uebergangsjacken" data-zehn-category-link data-zehn-category-level="sub" data-zehn-category-handle="uebergangsjacken" data-zehn-category-label="ÜBERGANGSJACKEN">ÜBERGANGSJACKEN</a>
+          <a class="zehn-category-explorer__sub-link" href="{{ collections_base }}/winterjacken" data-zehn-category-link data-zehn-category-level="sub" data-zehn-category-handle="winterjacken" data-zehn-category-label="WINTERJACKEN">WINTERJACKEN</a>
+        </div>
+        <div class="zehn-category-explorer__subgroup" data-zehn-category-subgroup="tops" hidden>
+          <a class="zehn-category-explorer__sub-link" href="{{ collections_base }}/t-shirts" data-zehn-category-link data-zehn-category-level="sub" data-zehn-category-handle="t-shirts" data-zehn-category-label="T-SHIRTS">T-SHIRTS</a>
+          <a class="zehn-category-explorer__sub-link" href="{{ collections_base }}/poloshirts" data-zehn-category-link data-zehn-category-level="sub" data-zehn-category-handle="poloshirts" data-zehn-category-label="POLOSHIRTS">POLOSHIRTS</a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="zehn-category-explorer__results-shell" data-zehn-category-results-shell hidden>
+      <div class="zehn-category-explorer__results-header">
+        <div>
+          <span class="zehn-category-explorer__eyebrow">{{ section.settings.eyebrow }}</span>
+          <h2 class="zehn-category-explorer__title" data-zehn-category-title></h2>
+        </div>
+        <a class="zehn-category-explorer__all" href="{{ routes.all_products_collection_url }}" data-zehn-category-all>Alle ansehen</a>
+      </div>
+      <p class="zehn-category-explorer__status" data-zehn-category-status role="status" aria-live="polite"></p>
+      <div class="zehn-category-explorer__results" data-zehn-category-results></div>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "ZEHN category explorer",
+  "settings": [
+    {
+      "type": "text",
+      "id": "accessibility_label",
+      "label": "Accessibility label",
+      "default": "Kategorien und Produkte entdecken"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Results eyebrow",
+      "default": "KATEGORIE"
+    }
+  ],
+  "presets": [
+    { "name": "ZEHN category explorer" }
+  ]
+}
+{% endschema %}
