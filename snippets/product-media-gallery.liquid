@@ -1,0 +1,142 @@
+{%- comment -%}
+  ZEHN — Product media gallery
+  Usage: {% render 'product-media-gallery', product: product, current_variant: current_variant %}
+
+  Deliberately uses product.images (guaranteed `image` objects, safe for the
+  image_url filter) instead of product.media (mixed image/video/model types
+  that require .preview_image indirection and are easy to get wrong).
+
+  Rendering strategy: there is exactly ONE main <img> and ONE viewer <img> in
+  the DOM. Thumbnail/dot clicks swap that single element's src/srcset via JS
+  instead of toggling visibility on N stacked <img> tags — this removes the
+  whole class of "is-active never got applied so nothing is visible" bugs,
+  since the visible image is never conditionally hidden.
+
+  Depends on CSS classes already defined in main-product.liquid's <style>
+  block (scoped by #shopify-section-{{ section.id }} .pp), so no separate
+  stylesheet is needed here.
+{%- endcomment -%}
+
+{%- liquid
+  assign gallery_images = product.images
+  assign first_image = gallery_images.first
+-%}
+
+<div class="pp__gallery">
+  <div class="pp__gallery-grid">
+
+    <div class="pp__thumbs" data-pp-thumbs {% if gallery_images.size <= 1 %}hidden{% endif %}>
+      <button type="button" class="pp__thumb-nav pp__thumb-nav--up" data-pp-thumb-scroll="up" aria-label="Vorherige Bilder anzeigen" hidden>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+      </button>
+      <div class="pp__thumb-rail" data-pp-thumb-rail>
+        {%- for image in gallery_images -%}
+          <button
+            type="button"
+            class="pp__thumb{% if forloop.first %} is-active{% endif %}"
+            data-pp-thumb
+            data-index="{{ forloop.index0 }}"
+            aria-label="Bild {{ forloop.index }} anzeigen"
+          >
+            <img
+              src="{{ image | image_url: width: 160 }}"
+              alt="{{ image.alt | default: product.title | escape }}"
+              loading="lazy"
+              width="80"
+              height="120"
+            >
+          </button>
+        {%- endfor -%}
+      </div>
+      <button type="button" class="pp__thumb-nav pp__thumb-nav--down" data-pp-thumb-scroll="down" aria-label="Weitere Bilder anzeigen" {% if gallery_images.size <= 4 %}hidden{% endif %}>
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
+
+    <div class="pp__main-image" data-pp-main-image role="button" tabindex="0" aria-label="Produktbild in Vollbild öffnen">
+      {%- if first_image -%}
+        <img
+          data-pp-main-img
+          src="{{ first_image | image_url: width: 1200 }}"
+          srcset="
+            {{ first_image | image_url: width: 400 }} 400w,
+            {{ first_image | image_url: width: 600 }} 600w,
+            {{ first_image | image_url: width: 800 }} 800w,
+            {{ first_image | image_url: width: 1200 }} 1200w
+          "
+          sizes="(min-width: 1024px) 547px, 100vw"
+          alt="{{ first_image.alt | default: product.title | escape }}"
+          loading="eager"
+          width="{{ first_image.width }}"
+          height="{{ first_image.height }}"
+        >
+      {%- else -%}
+        {{ 'product-1' | placeholder_svg_tag: 'pp__placeholder-img' }}
+      {%- endif -%}
+
+      <button type="button" class="pp__wishlist" data-pp-wishlist aria-label="Zur Wunschliste hinzufügen">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>
+      </button>
+    </div>
+
+    <div class="pp__dots" data-pp-dots {% if gallery_images.size <= 1 %}hidden{% endif %}>
+      {%- for image in gallery_images -%}
+        <button type="button" class="pp__dot{% if forloop.first %} is-active{% endif %}" data-pp-dot data-index="{{ forloop.index0 }}" aria-label="Bild {{ forloop.index }} anzeigen"></button>
+      {%- endfor -%}
+    </div>
+
+  </div>
+</div>
+
+{%- comment -%} ---------- fullscreen image viewer ---------- {%- endcomment -%}
+<div class="pp__viewer" data-pp-viewer aria-hidden="true">
+  <div class="pp__viewer-frame" data-pp-viewer-frame role="dialog" aria-modal="true" aria-label="Produktbild Vollbildansicht">
+    {%- if first_image -%}
+      <img
+        data-pp-viewer-img
+        src="{{ first_image | image_url: width: 1200 }}"
+        alt="{{ first_image.alt | default: product.title | escape }}"
+        loading="lazy"
+      >
+    {%- endif -%}
+
+    <button type="button" class="pp__viewer-nav pp__viewer-nav--prev" data-pp-viewer-prev aria-label="Vorheriges Produktbild" {% if gallery_images.size <= 1 %}hidden{% endif %}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <button type="button" class="pp__viewer-nav pp__viewer-nav--next" data-pp-viewer-next aria-label="Nächstes Produktbild" {% if gallery_images.size <= 1 %}hidden{% endif %}>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+
+    <button type="button" class="pp__wishlist pp__wishlist--floating" data-pp-wishlist aria-label="Zur Wunschliste hinzufügen">
+      <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"/></svg>
+    </button>
+
+    <button type="button" class="pp__viewer-bag" data-pp-viewer-bag aria-label="Farbe und Größe auswählen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      <span class="pp__sr-only">Farbe und Größe auswählen</span>
+    </button>
+
+    <button type="button" class="pp__viewer-close" data-pp-close-viewer aria-label="Vollbildansicht schließen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+</div>
+
+{%- comment -%}
+  Precomputed image URLs at each width, keyed by index. JS can't call Liquid's
+  image_url filter, so every size the gallery might swap to is generated here
+  up front and just looked up by index at click time.
+{%- endcomment -%}
+<script type="application/json" data-pp-gallery-json>
+[
+  {%- for image in gallery_images -%}
+  {
+    "alt": {{ image.alt | default: product.title | escape | json }},
+    "src400": {{ image | image_url: width: 400 | json }},
+    "src600": {{ image | image_url: width: 600 | json }},
+    "src800": {{ image | image_url: width: 800 | json }},
+    "src1200": {{ image | image_url: width: 1200 | json }}
+  }{% unless forloop.last %},{% endunless %}
+  {%- endfor -%}
+]
+</script>
