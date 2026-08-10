@@ -175,6 +175,9 @@
                               {% endif %}
                               <span class="menu-drawer__menu-item-text wrap-text">{{ childlink.title | escape }}</span>
                             </a>
+                            {% if childlink.links == blank %}
+                              {% render 'zehn-category-sublinks', link: childlink, variant: 'drawer' %}
+                            {% endif %}
                           </li>
                         {%- endfor -%}
                       </ul>
@@ -235,6 +238,9 @@
                           {% endif %}
                           <span class="menu-drawer__menu-item-text wrap-text">{{ childlink.title | escape }}</span>
                         </a>
+                        {% if childlink.links == blank %}
+                          {% render 'zehn-category-sublinks', link: childlink, variant: 'drawer' %}
+                        {% endif %}
                       </li>
                     {%- endfor -%}
                   </ul>

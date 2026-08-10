@@ -1,0 +1,40 @@
+{%- doc -%}
+  Renders the canonical ZEHN subcategories when a Shopify navigation item has
+  no configured children. Real Shopify child links always take precedence.
+
+  @param {object} link - Parent navigation link
+  @param {string} [variant] - `mega` or `drawer`
+{%- enddoc -%}
+
+{%- liquid
+  assign category_key = link.title | handleize
+  assign subcategory_pairs = blank
+
+  case category_key
+    when 'shorts'
+      assign subcategory_pairs = 'cargo-shorts|CARGO-SHORTS,chino-shorts|CHINO-SHORTS'
+    when 'hosen'
+      assign subcategory_pairs = 'cargohosen|CARGOHOSEN,chinohosen|CHINOHOSEN,jeans|JEANS'
+    when 'jacken'
+      assign subcategory_pairs = 'uebergangsjacken|ÜBERGANGSJACKEN,winterjacken|WINTERJACKEN'
+    when 'tops'
+      assign subcategory_pairs = 't-shirts|T-SHIRTS,poloshirts|POLOSHIRTS'
+  endcase
+-%}
+
+{%- if subcategory_pairs != blank -%}
+  <ul class="zehn-category-sublinks zehn-category-sublinks--{{ variant | default: 'mega' }} list-unstyled" role="list">
+    {%- assign subcategories = subcategory_pairs | split: ',' -%}
+    {%- for subcategory in subcategories -%}
+      {%- assign parts = subcategory | split: '|' -%}
+      <li>
+        <a
+          class="{% if variant == 'drawer' %}menu-drawer__menu-item menu-drawer__menu-item--child focus-inset{% else %}mega-menu__link{% endif %}"
+          href="{{ routes.collections_url }}/{{ parts[0] }}"
+        >
+          <span class="wrap-text">{{ parts[1] }}</span>
+        </a>
+      </li>
+    {%- endfor -%}
+  </ul>
+{%- endif -%}

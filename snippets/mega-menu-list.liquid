@@ -70,14 +70,24 @@
       assign menu_content_type = 'text'
     endif
   endif
+
+  assign parent_link_key = parent_link.title | handleize
 %}
 <ul
   data-menu-list-id="{{ id }}"
-  class="mega-menu__list list-unstyled"
+  class="mega-menu__list list-unstyled{% if parent_link_key == 'shop-all' %} mega-menu__list--zehn-hierarchy{% endif %}"
   style="--menu-image-border-radius: {{ image_border_radius }}px;"
 >
   {% for link in parent_link.links %}
     {% liquid
+      assign zehn_category_key = link.title | handleize
+      assign zehn_category_token = '|' | append: zehn_category_key | append: '|'
+      assign zehn_parent_keys = '|shorts|hosen|jacken|tops|'
+      assign zehn_has_sublinks = false
+      if link.links == blank and zehn_parent_keys contains zehn_category_token
+        assign zehn_has_sublinks = true
+      endif
+
       # Decide whether to open a column span, and how many columns of the grid to span
       if forloop.first or open_column_span == false
         assign open_column_span = true
@@ -109,7 +119,7 @@
     <div>
       <a
         href="{{ link.url }}"
-        class="mega-menu__link {% if link.links != blank %}mega-menu__link--parent{% endif %}"
+        class="mega-menu__link {% if link.links != blank or zehn_has_sublinks %}mega-menu__link--parent{% endif %}"
       >
         {% if menu_content_type == 'collection_images' %}
           {%- capture collection_image_sizes -%}
@@ -158,6 +168,8 @@
             </li>
           {% endfor %}
         </ul>
+      {% elsif zehn_has_sublinks %}
+        {% render 'zehn-category-sublinks', link: link, variant: 'mega' %}
       {% endif %}
     </div>
 
