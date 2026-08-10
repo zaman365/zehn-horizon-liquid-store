@@ -403,7 +403,7 @@
 
         {%- comment -%} ---------- brand / newsletter / socials ---------- {%- endcomment -%}
         <div class="zf__brand">
-          <a class="zf__club" href="/pages/contact?view=zehn-club" aria-label="ZEHN Club entdecken">
+          <a class="zf__club" href="/zehn-club" aria-label="ZEHN Club entdecken">
             <span class="zf__club-mark">
               <img src="{{ 'ZEHN_Club.png' | asset_url }}" alt="" aria-hidden="true" width="531" height="531" loading="lazy">
             </span>
@@ -518,13 +518,13 @@
               case forloop.index
                 when 1
                   assign heading = 'Rechtliches'
-                  assign fallback_links = 'Impressum|/policies/legal-notice,AGB|/policies/terms-of-service,Datenschutz|/policies/privacy-policy,Cookies|/policies/privacy-policy#cookies,FAQ|/pages/contact?view=faq,Produktsicherheit|/pages/contact?view=produktsicherheit,Widerruf|/policies/refund-policy'
+                  assign fallback_links = 'Impressum|/pages/impressum,AGB|/pages/terms,Datenschutz|/pages/privacy,Cookies|/pages/cookies,FAQ|/pages/faq,Produktsicherheit|/blogs/produktsicherheit,Widerruf|/pages/widerruf'
                 when 2
                   assign heading = 'Über ZEHN'
-                  assign fallback_links = 'ZEHN Club|/pages/contact?view=zehn-club,Unsere Geschichte|/pages/contact?view=about-us,Nachhaltigkeit|/pages/contact?view=sustainability,ZEHN PROTOKOLL|/pages/contact?view=protokoll'
+                  assign fallback_links = 'ZEHN Club|/zehn-club,Unsere Geschichte|/about-us,Nachhaltigkeit|/pages/sustainability,ZEHN PROTOKOLL|/protokoll'
                 else
                   assign heading = 'Kundenservice'
-                  assign fallback_links = 'Bestellung verfolgen|/pages/contact?view=track-order,Kontakt|/pages/contact,Lieferung & Rückgabe|/policies/shipping-policy,Zahlung & Sicherheit|/pages/contact?view=payment,Stoffpflege|/pages/contact?view=care,Fitguide|/pages/contact?view=fitguide'
+                  assign fallback_links = 'Bestellung verfolgen|/pages/track-order,Kontakt|/pages/contact,Lieferung & Rückgabe|/pages/shipping,Zahlung & Sicherheit|/pages/payment,Stoffpflege|/pages/care,Fitguide|/pages/fitguide'
               endcase
             elsif heading == blank and menu != blank
               assign heading = menu.title

@@ -1,0 +1,114 @@
+<section class="zcp" aria-labelledby="zcp-title-{{ section.id }}">
+  <header class="zcp__hero">
+    <div class="zcp__inner">
+      <p class="zcp__eyebrow">Kundenservice</p>
+      <h1 id="zcp-title-{{ section.id }}">Kontakt</h1>
+      <p>Wir helfen persönlich, klar und ohne Umwege.</p>
+    </div>
+  </header>
+
+  <div class="zcp__inner zcp__body">
+    <div class="zcp__channels" aria-label="Kontaktmöglichkeiten">
+      <a href="https://wa.me/491634210324" target="_blank" rel="noopener noreferrer"><span>WhatsApp</span><small>Antwort innerhalb von 1 Stunde</small></a>
+      <a href="mailto:info@zehnfashion.de"><span>E-Mail</span><small>Antwort innerhalb von 24 Stunden</small></a>
+      <a href="tel:+491634210324"><span>Telefon</span><small>Mo–Fr, 09:00–18:00 Uhr</small></a>
+      <a href="/pages/faq"><span>FAQ</span><small>Antworten direkt finden</small></a>
+    </div>
+
+    <div class="zcp__grid">
+      <div>
+        <p class="zcp__eyebrow">Nachricht senden</p>
+        <h2>Wie können wir helfen?</h2>
+        <p class="zcp__intro">Nennen Sie bei Bestellfragen möglichst Ihre Bestellnummer. So können wir schneller helfen.</p>
+      </div>
+
+      {%- form 'contact', class: 'zcp__form' -%}
+        {%- if form.posted_successfully? -%}
+          <p class="zcp__notice zcp__notice--success" tabindex="-1">Vielen Dank. Ihre Nachricht wurde erfolgreich gesendet.</p>
+        {%- endif -%}
+        {%- if form.errors -%}
+          <div class="zcp__notice zcp__notice--error" role="alert" tabindex="-1">
+            {{ form.errors | default_errors }}
+          </div>
+        {%- endif -%}
+
+        <div class="zcp__field-row">
+          <label>Ihr Name<input type="text" name="contact[name]" autocomplete="name" value="{% if form.name %}{{ form.name | escape }}{% elsif customer %}{{ customer.name | escape }}{% endif %}" required></label>
+          <label>E-Mail<input type="email" name="contact[email]" autocomplete="email" value="{% if form.email %}{{ form.email | escape }}{% elsif customer %}{{ customer.email | escape }}{% endif %}" required></label>
+        </div>
+        <label>Betreff
+          <select name="contact[Betreff]">
+            <option>Bestellung & Zahlung</option>
+            <option>Versand & Lieferung</option>
+            <option>Retoure & Erstattung</option>
+            <option>Produkt & Größe</option>
+            <option>ZEHN Club</option>
+            <option>Sonstiges</option>
+          </select>
+        </label>
+        <label>Nachricht<textarea name="contact[body]" rows="7" required>{{ form.body }}</textarea></label>
+        <button class="zcp__submit" type="submit">Nachricht senden</button>
+      {%- endform -%}
+    </div>
+
+    <section class="zcp__faq" aria-labelledby="zcp-faq-{{ section.id }}">
+      <p class="zcp__eyebrow">Häufige Fragen</p>
+      <h2 id="zcp-faq-{{ section.id }}">Vielleicht ist die Antwort schon hier.</h2>
+      <div>
+        <details><summary>Wie lange dauert die Lieferung?</summary><p>Deutschland: in der Regel 2–5 Werktage. EU: ungefähr 3–8 Werktage.</p></details>
+        <details><summary>Kann ich meine Bestellung verfolgen?</summary><p>Ja. Nutzen Sie den Link in der Versandbestätigung oder unsere <a href="/pages/track-order">Sendungsverfolgung</a>.</p></details>
+        <details><summary>Wie funktioniert eine Rückgabe?</summary><p>Alle Schritte und Fristen finden Sie unter <a href="/pages/shipping">Lieferung & Rückgabe</a>.</p></details>
+        <details><summary>Welche Größe passt mir?</summary><p>Vergleichen Sie ein gut sitzendes Kleidungsstück mit unserem <a href="/pages/fitguide">Fitguide</a>.</p></details>
+      </div>
+    </section>
+  </div>
+</section>
+
+{% stylesheet %}
+  .zcp { width: 100%; background: #f4f4f5; color: #0f1426; }
+  .zcp * { box-sizing: border-box; }
+  .zcp__inner { width: min(100% - 32px, 1180px); margin-inline: auto; }
+  .zcp__hero { padding: clamp(72px, 10vw, 132px) 0 clamp(48px, 7vw, 88px); background: #0f1426; color: #fff; }
+  .zcp__eyebrow { margin: 0 0 14px; color: #ff5a1f; font-size: 12px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+  .zcp__hero h1 { margin: 0; color: inherit; font-size: clamp(48px, 8vw, 88px); line-height: .95; text-transform: uppercase; }
+  .zcp__hero p:last-child { max-width: 620px; margin: 20px 0 0; color: rgb(255 255 255 / 68%); font-size: clamp(17px, 2vw, 22px); }
+  .zcp__body { padding-block: clamp(42px, 7vw, 88px); }
+  .zcp__channels { display: grid; gap: 12px; }
+  .zcp__channels a { display: grid; gap: 5px; min-height: 108px; align-content: center; padding: 22px; border: 1px solid rgb(15 20 38 / 12%); border-radius: 12px; background: #fff; color: inherit; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
+  .zcp__channels a:hover { box-shadow: 0 12px 30px rgb(15 20 38 / 10%); transform: translateY(-2px); }
+  .zcp__channels span { font-size: 19px; font-weight: 750; }
+  .zcp__channels small { color: rgb(15 20 38 / 58%); font-size: 13px; }
+  .zcp__grid { display: grid; gap: clamp(28px, 6vw, 80px); margin-top: clamp(58px, 9vw, 104px); padding-top: 36px; border-top: 1px solid rgb(15 20 38 / 14%); }
+  .zcp__grid h2, .zcp__faq h2 { margin: 0; font-size: clamp(30px, 4vw, 48px); letter-spacing: -.03em; }
+  .zcp__intro { max-width: 470px; color: rgb(15 20 38 / 64%); line-height: 1.65; }
+  .zcp__form { display: grid; gap: 18px; }
+  .zcp__field-row { display: grid; gap: 18px; }
+  .zcp__form label { display: grid; gap: 8px; font-size: 13px; font-weight: 700; }
+  .zcp__form :is(input, select, textarea) { width: 100%; padding: 13px 15px; border: 1px solid rgb(15 20 38 / 22%); border-radius: 8px; background: #fff; color: inherit; font: inherit; }
+  .zcp__form :is(input, select) { min-height: 49px; }
+  .zcp__form :is(input, select, textarea):focus { border-color: #ff5a1f; outline: 2px solid rgb(255 90 31 / 15%); }
+  .zcp__submit { min-height: 50px; padding: 12px 22px; border: 0; border-radius: 999px; background: #0f1426; color: #fff; font: inherit; font-weight: 750; cursor: pointer; }
+  .zcp__notice { margin: 0; padding: 14px; border-radius: 8px; background: #fff; }
+  .zcp__notice--success { border-left: 4px solid #22863a; }
+  .zcp__notice--error { border-left: 4px solid #b42318; }
+  .zcp__faq { margin-top: clamp(64px, 10vw, 120px); }
+  .zcp__faq > div { margin-top: 26px; border-top: 1px solid rgb(15 20 38 / 14%); }
+  .zcp__faq details { border-bottom: 1px solid rgb(15 20 38 / 14%); }
+  .zcp__faq summary { padding: 20px 4px; font-size: 16px; font-weight: 750; cursor: pointer; }
+  .zcp__faq details p { max-width: 760px; margin: 0; padding: 0 4px 22px; color: rgb(15 20 38 / 66%); line-height: 1.65; }
+  .zcp__faq a { color: inherit; }
+  @media screen and (min-width: 750px) {
+    .zcp__channels { grid-template-columns: repeat(4, 1fr); }
+    .zcp__grid { grid-template-columns: minmax(260px, .75fr) minmax(0, 1.25fr); }
+    .zcp__field-row { grid-template-columns: repeat(2, 1fr); }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "ZEHN contact page",
+  "enabled_on": {"templates": ["page"]},
+  "settings": [],
+  "presets": [{"name": "ZEHN contact page"}]
+}
+{% endschema %}

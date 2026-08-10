@@ -10,8 +10,45 @@
   assign page_title = blank
   assign page_subtitle = blank
   assign page_category = 'ZEHN'
+  assign policy_handle = blank
+  assign page_variant = 'standard'
 
   case path
+    when '/zehn-club'
+      assign page_title = 'ZEHN Club'
+      assign page_subtitle = 'Sammle Club-Punkte und entdecke Vorteile, die mit dir wachsen.'
+      assign page_category = 'Member Experience'
+      assign page_variant = 'club'
+      capture page_content
+        echo '<section><h2>Werde Teil von ZEHN.</h2><div><p>Mit deinem kostenlosen Kundenkonto erhältst du Zugang zu Club-Leveln, persönlichen Vorteilen und ausgewählten Member-Aktionen.</p><p><a class="zehn-static-page__button" href="/account/login">Anmelden oder Konto erstellen</a></p></div></section>'
+        echo '<section><h2>Level & Vorteile</h2><div class="zehn-static-page__cards"><article><strong>Member</strong><span>Ab 0 €</span><p>1 Punkt je 1 € Einkaufswert und persönliche Club-Übersicht.</p></article><article><strong>Insider</strong><span>Ab 250 €</span><p>Früher Zugang zu Aktionen und exklusive Club-Inhalte.</p></article><article><strong>Icon</strong><span>Ab 500 €</span><p>Ausgewählte Member-Drops und priorisierte Club-Anfragen.</p></article><article><strong>Circle</strong><span>Ab 1.000 €</span><p>Kuratierte Empfehlungen und besondere ZEHN Club-Aktionen.</p></article></div></section>'
+        echo '<section><h2>Ein Konto. Mehr ZEHN.</h2><div><p>Erstelle dein Konto, shoppe bei ZEHN und entdecke deine verfügbaren Vorteile direkt im Kundenkonto.</p><p><a href="/account">Club-Status im Kundenkonto öffnen</a></p></div></section>'
+      endcapture
+    when '/pages/impressum'
+      assign page_title = 'Impressum'
+      assign page_subtitle = 'Angaben gemäß § 5 DDG'
+      assign page_category = 'Rechtliches'
+      assign policy_handle = 'legal-notice'
+    when '/pages/terms'
+      assign page_title = 'AGB'
+      assign page_subtitle = 'Allgemeine Geschäftsbedingungen für den ZEHN Online-Shop'
+      assign page_category = 'Rechtliches'
+      assign policy_handle = 'terms-of-service'
+    when '/pages/privacy'
+      assign page_title = 'Datenschutz'
+      assign page_subtitle = 'Informationen zur Verarbeitung personenbezogener Daten'
+      assign page_category = 'Rechtliches'
+      assign policy_handle = 'privacy-policy'
+    when '/pages/cookies'
+      assign page_title = 'Cookie-Richtlinie'
+      assign page_subtitle = 'Transparenz und Kontrolle über Ihre Datenschutz-Einstellungen'
+      assign page_category = 'Rechtliches'
+      assign page_variant = 'cookies'
+      capture page_content
+        echo '<section><h2>Was sind Cookies?</h2><div><p>Cookies sind kleine Textdateien, die auf Ihrem Endgerät gespeichert werden. Notwendige Cookies sichern Warenkorb, Checkout und Kundenkonto. Analyse-, Präferenz- und Marketing-Cookies werden nur entsprechend Ihrer Auswahl verwendet.</p></div></section>'
+        echo '<section><h2>Ihre Einstellungen</h2><div class="zehn-cookie-settings" data-zehn-cookie-settings><label><input type="checkbox" name="analytics"> Analyse erlauben</label><label><input type="checkbox" name="preferences"> Präferenzen erlauben</label><label><input type="checkbox" name="marketing"> Marketing erlauben</label><div class="zehn-cookie-settings__actions"><button class="zehn-static-page__button" type="button" data-cookie-save>Einstellungen speichern</button><button class="zehn-static-page__button zehn-static-page__button--secondary" type="button" data-cookie-reset>Zurücksetzen</button></div><p class="zehn-cookie-settings__status" role="status" aria-live="polite"></p></div></section>'
+        echo '<section><h2>Weitere Informationen</h2><div><p>Einzelheiten zu eingesetzten Diensten, Rechtsgrundlagen und Ihren Rechten finden Sie in unserer <a href="/pages/privacy">Datenschutzerklärung</a>. Notwendige Cookies können nicht deaktiviert werden.</p></div></section>'
+      endcapture
     when '/about-us'
       assign page_title = 'Unsere Geschichte'
       assign page_subtitle = 'Substanz statt Hype'
@@ -40,50 +77,65 @@
         echo '<section><h2>Fragen zu Materialien?</h2><p>Unser Team beantwortet produktbezogene Fragen unter <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a>.</p></section>'
       endcapture
     when '/pages/faq'
-      assign page_title = 'Häufig gestellte Fragen'
+      assign page_title = 'FAQ'
       assign page_subtitle = 'Antworten auf die wichtigsten Fragen'
-      assign page_category = 'Rechtliches'
+      assign page_category = 'Kundenservice'
       capture page_content
-        echo '<section><h2>Bestellung & Zahlung</h2><p>Wählen Sie Ihre Artikel aus und folgen Sie dem Checkout. Die für Ihre Bestellung verfügbaren Zahlungsarten werden dort angezeigt. Eine Änderung oder Stornierung hängt vom Bearbeitungsstatus ab; kontaktieren Sie uns deshalb möglichst schnell.</p></section>'
-        echo '<section><h2>Versand & Lieferung</h2><p>Innerhalb Deutschlands ist der Versand kostenlos. Die Regellieferzeit beträgt 2–5 Werktage. Nach dem Versand erhalten Sie eine E-Mail mit Sendungsverfolgung.</p></section>'
-        echo '<section><h2>Retouren</h2><p>Artikel können innerhalb von 30 Tagen ungetragen, ungewaschen und mit originalen Etiketten zurückgegeben werden. Details finden Sie unter <a href="/policies/refund-policy">Lieferung & Rückgabe</a>.</p></section>'
-        echo '<section><h2>Produkte & Größen</h2><p>Vergleichen Sie die Produktmaße mit einem gut sitzenden Kleidungsstück. Unser <a href="/pages/contact?view=fitguide">Fitguide</a> und die <a href="/pages/contact?view=care">Pflegehinweise</a> helfen bei Auswahl und Nutzung.</p></section>'
+        echo '<section><h2>Bestellung & Zahlung</h2><div><p>Wählen Sie Ihre Artikel aus und folgen Sie dem Checkout. Die für Ihre Bestellung verfügbaren Zahlungsarten werden dort angezeigt. Änderungen oder Stornierungen hängen vom Bearbeitungsstatus ab – kontaktieren Sie uns deshalb möglichst schnell.</p><p><a href="/pages/payment">Mehr zu Zahlung & Sicherheit</a></p></div></section>'
+        echo '<section><h2>Versand & Lieferung</h2><div><p>Innerhalb Deutschlands ist der Versand kostenlos. Die Regellieferzeit beträgt 2–5 Werktage. Nach dem Versand erhalten Sie eine E-Mail mit Sendungsverfolgung.</p><p><a href="/pages/track-order">Bestellung verfolgen</a></p></div></section>'
+        echo '<section><h2>Retouren & Umtausch</h2><div><p>Artikel können innerhalb von 30 Tagen ungetragen, ungewaschen und mit originalen Etiketten zurückgegeben werden.</p><p><a href="/pages/shipping">Lieferung & Rückgabe ansehen</a></p></div></section>'
+        echo '<section><h2>Produkte & Größen</h2><div><p>Vergleichen Sie die Produktmaße mit einem gut sitzenden Kleidungsstück. Unser <a href="/pages/fitguide">Fitguide</a> und die <a href="/pages/care">Pflegehinweise</a> helfen bei Auswahl und Nutzung.</p></div></section>'
       endcapture
-    when '/pages/produktsicherheit'
+    when '/blogs/produktsicherheit', '/pages/produktsicherheit'
       assign page_title = 'Produktsicherheit'
-      assign page_subtitle = 'Hinweise für eine sichere Nutzung'
+      assign page_subtitle = 'Sicherheits- und Gebrauchshinweise'
       assign page_category = 'Rechtliches'
       capture page_content
-        echo '<section><h2>Produktinformationen</h2><p>Beachten Sie stets Pflege-, Material- und Sicherheitshinweise auf dem Produkt, dem Etikett und der jeweiligen Produktseite. Halten Sie Verpackungsmaterial von Kindern fern.</p></section>'
-        echo '<section><h2>Herstellerkontakt</h2><p>VINCET GmbH<br>Friedrich-Engels-Straße 23<br>09337 Hohenstein-Ernstthal<br>Deutschland</p><p>E-Mail: <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a><br>Telefon: <a href="tel:+491634210324">+49 163 4210324</a></p></section>'
-        echo '<section><h2>Problem melden</h2><p>Wenn Sie einen sicherheitsrelevanten Mangel vermuten, verwenden Sie das Produkt nicht weiter und senden Sie uns Produktname, Bestellnummer und eine kurze Beschreibung.</p></section>'
+        echo '<section><h2>Sicherheits- und Gebrauchshinweise</h2><div><p>Beachten Sie Pflege-, Material- und Sicherheitshinweise auf dem Produkt, dem Etikett und der jeweiligen Produktseite. Halten Sie Verpackungsmaterial von Kindern fern.</p></div></section>'
+        echo '<section><h2>Herstellerkontakt</h2><div><p>VINCET GmbH<br>Friedrich-Engels-Straße 23<br>09337 Hohenstein-Ernstthal<br>Deutschland</p><p>E-Mail: <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a><br>Telefon: <a href="tel:+491634210324">+49 163 4210324</a></p></div></section>'
+        echo '<section><h2>Problem melden</h2><div><p>Wenn Sie einen sicherheitsrelevanten Mangel vermuten, verwenden Sie das Produkt nicht weiter und senden Sie uns Produktname, Bestellnummer und eine kurze Beschreibung.</p><p><a class="zehn-static-page__button" href="/pages/contact">Problem melden</a></p></div></section>'
       endcapture
+    when '/pages/widerruf'
+      assign page_title = 'Widerrufsbelehrung'
+      assign page_subtitle = 'Informationen zu Ihrem Widerrufsrecht'
+      assign page_category = 'Rechtliches'
+      assign policy_handle = 'refund-policy'
     when '/pages/track-order'
       assign page_title = 'Bestellung verfolgen'
       assign page_subtitle = 'Wo ist mein Paket?'
       assign page_category = 'Kundenservice'
       capture page_content
-        echo '<section><h2>Sendungsverfolgung</h2><p>Nach dem Versand erhalten Sie eine Bestätigungs-E-Mail mit Tracking-Link. Die Sendungsverfolgung wird in der Regel innerhalb von 24 Stunden nach Versand aktiviert.</p><p><a class="zehn-static-page__button" href="/account">Zum Kundenkonto</a></p></section>'
-        echo '<section><h2>Lieferzeiten</h2><p>Deutschland: 2–5 Werktage. Europäische Union: 3–8 Werktage. Während Aktionen und Feiertagen kann sich die Lieferzeit verlängern.</p></section>'
-        echo '<section><h2>Probleme mit der Lieferung?</h2><p>Kontaktieren Sie uns unter <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a> oder telefonisch unter <a href="tel:+491634210324">+49 163 4210324</a>.</p></section>'
+        echo '<section><h2>Sendungsverfolgung</h2><div><p>Geben Sie die DHL-Sendungsnummer aus Ihrer Versandbestätigung ein.</p><form class="zehn-track-form" data-zehn-track-form><label for="zehn-track-code">Sendungsnummer</label><div><input id="zehn-track-code" name="tracking" type="text" autocomplete="off" required placeholder="z. B. 0034043416…"><button class="zehn-static-page__button" type="submit">Bei DHL verfolgen</button></div><p role="status" data-track-status></p></form></div></section>'
+        echo '<section><h2>Wo finde ich meine Sendungsnummer?</h2><div><p>Nach dem Versand erhalten Sie eine Bestätigungs-E-Mail mit Tracking-Link. Die Sendungsverfolgung wird in der Regel innerhalb von 24 Stunden aktiviert.</p></div></section>'
+        echo '<section><h2>Bestellung im Kundenkonto verfolgen</h2><div><p>Angemeldete Kunden finden Status und Bestellhistorie direkt im Konto.</p><p><a class="zehn-static-page__button" href="/account">Zum Kundenkonto</a></p></div></section>'
+        echo '<section><h2>Lieferzeiten</h2><div><p>Deutschland: 2–5 Werktage. Europäische Union: 3–8 Werktage. Während Aktionen und Feiertagen kann sich die Lieferzeit verlängern.</p></div></section>'
       endcapture
+    when '/pages/shipping'
+      assign page_title = 'Lieferung & Rückgabe'
+      assign page_subtitle = 'Schnell geliefert, einfach zurückgeschickt'
+      assign page_category = 'Kundenservice'
+      assign policy_handle = 'shipping-policy'
     when '/pages/payment'
       assign page_title = 'Zahlung & Sicherheit'
       assign page_subtitle = 'Sicher und flexibel bezahlen'
       assign page_category = 'Kundenservice'
       capture page_content
-        echo '<section><h2>Verfügbare Zahlungsarten</h2><p>Die verfügbaren Zahlungsarten werden direkt im Shopify Checkout angezeigt und können je nach Land, Gerät und Bestellung variieren. Möglich sind unter anderem Kreditkarte, PayPal, Klarna und Kauf auf Rechnung.</p></section>'
-        echo '<section><h2>Sichere Zahlungsabwicklung</h2><p>Ihre Zahlung wird über verschlüsselte Verbindungen verarbeitet. Zahlungsinformationen werden nicht direkt in unserem Shop gespeichert, sondern durch Shopify und den jeweiligen Zahlungsanbieter verarbeitet.</p></section>'
-        echo '<section><h2>Erstattung</h2><p>Rückerstattungen erfolgen in der Regel über die ursprünglich verwendete Zahlungsmethode. Die Bearbeitung kann je nach Zahlungsanbieter einige Werktage dauern.</p></section>'
+        echo '<section><h2>Verfügbare Zahlungsarten</h2><div><p>Im Checkout können – abhängig von Land, Gerät und Bestellung – Kreditkarte, PayPal, Klarna und Kauf auf Rechnung angeboten werden. Verbindlich ist die Auswahl im Checkout.</p></div></section>'
+        echo '<section><h2>Kreditkarte, PayPal & Klarna</h2><div><p>Karten- und Wallet-Zahlungen werden durch den jeweiligen Zahlungsanbieter verarbeitet. Klarna-Angebote können eine Anbieterprüfung voraussetzen.</p></div></section>'
+        echo '<section><h2>Sichere Zahlungsabwicklung</h2><div><p>Ihre Zahlung wird über verschlüsselte Verbindungen verarbeitet. Zahlungsinformationen werden nicht direkt in unserem Theme gespeichert, sondern durch Shopify und den jeweiligen Zahlungsanbieter verarbeitet.</p></div></section>'
+        echo '<section><h2>Erstattung</h2><div><p>Rückerstattungen erfolgen über die ursprünglich verwendete Zahlungsmethode. Die Bearbeitung kann je nach Zahlungsanbieter einige Werktage dauern.</p></div></section>'
       endcapture
     when '/pages/care'
       assign page_title = 'Stoffpflege'
       assign page_subtitle = 'So bleibt Ihre ZEHN-Kleidung wie am ersten Tag'
       assign page_category = 'Kundenservice'
       capture page_content
-        echo '<section><h2>Grundregeln</h2><p>Das Pflegeetikett am Produkt hat immer Vorrang. Farben trennen, Taschen leeren, Verschlüsse schließen und Kleidungsstücke auf links drehen. Niedrige Temperaturen und Lufttrocknung schonen Material und Form.</p></section>'
-        echo '<section><h2>T-Shirts, Polos, Hosen & Shorts</h2><p>Mit ähnlichen Farben bei 30°C und einem milden Waschmittel waschen. Nicht bleichen. Bei Stretch-Anteilen keine hohe Hitze verwenden.</p></section>'
-        echo '<section><h2>Jacken</h2><p>Jacken aus Nylonmischungen oder wattierten Materialien nur nach Etikett reinigen. Oft reichen Auslüften oder eine punktuelle Reinigung. Bei empfindlichen Woll- oder Daunenmischungen im Zweifel professionelle Reinigung wählen.</p></section>'
+        echo '<section><h2>Allgemeine Pflegehinweise</h2><div><p>Das Pflegeetikett hat immer Vorrang. Farben trennen, Taschen leeren, Verschlüsse schließen und Kleidungsstücke auf links drehen. Niedrige Temperaturen und Lufttrocknung schonen Material und Form.</p></div></section>'
+        echo '<section><h2>T-Shirts & Poloshirts</h2><div><p>Baumwolle und Baumwollmischungen mit ähnlichen Farben kalt oder bei 30°C waschen. Mildes Waschmittel verwenden, nicht bleichen und Drucke von links bügeln.</p></div></section>'
+        echo '<section><h2>Chinos, Cargos & Shorts</h2><div><p>Bei 30°C waschen, Taschen leeren und Verschlüsse schließen. Lufttrocknung erhält Form und Oberfläche; Stretch-Anteile keiner hohen Hitze aussetzen.</p></div></section>'
+        echo '<section><h2>Puffer-, Stepp- & Nylonjacken</h2><div><p>Nur nach Etikett reinigen. Oft reichen Auslüften oder punktuelle Reinigung. Keinen Weichspüler verwenden.</p></div></section>'
+        echo '<section><h2>Daunen- & Wollmischungen</h2><div><p>Empfindliche Mischungen nicht wringen und nicht heiß trocknen. Bei Unsicherheit eine professionelle Reinigung wählen.</p></div></section>'
+        echo '<section><h2>Aufbewahrung</h2><div><p>Kleidung sauber und vollständig trocken lagern. Schwere Jacken auf breite Bügel hängen und direkte Sonne vermeiden.</p></div></section>'
       endcapture
     when '/pages/fitguide'
       assign page_title = 'Fitguide'
@@ -96,10 +148,32 @@
         echo '<section><h2>Zwischen zwei Größen?</h2><p>Kleiner für einen körpernäheren Look, größer für mehr Komfort und Bewegungsfreiheit. Für persönliche Beratung kontaktieren Sie uns über die <a href="/pages/contact">Kontaktseite</a>.</p></section>'
       endcapture
   endcase
+
+  if policy_handle != blank
+    assign selected_policy = blank
+    for policy in shop.policies
+      if policy.handle == policy_handle
+        assign selected_policy = policy
+        break
+      endif
+    endfor
+
+    capture page_content
+      if selected_policy != blank
+        echo '<div class="zehn-static-page__policy">'
+        echo selected_policy.body
+        echo '</div>'
+      elsif policy_handle == 'legal-notice'
+        echo '<section><h2>Angaben gemäß § 5 DDG</h2><div><p>VINCET GmbH<br>Friedrich-Engels-Straße 23<br>09337 Hohenstein-Ernstthal<br>Deutschland</p><p>Geschäftsführerin: Faria Jarin<br>Registergericht: Amtsgericht Chemnitz<br>HRB 36403<br>USt-ID: DE343868243</p><p>E-Mail: <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a><br>Telefon: <a href="tel:+491634210324">+49 163 4210324</a></p></div></section>'
+      else
+        echo '<section><h2>Informationen</h2><div><p>Die angeforderten Informationen sind vorübergehend nicht verfügbar. Bitte kontaktieren Sie uns unter <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a>.</p></div></section>'
+      endif
+    endcapture
+  endif
 -%}
 
 {%- if page_title != blank -%}
-  <article class="zehn-static-page" data-zehn-static-fallback data-zehn-static-path="{{ path | escape }}">
+  <article class="zehn-static-page zehn-static-page--{{ page_variant }}" data-zehn-static-fallback data-zehn-static-path="{{ path | escape }}">
     <header class="zehn-static-page__hero">
       <div class="zehn-static-page__inner">
         <p class="zehn-static-page__eyebrow">{{ page_category }}</p>
@@ -126,9 +200,89 @@
     .zehn-static-page__content h2 { margin: 0; color: inherit; font-size: clamp(20px, 2.4vw, 30px); line-height: 1.1; }
     .zehn-static-page__content p { margin: 0 0 16px; color: rgb(15 20 38 / 72%); line-height: 1.75; }
     .zehn-static-page__content a:not(.zehn-static-page__button) { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
-    .zehn-static-page__button { display: inline-flex; min-height: 44px; align-items: center; padding: 10px 18px; background: #0f1426; color: #fff; text-decoration: none; }
+    .zehn-static-page__button { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; padding: 10px 18px; border: 1px solid #0f1426; border-radius: 999px; background: #0f1426; color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+    .zehn-static-page__button--secondary { background: transparent; color: #0f1426; }
+    .zehn-static-page__policy { padding-block: 4px; }
+    .zehn-static-page__policy :is(h1, h2, h3) { margin: 42px 0 14px; color: inherit; }
+    .zehn-static-page__policy > :first-child { margin-top: 0; }
+    .zehn-static-page__policy :is(p, li) { color: rgb(15 20 38 / 72%); line-height: 1.75; }
+    .zehn-static-page__cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .zehn-static-page__cards article { display: grid; gap: 7px; padding: 20px; border-radius: 12px; background: #f4f4f5; }
+    .zehn-static-page__cards strong { font-size: 20px; }
+    .zehn-static-page__cards span { color: #ff5a1f; font-weight: 700; }
+    .zehn-track-form label { display: block; margin-bottom: 8px; font-weight: 700; }
+    .zehn-track-form > div { display: flex; gap: 8px; }
+    .zehn-track-form input { min-width: 0; flex: 1; min-height: 46px; padding: 10px 14px; border: 1px solid rgb(15 20 38 / 25%); border-radius: 999px; font: inherit; }
+    .zehn-cookie-settings { display: grid; gap: 14px; }
+    .zehn-cookie-settings label { display: flex; align-items: center; gap: 10px; font-weight: 650; }
+    .zehn-cookie-settings input { width: 18px; height: 18px; accent-color: #ff5a1f; }
+    .zehn-cookie-settings__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+    .zehn-cookie-settings__status { min-height: 1.5em; }
     @media screen and (max-width: 749px) {
       .zehn-static-page__content section { grid-template-columns: 1fr; gap: 14px; padding: 28px 0; }
+      .zehn-static-page__cards { grid-template-columns: 1fr; }
+      .zehn-track-form > div { align-items: stretch; flex-direction: column; }
     }
   </style>
+
+  {% if page_variant == 'cookies' %}
+    <script>
+      (() => {
+        const root = document.querySelector('[data-zehn-cookie-settings]');
+        if (!root || root.dataset.ready === 'true') return;
+        root.dataset.ready = 'true';
+        const status = root.querySelector('.zehn-cookie-settings__status');
+        const field = (name) => root.querySelector(`[name="${name}"]`);
+        const privacy = () => window.Shopify?.customerPrivacy;
+        const sync = () => {
+          const current = privacy()?.currentVisitorConsent?.() || {};
+          ['analytics', 'preferences', 'marketing'].forEach((name) => {
+            field(name).checked = current[name] === 'yes';
+          });
+        };
+        root.querySelector('[data-cookie-save]').addEventListener('click', () => {
+          const api = privacy();
+          if (!api?.setTrackingConsent) {
+            status.textContent = 'Die Cookie-Einstellungen sind momentan nicht verfügbar.';
+            return;
+          }
+          api.setTrackingConsent({
+            analytics: field('analytics').checked,
+            preferences: field('preferences').checked,
+            marketing: field('marketing').checked,
+            sale_of_data: false
+          }, () => { status.textContent = 'Ihre Einstellungen wurden gespeichert.'; });
+        });
+        root.querySelector('[data-cookie-reset]').addEventListener('click', () => {
+          ['analytics', 'preferences', 'marketing'].forEach((name) => { field(name).checked = false; });
+          const api = privacy();
+          if (api?.setTrackingConsent) {
+            api.setTrackingConsent({analytics: false, preferences: false, marketing: false, sale_of_data: false}, () => {
+              status.textContent = 'Optionale Cookies wurden deaktiviert.';
+            });
+          }
+        });
+        sync();
+      })();
+    </script>
+  {% elsif path == '/pages/track-order' %}
+    <script>
+      (() => {
+        const form = document.querySelector('[data-zehn-track-form]');
+        if (!form || form.dataset.ready === 'true') return;
+        form.dataset.ready = 'true';
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          const code = String(new FormData(form).get('tracking') || '').replace(/\s+/g, '');
+          const status = form.querySelector('[data-track-status]');
+          if (code.length < 8) {
+            status.textContent = 'Bitte geben Sie eine gültige Sendungsnummer ein.';
+            return;
+          }
+          status.textContent = 'DHL Sendungsverfolgung wird geöffnet …';
+          window.open(`https://www.dhl.de/de/privatkunden/dhl-sendungsverfolgung.html?piececode=${encodeURIComponent(code)}`, '_blank', 'noopener');
+        });
+      })();
+    </script>
+  {% endif %}
 {%- endif -%}

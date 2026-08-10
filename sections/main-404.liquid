@@ -1,9 +1,9 @@
 {% liquid
-  assign zehn_static_paths = '|/about-us|/protokoll|/pages/faq|/pages/produktsicherheit|/pages/sustainability|/pages/track-order|/pages/payment|/pages/care|/pages/fitguide|'
+  assign zehn_static_routes = '|/zehn-club|/pages/impressum|/pages/terms|/pages/privacy|/pages/cookies|/pages/faq|/blogs/produktsicherheit|/pages/widerruf|/about-us|/pages/sustainability|/protokoll|/pages/track-order|/pages/shipping|/pages/payment|/pages/care|/pages/fitguide|'
   assign zehn_request_token = '|' | append: request.path | append: '|'
-  assign show_zehn_static_page = false
-  if zehn_static_paths contains zehn_request_token
-    assign show_zehn_static_page = true
+  assign zehn_is_static_route = false
+  if zehn_static_routes contains zehn_request_token
+    assign zehn_is_static_route = true
   endif
 
   if section.settings.background_color != blank
@@ -11,11 +11,10 @@
   endif
 %}
 
-{% if show_zehn_static_page %}
+{% if zehn_is_static_route %}
   {% render 'zehn-static-page', path: request.path %}
 {% else %}
 <div
-  data-zehn-request-path="{{ request.path | escape }}"
   class="section-background{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
 ></div>
 <div
