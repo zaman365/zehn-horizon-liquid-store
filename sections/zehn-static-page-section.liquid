@@ -1,0 +1,22 @@
+{% render 'zehn-static-page', path: section.settings.page_path %}
+
+{% schema %}
+{
+  "name": "ZEHN static page",
+  "enabled_on": {
+    "templates": ["page"]
+  },
+  "settings": [
+    {
+      "type": "text",
+      "id": "page_path",
+      "label": "Content path"
+    }
+  ],
+  "presets": [
+    {
+      "name": "ZEHN static page"
+    }
+  ]
+}
+{% endschema %}
