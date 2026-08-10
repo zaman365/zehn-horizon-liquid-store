@@ -33,11 +33,36 @@
   {{ block.shopify_attributes }}
 >
   <div class="{{ cart_summary_inner_class }}">
+    <h2 class="zehn-cart-summary__title">Zusammenfassung</h2>
     {% render 'cart-summary', accelerated_checkout_buttons_layout: 'vertical', section_id: section.id %}
+    <div class="zehn-cart-summary__service">
+      <p><span aria-hidden="true">✓</span> Lieferzeit: Deutschland 2–3, EU 3–5 Werktage</p>
+      <p><span aria-hidden="true">✓</span> 30-Tage-Rückgabe · Rücksendung in Deutschland und der EU kostenlos</p>
+    </div>
   </div>
 </div>
 
 {% stylesheet %}
+  .zehn-cart-summary__title {
+    width: 100%;
+    margin: 0;
+    color: var(--zehn-indigo, #0f1426);
+    font-family: var(--font-heading--family);
+    font-size: 21px;
+    font-weight: 600;
+  }
+  .zehn-cart-summary__service {
+    display: grid;
+    gap: 10px;
+    padding-top: 18px;
+    border-top: 1px solid rgb(15 20 38 / 10%);
+    color: rgb(15 20 38 / 66%);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .zehn-cart-summary__service p { display: flex; gap: 10px; margin: 0; }
+  .zehn-cart-summary__service span { color: #238636; font-weight: 700; }
+
   .cart-summary__inner {
     display: flex;
     flex-direction: column;

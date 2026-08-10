@@ -11,16 +11,13 @@
 <div class="cart-totals">
   {% # We need to keep this node in place to allow morphing to work properly # %}
   <div class="cart-totals__original-container cart-primary-typography">
-    {%- if cart.cart_level_discount_applications.size > 0 -%}
-      <span class="cart-totals__item cart-totals__original">
-        <span class="cart-totals__original-label">{{ 'content.cart_subtotal' | t }}</span>
-        <span
-          class="cart-totals__original-value cart-secondary-typography"
-          data-testid="cart-subtotal-value"
-        >
-          {{- cart.items_subtotal_price | money -}}
-        </span>
+    <span class="cart-totals__item cart-totals__original">
+      <span class="cart-totals__original-label">Zwischensumme</span>
+      <span class="cart-totals__original-value cart-secondary-typography" data-testid="cart-subtotal-value">
+        {{- cart.items_subtotal_price | money -}}
       </span>
+    </span>
+    {%- if cart.cart_level_discount_applications.size > 0 -%}
       <ul
         class="cart-discounts"
         role="list"
@@ -39,6 +36,11 @@
         {%- endfor -%}
       </ul>
     {%- endif -%}
+  </div>
+
+  <div class="zehn-cart-summary__shipping cart-primary-typography">
+    <span>Versand</span>
+    <strong>DE: kostenlos</strong>
   </div>
 
   {% if settings.show_cart_note or settings.show_add_discount_code %}
@@ -118,7 +120,7 @@
 
         {% capture cart_discount_accordion_children %}
           <details
-            {% if disclosure_expanded %}
+            {% if disclosure_expanded or section_id != 'cart-drawer-section' %}
               open
             {% endif %}
           >
@@ -155,7 +157,7 @@
                         type="text"
                         name="discount"
                         size="8"
-                        placeholder="{{ 'content.discount_code' | t }}"
+                        placeholder="Geschenkkarte oder Rabattcode"
                         required
                         data-skip-node-update
                       >
@@ -232,7 +234,10 @@
       class="cart-totals__item cart-totals__total"
       role="status"
     >
-      <span class="cart-totals__total-label cart-primary-typography">{{ 'content.cart_estimated_total' | t }}</span>
+      <span class="cart-totals__total-label cart-primary-typography">
+        Gesamt
+        <small>Inklusive MwSt.</small>
+      </span>
       <text-component
         ref="cartTotal"
         value="{{ total_price | strip_html }}"
@@ -269,7 +274,7 @@
     form="cart-form"
   >
     <span class="button-text">
-      {{ 'content.checkout' | t }}
+      Zur Kasse
     </span>
   </button>
 
@@ -286,6 +291,22 @@
 </div>
 
 {% stylesheet %}
+  .zehn-cart-summary__shipping {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: rgb(var(--color-foreground-rgb) / var(--opacity-70));
+    font-size: var(--cart-font-size--sm);
+  }
+  .zehn-cart-summary__shipping strong { color: #238636; font-weight: 600; }
+  .cart-totals__total-label small {
+    display: block;
+    margin-top: 4px;
+    color: var(--color-foreground-subdued);
+    font-size: var(--font-size--2xs);
+    font-weight: 400;
+  }
+
   .cart-actions {
     display: flex;
     flex-direction: column;
