@@ -131,8 +131,8 @@ a {
 .mega-menu__list--zehn-hierarchy > .mega-menu__column {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 26px clamp(18px, 2.5vw, 42px);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 20px clamp(12px, 1.6vw, 24px);
 }
 
 .mega-menu__list--zehn-hierarchy > .mega-menu__column > div {
@@ -140,14 +140,38 @@ a {
 }
 
 .mega-menu__list--zehn-hierarchy > .mega-menu__column > div > .mega-menu__link--parent {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  padding-bottom: 9px;
-  border-bottom: 1px solid var(--zehn-border);
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgb(15 20 38 / 12%);
   color: var(--zehn-indigo);
   font-family: var(--font-heading--family);
-  font-size: 14px;
+  font-size: clamp(13px, 1.45vw, 17px);
   font-weight: 700;
   letter-spacing: 0.08em;
+  text-align: center;
+  transition: color var(--zehn-transition), box-shadow var(--zehn-transition), transform var(--zehn-transition);
+}
+
+.mega-menu__list--zehn-hierarchy > .mega-menu__column > div > .mega-menu__link--parent:hover,
+.mega-menu__list--zehn-hierarchy > .mega-menu__column > div > .mega-menu__link--parent:focus-visible {
+  color: var(--zehn-signal);
+  box-shadow: 0 11px 25px rgb(15 20 38 / 17%);
+  transform: translateY(-2px);
+}
+
+@media screen and (max-width: 989px) {
+  .mega-menu__list--zehn-hierarchy > .mega-menu__column {
+    grid-template-columns: repeat(5, minmax(112px, 1fr));
+    overflow-x: auto;
+    padding-bottom: 12px;
+  }
 }
 
 .zehn-category-sublinks {

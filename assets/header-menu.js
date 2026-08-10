@@ -182,18 +182,26 @@ class HeaderMenu extends Component {
 
   /**
    * Activate the selected menu item immediately
-   * @param {PointerEvent | FocusEvent} event
+   * @param {PointerEvent | FocusEvent | MouseEvent} event
    */
   activate = (event) => {
     if (!(event.target instanceof Element) || !this.headerComponent) return;
 
-    const isMoreTrigger = event.target.slot === 'more';
+    const isMoreTrigger = Boolean(event.target.closest('[slot="more"]'));
     const item = findMenuItem(event.target);
     const overflowItem = isMoreTrigger ? this.#getFirstOverflowMenuItem() : null;
 
-    if (!item || item == this.#state.activeItem) return;
+    if (!item) return;
 
-    const isDefaultSlot = event.target.slot === '';
+    // Parent navigation items are menu triggers. Keep the submenu open when
+    // they are clicked instead of following the collection index URL.
+    if (event instanceof MouseEvent && event.type === 'click' && findSubmenu(item)) {
+      event.preventDefault();
+    }
+
+    if (item == this.#state.activeItem) return;
+
+    const isDefaultSlot = item.slot === '';
 
     this.dataset.overflowExpanded = (!isDefaultSlot).toString();
 
@@ -434,7 +442,11 @@ if (!customElements.get('header-menu')) {
 function findMenuItem(element) {
   if (!(element instanceof Element)) return null;
 
-  return element?.querySelector('[ref="menuitem"]');
+  const closestItem = element.closest('[ref="menuitem"]');
+  if (closestItem instanceof HTMLElement) return closestItem;
+
+  const nestedItem = element.querySelector('[ref="menuitem"]');
+  return nestedItem instanceof HTMLElement ? nestedItem : null;
 }
 
 /**

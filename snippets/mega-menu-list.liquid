@@ -72,6 +72,13 @@
   endif
 
   assign parent_link_key = parent_link.title | handleize
+  assign zehn_has_jeans_parent = false
+  for zehn_menu_link in parent_link.links
+    assign zehn_menu_link_key = zehn_menu_link.title | handleize
+    if zehn_menu_link_key == 'jeans'
+      assign zehn_has_jeans_parent = true
+    endif
+  endfor
 %}
 <ul
   data-menu-list-id="{{ id }}"
@@ -172,6 +179,14 @@
         {% render 'zehn-category-sublinks', link: link, variant: 'mega' %}
       {% endif %}
     </div>
+
+    {% if forloop.last and parent_link_key == 'shop-all' and zehn_has_jeans_parent == false %}
+      <div>
+        <a href="{{ routes.collections_url }}/jeans" class="mega-menu__link mega-menu__link--parent">
+          <span class="wrap-text">JEANS</span>
+        </a>
+      </div>
+    {% endif %}
 
     {% liquid
       # Check conditions for closing the span at the end of each iteration, then close the span if needed
