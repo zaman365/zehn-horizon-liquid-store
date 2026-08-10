@@ -18,6 +18,9 @@
   assign materials = product.metafields.custom.materials.value | default: block.settings.materials_fallback
   assign features = product.metafields.custom.features.value | default: block.settings.features_fallback
   assign care = product.metafields.custom.care.value | default: block.settings.care_fallback
+  assign description_marker = '<p><strong>Produktdetails ansehen</strong></p>'
+  assign summary_description = product.description | split: description_marker | first
+  assign full_description = product.description | replace: description_marker, ''
 %}
 
 <script src="{{ 'zehn-product-experience.js' | asset_url }}" defer></script>
@@ -25,7 +28,7 @@
 <zehn-product-experience class="zehn-product-experience" data-product-handle="{{ product.handle | escape }}" {{ block.shopify_attributes }}>
   {% if product.description != blank %}
     <div class="zehn-product-summary rte">
-      {{ product.description }}
+      {{ summary_description }}
     </div>
     <button class="zehn-text-action" type="button" data-dialog-open="zehn-details-{{ block.id }}">
       Produktdetails ansehen
@@ -89,7 +92,7 @@
       <button type="button" data-dialog-close aria-label="Schließen">×</button>
     </div>
     <div class="zehn-product-dialog__body rte">
-      {{ product.description }}
+      {{ full_description }}
       <h3>Materialien</h3>
       <p>{{ materials | newline_to_br }}</p>
       <h3>Eigenschaften</h3>
