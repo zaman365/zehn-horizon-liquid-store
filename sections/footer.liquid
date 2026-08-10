@@ -108,6 +108,43 @@
     letter-spacing: 0.04em;
     color: var(--zf-text);
   }
+  #shopify-section-{{ section.id }} .zf__club {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    width: fit-content;
+    margin: 0 0 28px;
+    color: var(--zf-text);
+    text-decoration: none;
+    transition: opacity 200ms ease;
+  }
+  #shopify-section-{{ section.id }} .zf__club:hover { opacity: .78; }
+  #shopify-section-{{ section.id }} .zf__club-mark {
+    display: grid;
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: 8px;
+    background: #fff;
+  }
+  #shopify-section-{{ section.id }} .zf__club-mark img {
+    display: block;
+    width: 34px;
+    height: 34px;
+    object-fit: contain;
+  }
+  #shopify-section-{{ section.id }} .zf__club-copy { display: grid; gap: 4px; }
+  #shopify-section-{{ section.id }} .zf__club-copy strong {
+    font-size: 1.25rem;
+    letter-spacing: .07em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  #shopify-section-{{ section.id }} .zf__club-copy small {
+    color: var(--zf-link);
+    font-size: .72rem;
+  }
   #shopify-section-{{ section.id }} .zf__label {
     display: block;
     margin: 0 0 12px;
@@ -366,6 +403,16 @@
 
         {%- comment -%} ---------- brand / newsletter / socials ---------- {%- endcomment -%}
         <div class="zf__brand">
+          <a class="zf__club" href="/pages/contact?view=zehn-club" aria-label="ZEHN Club entdecken">
+            <span class="zf__club-mark">
+              <img src="{{ 'ZEHN_Club.png' | asset_url }}" alt="" aria-hidden="true" width="531" height="531" loading="lazy">
+            </span>
+            <span class="zf__club-copy">
+              <strong>ZEHN Club</strong>
+              <small>{% if customer %}Deinen Club-Status öffnen{% else %}Member werden & Vorteile entdecken{% endif %}</small>
+            </span>
+          </a>
+
           {%- if logo_src != blank -%}
             <a href="{{ routes.root_url }}">
               <img
@@ -474,7 +521,7 @@
                   assign fallback_links = 'Impressum|/policies/legal-notice,AGB|/policies/terms-of-service,Datenschutz|/policies/privacy-policy,Cookies|/policies/privacy-policy#cookies,FAQ|/pages/contact?view=faq,Produktsicherheit|/pages/contact?view=produktsicherheit,Widerruf|/policies/refund-policy'
                 when 2
                   assign heading = 'Über ZEHN'
-                  assign fallback_links = 'Unsere Geschichte|/pages/contact?view=about-us,Nachhaltigkeit|/pages/contact?view=sustainability,ZEHN PROTOKOLL|/pages/contact?view=protokoll'
+                  assign fallback_links = 'ZEHN Club|/pages/contact?view=zehn-club,Unsere Geschichte|/pages/contact?view=about-us,Nachhaltigkeit|/pages/contact?view=sustainability,ZEHN PROTOKOLL|/pages/contact?view=protokoll'
                 else
                   assign heading = 'Kundenservice'
                   assign fallback_links = 'Bestellung verfolgen|/pages/contact?view=track-order,Kontakt|/pages/contact,Lieferung & Rückgabe|/policies/shipping-policy,Zahlung & Sicherheit|/pages/contact?view=payment,Stoffpflege|/pages/contact?view=care,Fitguide|/pages/contact?view=fitguide'

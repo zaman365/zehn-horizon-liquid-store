@@ -63,6 +63,19 @@
   {% endif %}
   {{- block.shopify_attributes -}}
 >
+  {% if customer %}
+    <a
+      class="zehn-club-header-link header-actions__action"
+      href="/pages/contact?view=zehn-club"
+      aria-label="ZEHN Club"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m12 3 2.3 4.7 5.2.8-3.8 3.7.9 5.3-4.6-2.5-4.6 2.5.9-5.3-3.8-3.7 5.2-.8Z"/>
+      </svg>
+      <span>ZEHN Club</span>
+    </a>
+  {% endif %}
+
   {% if shop.customer_accounts_enabled %}
     {% liquid
       assign account_actions_style = ''
@@ -165,6 +178,32 @@
   .account-button {
     /* Remove the background color from the color scheme, we want to inherit the color of the header */
     background: transparent;
+  }
+
+  .zehn-club-header-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--color-account-icon);
+    font-size: .72rem;
+    font-weight: 650;
+    letter-spacing: .08em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .zehn-club-header-link svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.4;
+  }
+
+  @media screen and (max-width: 989px) {
+    .zehn-club-header-link span { display: none; }
   }
 
   .account-button__icon,

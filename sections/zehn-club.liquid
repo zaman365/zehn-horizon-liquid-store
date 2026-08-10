@@ -1,0 +1,257 @@
+{% liquid
+  assign is_club_member = false
+  assign club_level = 'Member'
+  if customer
+    if customer.tags contains 'ZEHN Club' or customer.tags contains 'club-40' or customer.tags contains 'club-reward-250' or customer.tags contains 'club-reward-500' or customer.tags contains 'club-reward-1000'
+      assign is_club_member = true
+    endif
+    if customer.tags contains 'club-reward-1000'
+      assign club_level = 'Circle'
+    elsif customer.tags contains 'club-reward-500'
+      assign club_level = 'Icon'
+    elsif customer.tags contains 'club-reward-250'
+      assign club_level = 'Insider'
+    endif
+  endif
+%}
+
+<div class="zc" data-zehn-club-page>
+  <div class="zc__inner">
+    <nav class="zc__breadcrumb" aria-label="Breadcrumb">
+      <a href="{{ routes.root_url }}">ZEHN</a>
+      <span aria-hidden="true">›</span>
+      <span aria-current="page">ZEHN Club</span>
+    </nav>
+
+    <section class="zc__hero">
+      <div class="zc__hero-orb" aria-hidden="true"></div>
+      <div class="zc__hero-content">
+        <div class="zc__identity">
+          <span class="zc__mark">
+            <img src="{{ 'ZEHN_Club.png' | asset_url }}" alt="ZEHN Club" width="531" height="531">
+          </span>
+          <div>
+            <p class="zc__eyebrow">
+              {% if customer %}Willkommen{% else %}Member Experience{% endif %}
+            </p>
+            <h1>ZEHN Club</h1>
+            <p class="zc__lead">Sammle Club-Punkte und entdecke Vorteile, die mit dir wachsen.</p>
+          </div>
+        </div>
+
+        <div class="zc__status">
+          <p>Aktuelles Level</p>
+          <strong>{% if is_club_member %}{{ club_level }}{% else %}Member{% endif %}</strong>
+          {% if customer %}
+            <small>{{ customer.email }}</small>
+          {% else %}
+            <small>Mit Konto freischalten</small>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    {% if customer %}
+      <section class="zc__member-banner">
+        <div>
+          <p class="zc__eyebrow">Dein Club</p>
+          <h2>Hallo{% if customer.first_name != blank %}, {{ customer.first_name }}{% endif %}.</h2>
+          <p>
+            {% if is_club_member %}
+              Dein ZEHN Club Status ist mit diesem Kundenkonto verbunden.
+            {% else %}
+              Dein Kundenkonto ist verbunden. Sobald deine Club-Mitgliedschaft aktiviert ist, erscheinen Status und Prämien hier.
+            {% endif %}
+          </p>
+        </div>
+        <a class="zc__button zc__button--light" href="{{ routes.account_url }}">Zum Kundenkonto</a>
+      </section>
+    {% else %}
+      <section class="zc__member-banner">
+        <div>
+          <p class="zc__eyebrow">Jetzt Mitglied werden</p>
+          <h2>Werde Teil von ZEHN.</h2>
+          <p>Mit deinem kostenlosen Kundenkonto erhältst du Zugang zu Club-Leveln, persönlichen Vorteilen und ausgewählten Member-Aktionen.</p>
+        </div>
+        <a class="zc__button zc__button--light" href="{{ routes.account_login_url }}">Anmelden oder Konto erstellen</a>
+      </section>
+    {% endif %}
+
+    <section class="zc__stats" aria-label="Club-Vorteile">
+      <article>
+        <span>01</span>
+        <strong>1 Punkt je 1 €</strong>
+        <p>Für qualifizierten Einkaufswert.</p>
+      </article>
+      <article>
+        <span>02</span>
+        <strong>Vier Club-Level</strong>
+        <p>Vorteile, die mit dir wachsen.</p>
+      </article>
+      <article>
+        <span>03</span>
+        <strong>Member First</strong>
+        <p>Früher Zugang zu ausgewählten Aktionen.</p>
+      </article>
+    </section>
+
+    <section class="zc__levels">
+      <header>
+        <p class="zc__eyebrow">Club-Level</p>
+        <h2>Level &amp; Vorteile</h2>
+        <p>Dein Level richtet sich nach dem qualifizierten Einkaufswert. Punkte und Prämien werden sicher über dein Kundenkonto verwaltet.</p>
+      </header>
+
+      <div class="zc__level-grid">
+        <article class="zc__level zc__level--active">
+          <div><span>Level 1</span><span aria-label="Startlevel">✓</span></div>
+          <h3>Member</h3>
+          <p>Ab 0 €</p>
+          <ul>
+            <li>1 Punkt je 1 € Einkaufswert</li>
+            <li>Persönliche Club- und Bestellübersicht</li>
+          </ul>
+        </article>
+        <article class="zc__level">
+          <div><span>Level 2</span><span aria-hidden="true">☆</span></div>
+          <h3>Insider</h3>
+          <p>Ab 250 €</p>
+          <ul>
+            <li>Früher Zugang zu ausgewählten Aktionen</li>
+            <li>Exklusive Club-Inhalte</li>
+          </ul>
+        </article>
+        <article class="zc__level">
+          <div><span>Level 3</span><span aria-hidden="true">☆</span></div>
+          <h3>Icon</h3>
+          <p>Ab 500 €</p>
+          <ul>
+            <li>Zugang zu ausgewählten Member-Drops</li>
+            <li>Priorisierte Club-Anfragen</li>
+          </ul>
+        </article>
+        <article class="zc__level">
+          <div><span>Level 4</span><span aria-hidden="true">☆</span></div>
+          <h3>Circle</h3>
+          <p>Ab 1.000 €</p>
+          <ul>
+            <li>Persönlich kuratierte Empfehlungen</li>
+            <li>Besondere ZEHN Club-Aktionen</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="zc__how">
+      <div>
+        <p class="zc__eyebrow">So funktioniert’s</p>
+        <h2>Ein Konto. Mehr ZEHN.</h2>
+      </div>
+      <ol>
+        <li><span>1</span><div><strong>Konto erstellen</strong><p>Melde dich kostenlos mit deiner E-Mail-Adresse an.</p></div></li>
+        <li><span>2</span><div><strong>Bei ZEHN einkaufen</strong><p>Qualifizierte Bestellungen bringen dich zum nächsten Level.</p></div></li>
+        <li><span>3</span><div><strong>Vorteile entdecken</strong><p>Deine verfügbaren Club-Vorteile werden im Kundenkonto angezeigt.</p></div></li>
+      </ol>
+    </section>
+
+    <section class="zc__closing">
+      <div>
+        <p class="zc__eyebrow">ZEHN Club</p>
+        <h2>Dein Stil. Dein Level.</h2>
+        <p>Entdecke ZEHN als Member und erhalte Zugang zu Vorteilen, die nicht für alle sichtbar sind.</p>
+      </div>
+      <a class="zc__button zc__button--light" href="{% if customer %}{{ routes.account_url }}{% else %}{{ routes.account_login_url }}{% endif %}">
+        {% if customer %}Kundenkonto öffnen{% else %}Jetzt starten{% endif %}
+      </a>
+    </section>
+  </div>
+</div>
+
+{% stylesheet %}
+  .zc {
+    width: 100%;
+    padding: clamp(28px, 5vw, 64px) 0 clamp(72px, 9vw, 128px);
+    background: #f4f4f5;
+    color: #0f1426;
+  }
+
+  .zc * { box-sizing: border-box; }
+  .zc__inner { width: min(100% - 32px, 1440px); margin-inline: auto; }
+  .zc__breadcrumb { display: flex; gap: 8px; margin-bottom: 28px; color: rgb(15 20 38 / 55%); font-size: 13px; }
+  .zc__breadcrumb a { color: #0f1426; text-decoration: none; }
+  .zc__hero { position: relative; overflow: hidden; border-radius: 14px; background: #0f1426; color: #fff; }
+  .zc__hero-orb { position: absolute; top: -140px; right: -100px; width: 380px; height: 380px; border-radius: 50%; background: rgb(255 255 255 / 5%); }
+  .zc__hero-content { position: relative; display: grid; gap: 32px; padding: clamp(24px, 5vw, 54px); }
+  .zc__identity { display: flex; align-items: center; gap: clamp(16px, 3vw, 30px); }
+  .zc__mark { display: grid; flex: 0 0 clamp(68px, 10vw, 104px); width: clamp(68px, 10vw, 104px); height: clamp(68px, 10vw, 104px); place-items: center; border-radius: 12px; background: #fff; }
+  .zc__mark img { width: 72%; height: 72%; object-fit: contain; }
+  .zc__eyebrow { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; opacity: .58; }
+  .zc h1 { margin: 6px 0 0; color: inherit; font-size: clamp(32px, 5vw, 62px); letter-spacing: -.035em; line-height: .95; text-transform: uppercase; }
+  .zc__lead { max-width: 590px; margin: 16px 0 0; color: rgb(255 255 255 / 65%); font-size: clamp(14px, 2vw, 18px); line-height: 1.6; }
+  .zc__status { display: grid; align-content: center; min-width: 210px; padding: 18px; border: 1px solid rgb(255 255 255 / 15%); border-radius: 10px; background: rgb(255 255 255 / 7%); }
+  .zc__status p { margin: 0; color: rgb(255 255 255 / 55%); font-size: 11px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; }
+  .zc__status strong { margin-top: 5px; font-size: 21px; }
+  .zc__status small { margin-top: 3px; overflow: hidden; color: rgb(255 255 255 / 62%); font-size: 12px; text-overflow: ellipsis; }
+  .zc__member-banner, .zc__closing { display: flex; align-items: center; justify-content: space-between; gap: 30px; margin-top: 20px; padding: clamp(24px, 4vw, 38px); border-radius: 12px; background: #0f1426; color: #fff; }
+  .zc__member-banner h2, .zc__closing h2 { margin: 7px 0 0; color: inherit; font-size: clamp(24px, 3.4vw, 38px); }
+  .zc__member-banner p:last-child, .zc__closing p:last-child { max-width: 760px; margin: 10px 0 0; color: rgb(255 255 255 / 65%); line-height: 1.6; }
+  .zc__button { display: inline-flex; flex: 0 0 auto; min-height: 48px; align-items: center; justify-content: center; padding: 12px 20px; border-radius: 999px; font-size: 14px; font-weight: 700; text-decoration: none; }
+  .zc__button--light { background: #fff; color: #0f1426; }
+  .zc__stats { display: grid; gap: 14px; margin-top: 20px; }
+  .zc__stats article { padding: 24px; border: 1px solid rgb(15 20 38 / 14%); border-radius: 10px; background: rgb(255 255 255 / 48%); }
+  .zc__stats span { color: rgb(15 20 38 / 42%); font-size: 11px; font-weight: 700; letter-spacing: .14em; }
+  .zc__stats strong { display: block; margin-top: 16px; font-size: 20px; }
+  .zc__stats p { margin: 6px 0 0; color: rgb(15 20 38 / 62%); font-size: 14px; }
+  .zc__levels { margin-top: clamp(64px, 9vw, 104px); }
+  .zc__levels > header { max-width: 760px; }
+  .zc__levels h2, .zc__how h2 { margin: 8px 0 0; font-size: clamp(30px, 4vw, 48px); letter-spacing: -.03em; }
+  .zc__levels > header > p:last-child { margin: 16px 0 0; color: rgb(15 20 38 / 65%); line-height: 1.65; }
+  .zc__level-grid { display: grid; gap: 14px; margin-top: 30px; }
+  .zc__level { padding: 24px; border: 1px solid rgb(15 20 38 / 15%); border-radius: 12px; background: rgb(255 255 255 / 48%); }
+  .zc__level--active { background: #0f1426; color: #fff; }
+  .zc__level > div { display: flex; justify-content: space-between; color: currentColor; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; opacity: .52; }
+  .zc__level h3 { margin: 18px 0 0; color: inherit; font-size: 24px; }
+  .zc__level > p { margin: 3px 0 0; opacity: .6; }
+  .zc__level ul { display: grid; gap: 10px; margin: 24px 0 0; padding: 0; list-style: none; }
+  .zc__level li { display: flex; gap: 8px; font-size: 13px; line-height: 1.5; opacity: .74; }
+  .zc__level li::before { content: '✦'; font-size: 10px; }
+  .zc__how { display: grid; gap: 34px; margin-top: clamp(64px, 9vw, 104px); padding-top: 38px; border-top: 1px solid rgb(15 20 38 / 14%); }
+  .zc__how ol { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+  .zc__how li { display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding: 22px 0; border-top: 1px solid rgb(15 20 38 / 12%); }
+  .zc__how li > span { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 50%; background: #0f1426; color: #fff; font-size: 12px; }
+  .zc__how strong { font-size: 17px; }
+  .zc__how li p { margin: 5px 0 0; color: rgb(15 20 38 / 62%); font-size: 14px; line-height: 1.55; }
+  .zc__closing { margin-top: clamp(64px, 9vw, 104px); }
+
+  @media screen and (min-width: 750px) {
+    .zc__hero-content { grid-template-columns: minmax(0, 1fr) 240px; align-items: center; }
+    .zc__stats { grid-template-columns: repeat(3, 1fr); }
+    .zc__level-grid { grid-template-columns: repeat(2, 1fr); }
+    .zc__how { grid-template-columns: minmax(240px, .75fr) minmax(0, 1.25fr); }
+  }
+
+  @media screen and (min-width: 1100px) {
+    .zc__level-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  @media screen and (max-width: 749px) {
+    .zc__identity { align-items: flex-start; }
+    .zc__member-banner, .zc__closing { align-items: flex-start; flex-direction: column; }
+    .zc__button { width: 100%; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "ZEHN Club",
+  "enabled_on": {
+    "templates": ["page"]
+  },
+  "settings": [],
+  "presets": [
+    {
+      "name": "ZEHN Club"
+    }
+  ]
+}
+{% endschema %}
