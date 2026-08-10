@@ -1390,20 +1390,71 @@
           if (activeThumb) activeThumb.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
 
-        function filterByColor(colorValue) {
-          if (!colorValue) {
-            visible = galleryData.map(function (_, i) { return i; });
-          } else {
-            var lower = colorValue.toLowerCase();
-            var matches = [];
-            galleryData.forEach(function (item, i) {
-              if ((item.alt || '').toLowerCase().indexOf(lower) !== -1) matches.push(i);
-            });
-            visible = matches.length ? matches : galleryData.map(function (_, i) { return i; });
+        /* Alt text is not a reliable grouping key (merchants mis-tag it, and it
+         * rarely contains the exact option value). Filenames are: Shopify keeps
+         * the uploaded name, and each variant's own featured_image tells us
+         * which filename group that colour belongs to. So: read the variant's
+         * featured image, take its filename group token, and show every image
+         * sharing it. Alt text is only a fallback. */
+        var productImageUrls = productData.images || [];
+
+        function fileGroup(url) {
+          if (!url) return '';
+          var name = url.split('?')[0].split('/').pop().replace(/\.[a-z0-9]+$/i, '');
+          var m = name.match(/^([A-Za-z]+)/);
+          return (m ? m[1] : name).toLowerCase();
+        }
+
+        function normalize(str) {
+          return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        function indexesForVariant(variant) {
+          var all = galleryData.map(function (_, i) { return i; });
+
+          /* 1. Preferred: group by the filename of the variant's featured image. */
+          var anchor = variant && variant.featured_image && variant.featured_image.src;
+          if (anchor) {
+            var group = fileGroup(anchor);
+            if (group) {
+              var byFile = [];
+              productImageUrls.forEach(function (url, i) {
+                if (fileGroup(url) === group) byFile.push(i);
+              });
+              if (byFile.length) return byFile;
+            }
           }
+
+          /* 2. Fallback: normalized alt-text match on the colour value, then on
+           *    each word of it (handles "City Slate" vs "cityslate"). */
+          var colorPos = getColorPosition();
+          var colorValue = colorPos != null && variant ? variant.options[colorPos] : null;
+          if (colorValue) {
+            var candidates = [normalize(colorValue)];
+            colorValue.split(/[\s\-_/]+/).forEach(function (word) {
+              if (word.length >= 3) candidates.push(normalize(word));
+            });
+            for (var c = 0; c < candidates.length; c++) {
+              if (!candidates[c]) continue;
+              var byAlt = [];
+              galleryData.forEach(function (item, i) {
+                if (normalize(item.alt).indexOf(candidates[c]) !== -1) byAlt.push(i);
+              });
+              if (byAlt.length) return byAlt;
+            }
+          }
+
+          /* 3. Nothing matched — show the whole gallery. */
+          return all;
+        }
+
+        function filterByVariant(variant) {
+          visible = indexesForVariant(variant);
           thumbBtns.forEach(function (btn, i) { btn.style.display = visible.indexOf(i) === -1 ? 'none' : ''; });
           dots.forEach(function (dot, i) { dot.style.display = visible.indexOf(i) === -1 ? 'none' : ''; });
-          show(visible[0] || 0);
+          /* Matches the Hydrogen behaviour of resetting to the first image of
+           * the colour group whenever the selected colour changes. */
+          show(visible.length ? visible[0] : 0);
           restartAutoSlide();
         }
 
@@ -1498,7 +1549,7 @@
         }
 
         return {
-          filterByColor: filterByColor,
+          filterByVariant: filterByVariant,
           show: show,
           next: next,
           prev: prev,
@@ -1782,10 +1833,7 @@
           window.history.replaceState({}, '', window.location.pathname + '?' + params.toString());
         } catch (e) {}
 
-        var colorPos = getColorPosition();
-        if (colorPos != null && variant.options[colorPos]) {
-          Gallery.filterByColor(variant.options[colorPos]);
-        }
+        Gallery.filterByVariant(variant);
       }
 
       root.addEventListener('change', function (e) {
@@ -1799,10 +1847,7 @@
       });
       refreshAvailability();
 
-      var colorPosInit = getColorPosition();
-      if (colorPosInit != null && currentVariant.options[colorPosInit]) {
-        Gallery.filterByColor(currentVariant.options[colorPosInit]);
-      }
+      Gallery.filterByVariant(currentVariant);
 
       /* ================= MODALS ================= */
       function openModal(name) {
