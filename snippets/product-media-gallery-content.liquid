@@ -29,6 +29,106 @@
   assign selected_variant_media = selected_product.selected_or_first_available_variant.featured_media
   assign first_3d_model = selected_product.media | where: 'media_type', 'model' | first
 
+  # Product imports do not consistently attach media to variants. Mirror the
+  # Hydrogen storefront's color matching by grouping media from their filename
+  # (and alt text) before falling back to Shopify's featured-media assignment.
+  assign selected_color_token = blank
+  for product_option in selected_product.options_with_values
+    assign option_name_token = product_option.name | strip | downcase
+    if option_name_token == 'color' or option_name_token == 'colour' or option_name_token == 'farbe'
+      assign selected_color_token = product_option.selected_value | handleize
+      break
+    endif
+  endfor
+
+  assign exact_color_media = '' | split: ','
+  assign alias_color_media = '' | split: ','
+  assign color_aliases = '' | split: ','
+
+  if selected_color_token != blank
+    case selected_color_token
+      when 'blau', 'blue'
+        assign color_aliases = 'blau|blue|navy|marineblau|marine-blue|nightwatch-blue' | split: '|'
+      when 'braun', 'brown'
+        assign color_aliases = 'braun|brown|otter|coffee' | split: '|'
+      when 'coffee'
+        assign color_aliases = 'coffee|brown|braun' | split: '|'
+      when 'grau', 'gray', 'grey'
+        assign color_aliases = 'grau|gray|grey|slate|slade' | split: '|'
+      when 'gruen', 'green'
+        assign color_aliases = 'gruen|green|olive' | split: '|'
+      when 'marineblau', 'marine-blue', 'navy'
+        assign color_aliases = 'marineblau|marine-blue|navy|navy-blue|nightwatch-blue|nightwatch' | split: '|'
+      when 'nightwatch-blue'
+        assign color_aliases = 'nightwatch-blue|nightwatch|marineblau|navy|blue' | split: '|'
+      when 'olivgruen', 'olivgrun', 'olive'
+        assign color_aliases = 'olivgruen|olivgrun|olive|green|gruen' | split: '|'
+      when 'otter'
+        assign color_aliases = 'otter|brown|braun' | split: '|'
+      when 'schwarz', 'black'
+        assign color_aliases = 'schwarz|black' | split: '|'
+      when 'shadow-olive'
+        assign color_aliases = 'shadow-olive|olive' | split: '|'
+      when 'slade', 'slate'
+        assign color_aliases = 'slade|slate|black|schwarz|gray|grey|grau' | split: '|'
+      when 'weiss', 'wei', 'white'
+        assign color_aliases = 'weiss|wei|white' | split: '|'
+      else
+        assign color_aliases = selected_color_token | split: '|'
+    endcase
+
+    assign padded_selected_color = selected_color_token | prepend: '-' | append: '-'
+
+    for media in selected_product.media
+      assign media_filename = media.preview_image.src | split: '/' | last | split: '?' | first | handleize
+      assign media_alt_token = media.alt | handleize
+      assign padded_media_filename = media_filename | prepend: '-' | append: '-'
+      assign padded_media_alt = media_alt_token | prepend: '-' | append: '-'
+      assign exact_color_match = false
+
+      if padded_media_filename contains padded_selected_color or padded_media_alt contains padded_selected_color
+        assign exact_color_match = true
+      endif
+
+      # Prevent short names from swallowing known compound sibling colors.
+      if selected_color_token == 'khaki' and padded_media_filename contains '-american-khaki-'
+        assign exact_color_match = false
+      elsif selected_color_token == 'indigo'
+        if padded_media_filename contains '-indigo-dark-' or padded_media_filename contains '-indigo-medium-' or padded_media_filename contains '-indigo-od-'
+          assign exact_color_match = false
+        endif
+      endif
+
+      if exact_color_match
+        assign found_media = selected_product.media | where: 'id', media.id
+        assign exact_color_media = exact_color_media | concat: found_media
+      else
+        assign alias_color_match = false
+        for color_alias in color_aliases
+          if color_alias == selected_color_token
+            continue
+          endif
+          assign padded_color_alias = color_alias | prepend: '-' | append: '-'
+          if padded_media_filename contains padded_color_alias or padded_media_alt contains padded_color_alias
+            assign alias_color_match = true
+            break
+          endif
+        endfor
+
+        if alias_color_match
+          assign found_media = selected_product.media | where: 'id', media.id
+          assign alias_color_media = alias_color_media | concat: found_media
+        endif
+      endif
+    endfor
+  endif
+
+  if exact_color_media.size > 0
+    assign color_media = exact_color_media
+  else
+    assign color_media = alias_color_media
+  endif
+
   if block_settings.hide_variants
     assign variant_images = selected_product.images | where: 'attached_to_variant?', true | map: 'src'
   endif
@@ -102,7 +202,20 @@
   endif
 
   assign sorted_media = '' | split: ','
-  if selected_variant_media
+  if color_media.size > 0
+    if selected_variant_media
+      assign selected_media_in_color = color_media | where: 'id', selected_variant_media.id
+      assign sorted_media = sorted_media | concat: selected_media_in_color
+    endif
+
+    for media in color_media
+      if selected_variant_media and media.id == selected_variant_media.id
+        continue
+      endif
+      assign found_media = color_media | where: 'id', media.id
+      assign sorted_media = sorted_media | concat: found_media
+    endfor
+  elsif selected_variant_media
     assign sorted_media = sorted_media | concat: selected_product.media | where: 'id', selected_variant_media.id
 
     for media in selected_product.media
