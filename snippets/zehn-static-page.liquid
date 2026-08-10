@@ -230,7 +230,7 @@
   </script>
 
   {% if page_variant == 'cookies' %}
-    <script src="{{ 'shopify_common.js' | shopify_asset_url }}" defer></script>
+    <script src="https://cdn.shopify.com/shopifycloud/consent-tracking-api/v0.1/consent-tracking-api.js" defer></script>
     <script>
       window.addEventListener('load', () => {
         const root = document.querySelector('[data-zehn-cookie-settings]');
