@@ -237,12 +237,30 @@
         "overlay_opacity": 75,
         "image_zoom": true
       }
+    },
+    "zehn_contact_bar_WenfVp": {
+      "type": "zehn-contact-bar",
+      "name": "Contact bar",
+      "settings": {
+        "heading": "NOCH FRAGEN?",
+        "subheading": "Telefonisch erreichbar: Montag bis Freitag, 09:00 – 18:00 Uhr.",
+        "whatsapp_label": "WhatsApp",
+        "whatsapp_sublabel": "Antwort innerhalb von 1 Stunde",
+        "phone_number": "+491634210324",
+        "call_label": "Anruf",
+        "call_sublabel": "Nachricht senden",
+        "email_label": "E-Mail",
+        "email_sublabel": "Antwort innerhalb von 1 Werktag",
+        "chat_label": "Chat",
+        "chat_sublabel": "Antwort innerhalb von 2 Minuten"
+      }
     }
   },
   "order": [
     "hero_slider_dac8Wd",
     "category_nav_cb8yPA",
     "homepage_product_sliders_AqiiTc",
-    "zehn_highlights_bento_6VBnqE"
+    "zehn_highlights_bento_6VBnqE",
+    "zehn_contact_bar_WenfVp"
   ]
 }
