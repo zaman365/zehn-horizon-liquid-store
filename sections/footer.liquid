@@ -2,7 +2,8 @@
   ZEHN — Footer  (Hydrogen `Footer.tsx` → Shopify Liquid, 1:1 conversion)
   Place in: sections/zehn-footer.liquid
 
-  Self-contained: no Tailwind / theme utility classes required.
+  Self-contained: no Tailwind / theme utility classes required
+  (besides the theme's standard "page-width" container class).
   Newsletter uses Shopify's native {% form 'customer' %} (from the previous Liquid version).
 
   Token mapping taken from app.css:
@@ -77,7 +78,6 @@
     --zf-bubble: {{ section.settings.color_card | color_modify: 'alpha', 0.1 }};
     --zf-cols: {{ cols }};
     --zf-gap: 0px;
-    --zf-max: {{ section.settings.max_width }}px;
     --zf-body: {{ section.settings.body_font_size }}px;
     --zf-font: {{ section.settings.font_family }};
 
@@ -121,15 +121,10 @@
     opacity: {{ section.settings.watermark_opacity | divided_by: 100.0 }};
   }
 
-  /* ---------- content shell (.zehn-desktop-layout-width) ---------- */
+  /* ---------- content shell (page-width) ---------- */
   #shopify-section-{{ section.id }} .zf__inner {
     position: relative;
     z-index: 10;
-    width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 12px;
-    padding-right: 12px;
   }
   #shopify-section-{{ section.id }} .zf__grid {
     display: grid;
@@ -389,10 +384,6 @@
       padding-top: {{ pt_sm }}px;
       padding-bottom: {{ section.settings.padding_bottom }}px;
     }
-    #shopify-section-{{ section.id }} .zf__inner {
-      padding-left: 24px;
-      padding-right: 24px;
-    }
     #shopify-section-{{ section.id }} .zf__watermark-wrap {
       align-items: center;
       padding-bottom: 0;
@@ -446,12 +437,6 @@
       padding-top: {{ section.settings.padding_top }}px;
     }
     #shopify-section-{{ section.id }} .zf__watermark { height: {{ section.settings.watermark_height }}px; }
-    #shopify-section-{{ section.id }} .zf__inner {
-      width: min(95vw, var(--zf-max));
-      max-width: var(--zf-max);
-      padding-left: 0;
-      padding-right: 0;
-    }
     #shopify-section-{{ section.id }} .zf__payments { gap: 64px; padding-left: 80px; padding-right: 80px; }
   }
 
@@ -480,7 +465,7 @@
       </div>
     {%- endif -%}
 
-    <div class="zf__inner">
+    <div class="page-width zf__inner">
       <div class="zf__grid">
 
         {%- comment -%} ---------- brand / newsletter / socials ---------- {%- endcomment -%}
@@ -905,16 +890,6 @@
       "step": 1,
       "unit": "px",
       "default": 4
-    },
-    {
-      "type": "range",
-      "id": "max_width",
-      "label": "Content width",
-      "min": 1000,
-      "max": 1800,
-      "step": 20,
-      "unit": "px",
-      "default": 1400
     },
     {
       "type": "range",
