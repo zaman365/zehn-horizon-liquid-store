@@ -92,16 +92,7 @@
   }
 
   #shopify-section-{{ section.id }} .pp__shell {
-    margin: 0 auto;
     min-width: 0;
-    max-width: 100%;
-    padding: 0 0.75rem;
-  }
-  @media (min-width: 640px) {
-    #shopify-section-{{ section.id }} .pp__shell { padding: 0 1.5rem; }
-  }
-  @media (min-width: 1024px) {
-    #shopify-section-{{ section.id }} .pp__shell { padding: 0; }
   }
 
   /* ---------- breadcrumb ---------- */
@@ -1029,7 +1020,7 @@
                     aria-label="Bild {{ forloop.index }} anzeigen"
                   >
                     <img
-                      src="{{ media | image_url: width: 160 }}"
+                      src="{{ media.preview_image | image_url: width: 160 }}"
                       alt="{{ media.alt | default: product.title | escape }}"
                       loading="lazy"
                       width="80"
@@ -1049,18 +1040,18 @@
                   class="pp__gallery-img{% if forloop.first %} is-active{% endif %}"
                   data-pp-main-img
                   data-index="{{ forloop.index0 }}"
-                  src="{{ media | image_url: width: 1200 }}"
+                  src="{{ media.preview_image | image_url: width: 1200 }}"
                   srcset="
-                    {{ media | image_url: width: 400 }} 400w,
-                    {{ media | image_url: width: 600 }} 600w,
-                    {{ media | image_url: width: 800 }} 800w,
-                    {{ media | image_url: width: 1200 }} 1200w
+                    {{ media.preview_image | image_url: width: 400 }} 400w,
+                    {{ media.preview_image | image_url: width: 600 }} 600w,
+                    {{ media.preview_image | image_url: width: 800 }} 800w,
+                    {{ media.preview_image | image_url: width: 1200 }} 1200w
                   "
                   sizes="(min-width: 1024px) 547px, 100vw"
                   alt="{{ media.alt | default: product.title | escape }}"
                   loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
-                  width="{{ media.width }}"
-                  height="{{ media.height }}"
+                  width="{{ media.preview_image.width }}"
+                  height="{{ media.preview_image.height }}"
                 >
               {%- else -%}
                 {{ 'product-1' | placeholder_svg_tag: 'pp__gallery-img is-active' }}
@@ -1141,7 +1132,7 @@
                           {% unless value.available %}disabled{% endunless %}
                         >
                         {%- if is_color -%}
-                          {%- assign swatch_img = value.swatch.image | default: value.variant.featured_media -%}
+                          {%- assign swatch_img = value.swatch.image | default: value.variant.featured_media.preview_image -%}
                           <span class="pp__swatch{% unless value.available %} is-unavailable{% endunless %}" data-pp-value data-value="{{ value.name | escape }}">
                             {%- if swatch_img -%}
                               <img src="{{ swatch_img | image_url: width: 88 }}" alt="{{ value.name | escape }}" loading="lazy" width="44" height="44">
@@ -1332,7 +1323,7 @@
           <div class="pp__modal-slider" data-pp-modal-slider>
             {%- for media in product.media -%}
               <div class="pp__modal-slide">
-                <img src="{{ media | image_url: width: 900 }}" alt="{{ media.alt | default: product.title | escape }}" loading="lazy">
+                <img src="{{ media.preview_image | image_url: width: 900 }}" alt="{{ media.alt | default: product.title | escape }}" loading="lazy">
               </div>
             {%- endfor -%}
           </div>
@@ -1362,7 +1353,7 @@
           class="pp__viewer-img{% if forloop.first %} is-active{% endif %}"
           data-pp-viewer-img
           data-index="{{ forloop.index0 }}"
-          src="{{ media | image_url: width: 1200 }}"
+          src="{{ media.preview_image | image_url: width: 1200 }}"
           alt="{{ media.alt | default: product.title | escape }}"
           loading="lazy"
         >
@@ -1397,7 +1388,7 @@
       "@type": "Product",
       "name": {{ product.title | json }},
       "description": {{ product.description | strip_html | json }},
-      "image": [{% for media in product.media %}{{ media | image_url: width: 1200 | prepend: "https:" | json }}{% unless forloop.last %},{% endunless %}{% endfor %}],
+      "image": [{% for media in product.media %}{{ media.preview_image | image_url: width: 1200 | prepend: "https:" | json }}{% unless forloop.last %},{% endunless %}{% endfor %}],
       "sku": {{ current_variant.sku | json }},
       "brand": {
         "@type": "Brand",
