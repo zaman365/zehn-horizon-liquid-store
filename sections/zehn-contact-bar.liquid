@@ -1,0 +1,46 @@
+<section class="zehn-contact-bar" aria-labelledby="zehn-contact-title-{{ section.id }}">
+  <div class="zehn-contact-bar__inner zehn-page-width">
+    <div>
+      <h2 class="zehn-contact-bar__title" id="zehn-contact-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+      <p class="zehn-contact-bar__hours">{{ section.settings.hours }}</p>
+    </div>
+
+    <div class="zehn-contact-bar__options">
+      <a class="zehn-contact-bar__option" href="{{ section.settings.whatsapp_url }}" target="_blank" rel="noopener">
+        <span class="zehn-contact-bar__icon" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.26-.46-2.39-1.48-.88-.79-1.48-1.76-1.65-2.06-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.61-.92-2.21-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.07c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.69.63.71.23 1.36.2 1.87.12.57-.09 1.76-.72 2.01-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35M12.05 21.79a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.74.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.51-5.26A9.9 9.9 0 0 1 12.06 2a9.82 9.82 0 0 1 6.99 2.9 9.83 9.83 0 0 1 2.89 7c0 5.45-4.44 9.88-9.89 9.88M20.46 3.49A11.82 11.82 0 0 0 12.05 0C5.5 0 .16 5.34.16 11.89c0 2.1.55 4.14 1.59 5.95L.06 24l6.3-1.65a11.88 11.88 0 0 0 5.69 1.45c6.55 0 11.89-5.34 11.89-11.9a11.82 11.82 0 0 0-3.48-8.41"/></svg>
+        </span>
+        <span><span class="zehn-contact-bar__label">WhatsApp</span><span class="zehn-contact-bar__hint">Antwort innerhalb von 1 Stunde</span></span>
+      </a>
+      <a class="zehn-contact-bar__option" href="tel:{{ section.settings.phone | remove: ' ' }}">
+        <span class="zehn-contact-bar__icon" aria-hidden="true">☎</span>
+        <span><span class="zehn-contact-bar__label">Anruf</span><span class="zehn-contact-bar__hint">Sofortige Rückmeldung</span></span>
+      </a>
+      <a class="zehn-contact-bar__option" href="mailto:{{ section.settings.email }}">
+        <span class="zehn-contact-bar__icon" aria-hidden="true">✉</span>
+        <span><span class="zehn-contact-bar__label">E-Mail</span><span class="zehn-contact-bar__hint">Antwort innerhalb von 1 Werktag</span></span>
+      </a>
+      <a class="zehn-contact-bar__option" href="{{ section.settings.contact_page }}">
+        <span class="zehn-contact-bar__icon" aria-hidden="true">◌</span>
+        <span><span class="zehn-contact-bar__label">Kontakt</span><span class="zehn-contact-bar__hint">Alle Kontaktmöglichkeiten</span></span>
+      </a>
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "ZEHN contact bar",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "NOCH FRAGEN?" },
+    { "type": "text", "id": "hours", "label": "Hours", "default": "Telefonisch erreichbar: Montag bis Freitag, 09:00 – 18:00 Uhr." },
+    { "type": "text", "id": "phone", "label": "Phone", "default": "+491634210324" },
+    { "type": "text", "id": "email", "label": "Email", "default": "info@zehnfashion.de" },
+    { "type": "url", "id": "whatsapp_url", "label": "WhatsApp URL" },
+    { "type": "url", "id": "contact_page", "label": "Contact page" }
+  ],
+  "presets": [
+    { "name": "ZEHN contact bar" }
+  ]
+}
+{% endschema %}

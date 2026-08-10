@@ -1,1 +1,90 @@
-{"sections":{"hero_slider_dac8Wd":{"type":"hero-slider","blocks":{"slide_wMzkzD":{"type":"slide","settings":{"image_desktop":"shopify:\/\/shop_images\/BANNER_Slider-1.jpg","image_mobile":"shopify:\/\/shop_images\/BANNER_Slider_2_-_Mobile_2.jpg","alt_text":"","heading":"SOMMERKOLLEKTION","button_label":"ENTDECKEN","button_link":"shopify:\/\/collections\/sommerseite"}},"slide_NkFAba":{"type":"slide","settings":{"image_desktop":"shopify:\/\/shop_images\/BANNER_Slider-2_700fc101-7ceb-4bcc-8a20-dc11f89ab4d5.webp","image_mobile":"shopify:\/\/shop_images\/BANNER_Slider_1_-_Mobile.jpg","alt_text":"","heading":"HERBSTKOLLEKTION","button_label":"ENTDECKEN","button_link":"shopify:\/\/collections\/sommerseite"}},"slide_nLNQbc":{"type":"slide","settings":{"image_desktop":"shopify:\/\/shop_images\/BANNER_Slider-3.jpg","image_mobile":"shopify:\/\/shop_images\/BANNER_Slider_3_-_Mobile_1.jpg","alt_text":"","heading":"WINTERKOLLEKTION","button_label":"ENTDECKEN","button_link":"shopify:\/\/collections\/sommerseite"}}},"block_order":["slide_wMzkzD","slide_NkFAba","slide_nLNQbc"],"name":"Hero Slider","settings":{"background_color":"#e5e5e5","heading_color":"#ffffff","button_bg_color":"#ffffff","button_text_color":"#0f1426","overlay_opacity":0,"mobile_height":640,"desktop_height":800,"desktop_min_height":480,"autoplay":true,"autoplay_speed":5,"transition_speed":1800}},"zehn_highlights_bento_6VBnqE":{"type":"zehn-highlights-bento","blocks":{"tile_dTN9n4":{"type":"tile","settings":{"image":"shopify:\/\/shop_images\/bento-new-arrivals.jpg","title":"Neuheiten","link":"\/collections\/neuheiten","focal_point":"center"}},"tile_VEgxjD":{"type":"tile","settings":{"image":"shopify:\/\/shop_images\/bento-premium.jpg","title":"Premium","link":"\/pages\/about","focal_point":"center"}},"tile_rmD9Ka":{"type":"tile","settings":{"image":"shopify:\/\/shop_images\/bento-style-guide.jpg","title":"Sale","link":"\/collections\/sale","focal_point":"center"}},"tile_CNLjeU":{"type":"tile","settings":{"image":"shopify:\/\/shop_images\/bento-sale.jpg","title":"Style Guide","link":"\/pages\/fitguide","focal_point":"center"}},"tile_XFNJFD":{"type":"tile","settings":{"image":"shopify:\/\/shop_images\/bento-bestsellers.jpg","title":"Bestseller","link":"\/collections\/bestseller","focal_point":"center"}},"tile_BHanmm":{"type":"tile","settings":{"image":"shopify:\/\/shop_images\/bento-collections.jpg","title":"Collections","link":"\/collections\/all","focal_point":"center"}}},"block_order":["tile_dTN9n4","tile_VEgxjD","tile_rmD9Ka","tile_CNLjeU","tile_XFNJFD","tile_BHanmm"],"name":"Highlights bento","settings":{"eyebrow":"HIGHLIGHTS","heading":"Entdecke die Welt von ZEHN","max_width":1600,"grid_height_desktop":400,"grid_height_mobile":400,"grid_gap":16,"corner_radius":16,"padding_top":64,"padding_bottom":64,"color_background":"#f7f7f8","color_heading":"#0f172a","color_eyebrow":"#71717a","title_reveal":"hover","title_always_touch":true,"title_position":"bottom","overlay_opacity":75,"image_zoom":true}}},"order":["hero_slider_dac8Wd","zehn_highlights_bento_6VBnqE"]}
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "hero_slider": {
+      "type": "hero-slider",
+      "blocks": {
+        "slide_1": { "type": "slide", "settings": { "alt_text": "ZEHN Sommerkollektion", "heading": "SOMMERKOLLEKTION", "button_label": "ENTDECKEN", "button_link": "/collections/neuheiten" } },
+        "slide_2": { "type": "slide", "settings": { "alt_text": "ZEHN Herbstkollektion", "heading": "HERBSTKOLLEKTION", "button_label": "ENTDECKEN", "button_link": "/collections/neuheiten" } },
+        "slide_3": { "type": "slide", "settings": { "alt_text": "ZEHN Winterkollektion", "heading": "WINTERKOLLEKTION", "button_label": "ENTDECKEN", "button_link": "/collections/neuheiten" } }
+      },
+      "block_order": ["slide_1", "slide_2", "slide_3"],
+      "settings": {
+        "background_color": "#e5e5e5",
+        "heading_color": "#ffffff",
+        "button_bg_color": "#ffffff",
+        "button_text_color": "#0f1426",
+        "overlay_opacity": 0,
+        "mobile_height": 640,
+        "desktop_height": 800,
+        "desktop_min_height": 480,
+        "autoplay": true,
+        "autoplay_speed": 10,
+        "transition_speed": 1800
+      }
+    },
+    "product_rails": {
+      "type": "zehn-product-rails",
+      "blocks": {
+        "summer": { "type": "rail", "settings": { "fallback_handle": "sommerseite", "eyebrow": "KOLLEKTION", "heading": "Sommerseite" } },
+        "pants": { "type": "rail", "settings": { "fallback_handle": "hosen", "eyebrow": "KOLLEKTION", "heading": "Bein für Bein" } },
+        "jackets": { "type": "rail", "settings": { "fallback_handle": "uebergangsjacken", "eyebrow": "KOLLEKTION", "heading": "Übergangsjacken" } },
+        "tops": { "type": "rail", "settings": { "fallback_handle": "tops", "eyebrow": "KOLLEKTION", "heading": "Oberteile" } }
+      },
+      "block_order": ["summer", "pants", "jackets", "tops"],
+      "settings": { "accessibility_label": "Ausgewählte Kollektionen", "products_per_rail": 12 }
+    },
+    "highlights": {
+      "type": "zehn-highlights-bento",
+      "blocks": {
+        "tile_1": { "type": "tile", "settings": { "title": "Neuheiten", "link": "/collections/neuheiten", "focal_point": "center" } },
+        "tile_2": { "type": "tile", "settings": { "title": "Premium", "link": "/pages/about", "focal_point": "center" } },
+        "tile_3": { "type": "tile", "settings": { "title": "Style Guide", "link": "/pages/fitguide", "focal_point": "center" } },
+        "tile_4": { "type": "tile", "settings": { "title": "Sale", "link": "/collections/sale", "focal_point": "center" } },
+        "tile_5": { "type": "tile", "settings": { "title": "Bestseller", "link": "/collections/bestseller", "focal_point": "center" } },
+        "tile_6": { "type": "tile", "settings": { "title": "Collections", "link": "/collections/all", "focal_point": "center" } }
+      },
+      "block_order": ["tile_1", "tile_2", "tile_3", "tile_4", "tile_5", "tile_6"],
+      "settings": {
+        "eyebrow": "HIGHLIGHTS",
+        "heading": "Entdecke die Welt von ZEHN",
+        "max_width": 1600,
+        "grid_height_desktop": 400,
+        "grid_height_mobile": 400,
+        "grid_gap": 16,
+        "corner_radius": 16,
+        "padding_top": 12,
+        "padding_bottom": 12,
+        "color_background": "#f4f4f5",
+        "color_heading": "#0f1426",
+        "color_eyebrow": "#8e97a4",
+        "title_reveal": "hover",
+        "title_always_touch": true,
+        "title_position": "bottom",
+        "overlay_opacity": 75,
+        "image_zoom": true
+      }
+    },
+    "protokoll": { "type": "zehn-protokoll", "settings": { "eyebrow": "DOKUMENTIERT STATT BEHAUPTET", "heading": "ZEHN PROTOKOLL", "link_label": "Zum ZEHN PROTOKOLL" } },
+    "contact": {
+      "type": "zehn-contact-bar",
+      "settings": {
+        "heading": "NOCH FRAGEN?",
+        "hours": "Telefonisch erreichbar: Montag bis Freitag, 09:00 – 18:00 Uhr.",
+        "phone": "+491634210324",
+        "email": "info@zehnfashion.de",
+        "whatsapp_url": "https://wa.me/491634210324",
+        "contact_page": "/pages/contact"
+      }
+    }
+  },
+  "order": ["hero_slider", "product_rails", "highlights", "protokoll", "contact"]
+}
