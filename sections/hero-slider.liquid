@@ -287,6 +287,8 @@
         {%- assign heading_text = block.settings.heading -%}
         {%- assign button_label = block.settings.button_label -%}
         {%- assign button_link = block.settings.button_link -%}
+        {%- capture fallback_desktop_asset -%}zehn-hero-{{ forloop.index | at_most: 3 }}-desktop.avif{%- endcapture -%}
+        {%- capture fallback_mobile_asset -%}zehn-hero-{{ forloop.index | at_most: 3 }}-mobile.avif{%- endcapture -%}
 
         <div
           data-hero-slide="{{ block.id }}"
@@ -300,14 +302,17 @@
                         {{ block.settings.image_mobile | image_url: width: 1100 }} 1100w,
                         {{ block.settings.image_mobile | image_url: width: 1500 }} 1500w"
                 sizes="100vw">
+            {%- else -%}
+              <source media="(max-width: 1023px)" srcset="{{ fallback_mobile_asset | asset_url }}">
             {%- endif -%}
-
             {%- if block.settings.image_desktop != blank -%}
               <source media="(min-width: 1024px)"
                 srcset="{{ block.settings.image_desktop | image_url: width: 1600 }} 1600w,
                         {{ block.settings.image_desktop | image_url: width: 2200 }} 2200w,
                         {{ block.settings.image_desktop | image_url: width: 2800 }} 2800w"
                 sizes="100vw">
+            {%- else -%}
+              <source media="(min-width: 1024px)" srcset="{{ fallback_desktop_asset | asset_url }}">
             {%- endif -%}
 
             {%- assign fallback_img = block.settings.image_desktop | default: block.settings.image_mobile -%}
@@ -322,7 +327,15 @@
                 decoding="async"
               >
             {%- else -%}
-              <div class="hero-slide-placeholder">{{ 'hero-apparel-1' | placeholder_svg_tag: 'hero-placeholder-svg' }}</div>
+              <img
+                src="{{ fallback_desktop_asset | asset_url }}"
+                alt="{{ block.settings.alt_text | default: heading_text | escape }}"
+                width="2200"
+                height="880"
+                loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
+                fetchpriority="{% if forloop.first %}high{% else %}auto{% endif %}"
+                decoding="async"
+              >
             {%- endif -%}
           </picture>
 
@@ -352,7 +365,7 @@
               class="hero-fold__dot{% if forloop.first %} is-active{% endif %}"
               data-hero-dot
               data-slide-index="{{ forloop.index0 }}"
-              aria-label="{{ 'sections.slideshow.load_slide' | t: index: forloop.index }}"
+              aria-label="Slide {{ forloop.index }} anzeigen"
             ></button>
           {%- endfor -%}
         </div>
@@ -539,7 +552,7 @@
       "max": 10,
       "step": 1,
       "unit": "s",
-      "default": 5
+      "default": 10
     },
     {
       "type": "range",

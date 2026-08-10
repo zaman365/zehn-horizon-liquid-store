@@ -1,0 +1,117 @@
+<section class="zehn-product-rails" aria-label="{{ section.settings.accessibility_label | escape }}">
+  <div class="zehn-page-width">
+    {%- for block in section.blocks -%}
+      {%- liquid
+        assign rail_collection = block.settings.collection
+        if rail_collection == blank and block.settings.fallback_handle != blank
+          assign rail_collection = collections[block.settings.fallback_handle]
+        endif
+      -%}
+
+      {%- if rail_collection != blank and rail_collection.products_count > 0 -%}
+        <div class="zehn-product-rail" data-zehn-product-rail {{ block.shopify_attributes }}>
+          <div class="zehn-product-rail__header">
+            <div>
+              {%- if block.settings.eyebrow != blank -%}
+                <span class="zehn-product-rail__eyebrow">{{ block.settings.eyebrow }}</span>
+              {%- endif -%}
+              <h2 class="zehn-product-rail__title">{{ block.settings.heading | default: rail_collection.title }}</h2>
+            </div>
+            <div class="zehn-product-rail__actions">
+              <a class="zehn-product-rail__all" href="{{ rail_collection.url }}">Alle ansehen</a>
+              <button
+                class="zehn-product-rail__arrow"
+                type="button"
+                data-zehn-rail-direction="previous"
+                aria-label="Vorherige Produkte"
+              >
+                <span aria-hidden="true">←</span>
+              </button>
+              <button
+                class="zehn-product-rail__arrow"
+                type="button"
+                data-zehn-rail-direction="next"
+                aria-label="Weitere Produkte"
+              >
+                <span aria-hidden="true">→</span>
+              </button>
+            </div>
+          </div>
+
+          <ul class="zehn-product-rail__track" data-zehn-rail-track role="list">
+            {%- for product in rail_collection.products limit: section.settings.products_per_rail -%}
+              <li class="zehn-product-rail__item">
+                {% render 'zehn-product-card', product: product, loading: 'lazy' %}
+              </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "ZEHN product rails",
+  "max_blocks": 6,
+  "settings": [
+    {
+      "type": "text",
+      "id": "accessibility_label",
+      "label": "Accessibility label",
+      "default": "Ausgewählte Kollektionen"
+    },
+    {
+      "type": "range",
+      "id": "products_per_rail",
+      "label": "Products per rail",
+      "min": 4,
+      "max": 16,
+      "step": 1,
+      "default": 12
+    }
+  ],
+  "blocks": [
+    {
+      "type": "rail",
+      "name": "Collection rail",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection"
+        },
+        {
+          "type": "text",
+          "id": "fallback_handle",
+          "label": "Fallback collection handle",
+          "info": "Used by the initial configuration until a collection is selected in the editor."
+        },
+        {
+          "type": "text",
+          "id": "eyebrow",
+          "label": "Eyebrow",
+          "default": "KOLLEKTION"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "ZEHN product rails",
+      "blocks": [
+        { "type": "rail", "settings": { "fallback_handle": "sommerseite", "heading": "Sommerseite" } },
+        { "type": "rail", "settings": { "fallback_handle": "hosen", "heading": "Bein für Bein" } },
+        { "type": "rail", "settings": { "fallback_handle": "uebergangsjacken", "heading": "Übergangsjacken" } },
+        { "type": "rail", "settings": { "fallback_handle": "tops", "heading": "Oberteile" } }
+      ]
+    }
+  ]
+}
+{% endschema %}

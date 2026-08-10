@@ -55,14 +55,24 @@
     class="header-logo__image-container header-logo__image-container--original"
     data-testid="header-logo"
   >
-    {% render 'image',
-      image: settings.logo,
-      class: 'header-logo__image',
-      height: settings.logo_height,
-      alt_text_fallback: alt_text_fallback,
-      text_fallback: shop.name,
-      style: logo_style
-    %}
+    {%- if settings.logo != blank -%}
+      {% render 'image',
+        image: settings.logo,
+        class: 'header-logo__image',
+        height: settings.logo_height,
+        alt_text_fallback: alt_text_fallback,
+        text_fallback: shop.name,
+        style: logo_style
+      %}
+    {%- else -%}
+      <img
+        class="header-logo__image header-logo__image--zehn-fallback"
+        src="{{ 'ZEHN_Wordmark_with_logo.webp' | asset_url }}"
+        alt="{{ alt_text_fallback | escape }}"
+        width="220"
+        height="48"
+      >
+    {%- endif -%}
   </span>
 
   {% if use_inverse_logo %}
@@ -128,6 +138,15 @@
     @media screen and (min-width: 750px) {
       height: var(--header-logo-image-height);
       width: var(--header-logo-image-width);
+    }
+  }
+
+  .header-logo__image--zehn-fallback {
+    width: auto;
+    height: 32px;
+
+    @media screen and (min-width: 750px) {
+      height: 38px;
     }
   }
 

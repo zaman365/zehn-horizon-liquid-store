@@ -1,2 +1,35 @@
 {{ 'overflow-list.css' | asset_url | preload_tag: as: 'style' }}
 {{ 'base.css' | asset_url | stylesheet_tag: preload: true }}
+<style>
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url('{{ 'zehn-inter-latin.woff2' | asset_url }}') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 500;
+    font-display: swap;
+    src: url('{{ 'zehn-inter-latin-ext.woff2' | asset_url }}') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 500 700;
+    font-display: swap;
+    src: url('{{ 'zehn-archivo-latin.woff2' | asset_url }}') format('woff2');
+  }
+
+  @font-face {
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 500 700;
+    font-display: swap;
+    src: url('{{ 'zehn-archivo-latin-ext.woff2' | asset_url }}') format('woff2');
+  }
+</style>

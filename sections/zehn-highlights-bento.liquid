@@ -220,6 +220,7 @@
       </div>
     {%- endif -%}
 
+    {%- assign fallback_assets = 'bento-new-arrivals.jpg,bento-premium.jpg,bento-style-guide.jpg,bento-sale.jpg,bento-bestsellers.jpg,bento-collections.jpg' | split: ',' -%}
     <div class="zehn-bento">
       {%- for block in section.blocks limit: 6 -%}
         {%- liquid
@@ -261,7 +262,16 @@
               style="object-position: {{ block.settings.focal_point }};"
             >
           {%- else -%}
-            {{ 'image' | placeholder_svg_tag }}
+            <img
+              class="zehn-bento__img"
+              src="{{ fallback_assets[forloop.index0] | asset_url }}"
+              width="1200"
+              height="800"
+              alt="{{ tile_title | escape }}"
+              loading="lazy"
+              decoding="async"
+              style="object-position: {{ block.settings.focal_point }};"
+            >
           {%- endif -%}
 
           {%- if tile_title != blank -%}

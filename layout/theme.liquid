@@ -41,6 +41,7 @@
     {%- render 'scripts' -%}
     {%- render 'theme-styles-variables' -%}
     {%- render 'color-palette' -%}
+    {{ 'zehn-theme.css' | asset_url | stylesheet_tag }}
 
     {% if request.design_mode %}
       {%- render 'theme-editor' -%}
@@ -151,5 +152,7 @@
     {% if settings.quick_add or settings.mobile_quick_add %}
       {% render 'quick-add-modal' %}
     {% endif %}
+
+    <script src="{{ 'zehn-theme.js' | asset_url }}" defer></script>
   </body>
 </html>

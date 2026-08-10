@@ -1,0 +1,73 @@
+{%- liquid
+  assign protokoll_blog = section.settings.blog
+  if protokoll_blog == blank
+    assign protokoll_blog = blogs.protokoll
+  endif
+-%}
+
+{%- if protokoll_blog != blank and protokoll_blog.articles_count > 0 -%}
+  <section class="zehn-protokoll" aria-labelledby="zehn-protokoll-title-{{ section.id }}">
+    <div class="zehn-page-width">
+      <div class="zehn-protokoll__head">
+        <div>
+          <span class="zehn-protokoll__eyebrow">{{ section.settings.eyebrow }}</span>
+          <h2 class="zehn-protokoll__title" id="zehn-protokoll-title-{{ section.id }}">{{ section.settings.heading }}</h2>
+        </div>
+        <a class="zehn-protokoll__all" href="{{ protokoll_blog.url }}">{{ section.settings.link_label }} →</a>
+      </div>
+
+      <div class="zehn-protokoll__grid">
+        {%- for article in protokoll_blog.articles limit: 3 -%}
+          {%- liquid
+            assign reference_code = article.metafields.protokoll.reference_code.value | default: 'ZEHN PROTOKOLL'
+            assign record_type = article.metafields.protokoll.record_type.value
+            assign short_conclusion = article.metafields.protokoll.short_conclusion.value | default: article.excerpt_or_content | strip_html | truncatewords: 34
+          -%}
+          <a class="zehn-protokoll-card{% if forloop.first %} zehn-protokoll-card--featured{% endif %}" href="{{ article.url }}">
+            {%- if article.image != blank -%}
+              {{-
+                article.image
+                | image_url: width: 1000
+                | image_tag:
+                  class: 'zehn-protokoll-card__image',
+                  loading: 'lazy',
+                  widths: '208, 480, 720, 1000',
+                  sizes: '(min-width: 750px) 34vw, 104px',
+                  alt: article.image.alt | default: article.title
+              -}}
+            {%- else -%}
+              <span aria-hidden="true"></span>
+            {%- endif -%}
+            <span class="zehn-protokoll-card__content">
+              <span>
+                <span class="zehn-protokoll-card__meta">
+                  {{ reference_code }}{% if record_type != blank %} · {{ record_type }}{% endif %}
+                </span>
+                <span class="zehn-protokoll-card__title">{{ article.title }}</span>
+                {%- if forloop.first -%}
+                  <span class="zehn-protokoll-card__conclusion">{{ short_conclusion }}</span>
+                {%- endif -%}
+              </span>
+              <span class="zehn-protokoll-card__open">Eintrag öffnen →</span>
+            </span>
+          </a>
+        {%- endfor -%}
+      </div>
+    </div>
+  </section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "ZEHN PROTOKOLL",
+  "settings": [
+    { "type": "blog", "id": "blog", "label": "PROTOKOLL blog" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "DOKUMENTIERT STATT BEHAUPTET" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "ZEHN PROTOKOLL" },
+    { "type": "text", "id": "link_label", "label": "Link label", "default": "Zum ZEHN PROTOKOLL" }
+  ],
+  "presets": [
+    { "name": "ZEHN PROTOKOLL" }
+  ]
+}
+{% endschema %}

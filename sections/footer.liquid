@@ -355,6 +355,8 @@
           aria-hidden="true"
           loading="lazy"
           decoding="async"
+          width="1600"
+          height="400"
         >
       </div>
     {%- endif -%}
@@ -372,6 +374,8 @@
                 alt="{{ shop.name | escape }}"
                 loading="lazy"
                 decoding="async"
+                width="320"
+                height="70"
               >
             </a>
           {%- else -%}
@@ -510,6 +514,8 @@
                 alt="{{ filename | split: '.' | first | capitalize }}"
                 loading="lazy"
                 decoding="async"
+                width="96"
+                height="32"
               >
             {%- endif -%}
           {%- endfor -%}
