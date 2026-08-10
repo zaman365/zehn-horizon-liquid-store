@@ -1,0 +1,404 @@
+<style>
+  /* ============================================
+     Contact Bar
+     Ported 1:1 from the Hydrogen <ContactBar /> component.
+     Tailwind breakpoints replicated: sm = 640px, xl = 1280px.
+     Uses the same ZEHN design tokens as app.css
+     (--color-foreground, --font-body, --font-display).
+     ============================================ */
+
+  .zehn-contact-bar {
+    width: 100%;
+    background-color: #e8e8ea;
+    color: var(--color-foreground);
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .zehn-contact-bar__inner {
+    width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .zehn-contact-bar__inner {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .zehn-contact-bar__inner {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  .zehn-contact-bar__row {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  @media (min-width: 1280px) {
+    .zehn-contact-bar__row {
+      flex-direction: row;
+      align-items: center;
+      gap: 1.5rem;
+    }
+  }
+
+  /* Left side - title */
+  .zehn-contact-bar__title-block {
+    flex-shrink: 0;
+    width: 100%;
+    text-align: left;
+  }
+
+  @media (min-width: 1280px) {
+    .zehn-contact-bar__title-block {
+      width: auto;
+    }
+  }
+
+  .zehn-contact-bar__title {
+    font-family: var(--font-body);
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin: 0 0 0.125rem;
+  }
+
+  @media (min-width: 640px) {
+    .zehn-contact-bar__title {
+      font-size: 1.5rem;
+    }
+  }
+
+  .zehn-contact-bar__subtitle {
+    font-family: var(--font-body);
+    font-size: 10px;
+    line-height: 1.4;
+    margin: 0;
+    white-space: nowrap;
+    color: color-mix(in srgb, var(--color-foreground) 60%, transparent);
+  }
+
+  @media (min-width: 640px) {
+    .zehn-contact-bar__subtitle {
+      font-size: 0.75rem;
+    }
+  }
+
+  /* Right side - contact options */
+  .zehn-contact-bar__options {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  @media (min-width: 640px) {
+    .zehn-contact-bar__options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      align-items: center;
+      gap: 1rem;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .zehn-contact-bar__options {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 1.25rem;
+      width: auto;
+    }
+  }
+
+  .zehn-contact-bar__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 150ms ease;
+  }
+
+  .zehn-contact-bar__item:hover {
+    opacity: 0.8;
+    text-decoration: none;
+  }
+
+  .zehn-contact-bar__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    background-color: color-mix(in srgb, var(--color-foreground) 10%, transparent);
+    transition: background-color 150ms ease;
+  }
+
+  .zehn-contact-bar__item:hover .zehn-contact-bar__icon {
+    background-color: color-mix(in srgb, var(--color-foreground) 20%, transparent);
+  }
+
+  @media (min-width: 1280px) {
+    .zehn-contact-bar__icon {
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+  }
+
+  .zehn-contact-bar__text {
+    text-align: left;
+  }
+
+  @media (min-width: 1280px) {
+    .zehn-contact-bar__text {
+      white-space: nowrap;
+    }
+  }
+
+  .zehn-contact-bar__label {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  @media (min-width: 1280px) {
+    .zehn-contact-bar__label {
+      font-size: 0.875rem;
+    }
+  }
+
+  .zehn-contact-bar__sublabel {
+    display: block;
+    font-family: var(--font-body);
+    font-size: 9px;
+    line-height: 1;
+    margin-top: 0.125rem;
+    color: color-mix(in srgb, var(--color-foreground) 60%, transparent);
+  }
+
+  @media (min-width: 1280px) {
+    .zehn-contact-bar__sublabel {
+      font-size: 10px;
+    }
+  }
+</style>
+
+<section class="zehn-contact-bar" data-zehn-contact-bar>
+  <div class="zehn-desktop-layout-width zehn-contact-bar__inner">
+    <div class="zehn-contact-bar__row">
+
+      {%- comment -%} Left side - Title {%- endcomment -%}
+      <div class="zehn-contact-bar__title-block">
+        <h2 class="zehn-contact-bar__title">{{ section.settings.heading }}</h2>
+        <p class="zehn-contact-bar__subtitle">{{ section.settings.subheading }}</p>
+      </div>
+
+      {%- comment -%} Right side - Contact options {%- endcomment -%}
+      <div class="zehn-contact-bar__options">
+
+        {%- comment -%} WhatsApp {%- endcomment -%}
+        <button
+          type="button"
+          class="zehn-contact-bar__item"
+          data-zehn-contact-action="openWhatsAppWidget"
+        >
+          <span class="zehn-contact-bar__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+          </span>
+          <span class="zehn-contact-bar__text">
+            <span class="zehn-contact-bar__label">{{ section.settings.whatsapp_label }}</span>
+            <span class="zehn-contact-bar__sublabel">{{ section.settings.whatsapp_sublabel }}</span>
+          </span>
+        </button>
+
+        {%- comment -%} Call {%- endcomment -%}
+        <a
+          href="tel:{{ section.settings.phone_number }}"
+          class="zehn-contact-bar__item"
+        >
+          <span class="zehn-contact-bar__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/>
+            </svg>
+          </span>
+          <span class="zehn-contact-bar__text">
+            <span class="zehn-contact-bar__label">{{ section.settings.call_label }}</span>
+            <span class="zehn-contact-bar__sublabel">{{ section.settings.call_sublabel }}</span>
+          </span>
+        </a>
+
+        {%- comment -%} Email {%- endcomment -%}
+        <button
+          type="button"
+          class="zehn-contact-bar__item"
+          data-zehn-contact-action="openEmailWidget"
+        >
+          <span class="zehn-contact-bar__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect width="20" height="16" x="2" y="4" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+          </span>
+          <span class="zehn-contact-bar__text">
+            <span class="zehn-contact-bar__label">{{ section.settings.email_label }}</span>
+            <span class="zehn-contact-bar__sublabel">{{ section.settings.email_sublabel }}</span>
+          </span>
+        </button>
+
+        {%- comment -%} Chat {%- endcomment -%}
+        <button
+          type="button"
+          class="zehn-contact-bar__item"
+          data-zehn-contact-action="openChatWidget"
+        >
+          <span class="zehn-contact-bar__icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.236l3.29-1.065a2 2 0 0 1 1.167.094 10 10 0 1 0-4.722-4.722"/>
+            </svg>
+          </span>
+          <span class="zehn-contact-bar__text">
+            <span class="zehn-contact-bar__label">{{ section.settings.chat_label }}</span>
+            <span class="zehn-contact-bar__sublabel">{{ section.settings.chat_sublabel }}</span>
+          </span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    var bar = document.currentScript.previousElementSibling;
+    if (!bar || !bar.hasAttribute('data-zehn-contact-bar')) {
+      bar = document.querySelector('[data-zehn-contact-bar]');
+    }
+    if (!bar) return;
+
+    bar.addEventListener('click', function (event) {
+      var trigger = event.target.closest('[data-zehn-contact-action]');
+      if (!trigger) return;
+      window.dispatchEvent(new CustomEvent(trigger.getAttribute('data-zehn-contact-action')));
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "Contact bar",
+  "tag": "section",
+  "class": "zehn-contact-bar-section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "NOCH FRAGEN?"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Telefonisch erreichbar: Montag bis Freitag, 09:00 – 18:00 Uhr."
+    },
+    {
+      "type": "header",
+      "content": "WhatsApp"
+    },
+    {
+      "type": "text",
+      "id": "whatsapp_label",
+      "label": "Label",
+      "default": "WhatsApp"
+    },
+    {
+      "type": "text",
+      "id": "whatsapp_sublabel",
+      "label": "Sublabel",
+      "default": "Antwort innerhalb von 1 Stunde"
+    },
+    {
+      "type": "header",
+      "content": "Call"
+    },
+    {
+      "type": "text",
+      "id": "phone_number",
+      "label": "Phone number",
+      "default": "+491634210324"
+    },
+    {
+      "type": "text",
+      "id": "call_label",
+      "label": "Label",
+      "default": "Anruf"
+    },
+    {
+      "type": "text",
+      "id": "call_sublabel",
+      "label": "Sublabel",
+      "default": "Nachricht senden"
+    },
+    {
+      "type": "header",
+      "content": "Email"
+    },
+    {
+      "type": "text",
+      "id": "email_label",
+      "label": "Label",
+      "default": "E-Mail"
+    },
+    {
+      "type": "text",
+      "id": "email_sublabel",
+      "label": "Sublabel",
+      "default": "Antwort innerhalb von 1 Werktag"
+    },
+    {
+      "type": "header",
+      "content": "Chat"
+    },
+    {
+      "type": "text",
+      "id": "chat_label",
+      "label": "Label",
+      "default": "Chat"
+    },
+    {
+      "type": "text",
+      "id": "chat_sublabel",
+      "label": "Sublabel",
+      "default": "Antwort innerhalb von 2 Minuten"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Contact bar"
+    }
+  ]
+}
+{% endschema %}
