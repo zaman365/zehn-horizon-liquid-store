@@ -2219,3 +2219,8 @@ main > .shopify-section:first-child .section:not(.disable-section-top-offset) {
 .page-wrapper{
   padding-top:130px;
 }
+
+.page-width{
+  max-width:1400px;
+  margin:0px auto;
+}
