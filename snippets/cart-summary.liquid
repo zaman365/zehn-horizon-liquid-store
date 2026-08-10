@@ -216,7 +216,12 @@
             </div>
           </details>
         {% endcapture %}
-        {% render 'accordion-custom-component', children: cart_discount_accordion_children, class: 'cart-discount' %}
+        {% render 'accordion-custom-component',
+          children: cart_discount_accordion_children,
+          class: 'cart-discount',
+          open_by_default_on_desktop: true,
+          open_by_default_on_mobile: true
+        %}
       {% endif %}
     </div>
   {% endif %}
