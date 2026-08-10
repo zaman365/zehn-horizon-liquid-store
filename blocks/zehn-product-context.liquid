@@ -1,0 +1,131 @@
+{% liquid
+  assign product = closest.product
+  assign primary_collection = product.collections.first
+%}
+
+<div class="zehn-product-context" {{ block.shopify_attributes }}>
+  <nav class="zehn-product-breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ routes.root_url }}">Startseite</a>
+    <span aria-hidden="true">/</span>
+    {% if primary_collection != blank %}
+      <a href="{{ primary_collection.url }}">{{ primary_collection.title }}</a>
+      <span aria-hidden="true">/</span>
+    {% endif %}
+    <span aria-current="page">{{ product.title }}</span>
+  </nav>
+
+  <div class="zehn-product-context__meta">
+    {% if product.vendor != blank %}
+      <p class="zehn-product-context__vendor">{{ product.vendor }}</p>
+    {% endif %}
+    <button
+      class="zehn-wishlist-button"
+      type="button"
+      data-zehn-wishlist
+      data-product-handle="{{ product.handle | escape }}"
+      data-product-title="{{ product.title | escape }}"
+      data-product-url="{{ product.url | escape }}"
+      {% if product.featured_image %}data-product-image="{{ product.featured_image | image_url: width: 360 }}"{% endif %}
+      aria-pressed="false"
+      aria-label="Zur Wunschliste hinzufügen"
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21.3l7.8-7.8 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/>
+      </svg>
+      <span data-wishlist-label>Zur Wunschliste</span>
+    </button>
+  </div>
+</div>
+
+{% stylesheet %}
+  .zehn-product-context {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .zehn-product-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: rgb(var(--color-foreground-rgb) / 0.58);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    line-height: 1.45;
+  }
+
+  .zehn-product-breadcrumb a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .zehn-product-breadcrumb a:hover {
+    color: var(--color-foreground);
+  }
+
+  .zehn-product-breadcrumb span[aria-current='page'] {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .zehn-product-context__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .zehn-product-context__vendor {
+    margin: 0;
+    color: rgb(var(--color-foreground-rgb) / 0.64);
+    font-size: 0.72rem;
+    font-weight: 650;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .zehn-wishlist-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-foreground);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
+  }
+
+  .zehn-wishlist-button svg {
+    width: 20px;
+    height: 20px;
+    fill: transparent;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.5;
+    transition: fill 160ms ease, transform 160ms ease;
+  }
+
+  .zehn-wishlist-button[aria-pressed='true'] svg {
+    fill: currentColor;
+    transform: scale(1.06);
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "ZEHN Produktkontext",
+  "tag": null,
+  "settings": [],
+  "presets": [
+    {
+      "name": "ZEHN Produktkontext",
+      "category": "Produkt"
+    }
+  ]
+}
+{% endschema %}

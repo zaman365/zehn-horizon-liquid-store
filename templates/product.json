@@ -85,6 +85,12 @@
             "padding-inline-end": 0
           },
           "blocks": {
+            "zehn_context": {
+              "type": "zehn-product-context",
+              "name": "ZEHN Produktkontext",
+              "settings": {},
+              "blocks": {}
+            },
             "group_icgrde": {
               "type": "group",
               "name": "t:names.header",
@@ -195,7 +201,7 @@
               "type": "variant-picker",
               "settings": {
                 "variant_style": "buttons",
-                "show_swatches": false,
+                "show_swatches": true,
                 "option_label_text_color": "",
                 "variant_style_class": "default",
                 "custom_variant_background": "{{ settings.color_palette.background }}",
@@ -206,6 +212,20 @@
                 "custom_selected_variant_text": "{{ settings.color_palette.background }}",
                 "custom_selected_variant_border": "{{ settings.color_palette.foreground }}",
                 "alignment": "left",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "product_inventory": {
+              "type": "product-inventory",
+              "name": "Lagerstatus",
+              "settings": {
+                "inventory_threshold": 10,
+                "show_inventory_quantity": false,
+                "text_color": "",
                 "padding-block-start": 0,
                 "padding-block-end": 0,
                 "padding-inline-start": 0,
@@ -273,39 +293,26 @@
               },
               "block_order": []
             },
-            "text_aEtTtq": {
-              "type": "text",
-              "name": "t:names.product_description",
+            "zehn_experience": {
+              "type": "zehn-product-experience",
+              "name": "ZEHN Produkterlebnis",
               "settings": {
-                "text": "{{ closest.product.description }}",
-                "width": "100%",
-                "max_width": "normal",
-                "alignment": "left",
-                "type_preset": "rte",
-                "font": "var(--font-body--family)",
-                "font_size": "1rem",
-                "line_height": "normal",
-                "letter_spacing": "normal",
-                "case": "none",
-                "wrap": "pretty",
-                "text_color": "",
-                "background": false,
-                "background_color": "#00000026",
-                "corner_radius": 0,
-                "padding-block-start": 0,
-                "padding-block-end": 0,
-                "padding-inline-start": 0,
-                "padding-inline-end": 0
+                "materials_fallback": "Die genaue Materialzusammensetzung finden Sie auf dem Pflegeetikett des Artikels. Aussagen zu zertifizierten oder recycelten Materialien gelten nur, wenn sie für dieses Produkt ausdrücklich angegeben sind.",
+                "features_fallback": "Moderne, maßgeschneiderte Passform mit raffinierten Details. Verstärkte Nähte für langlebige Haltbarkeit. Funktionale Details mit sauberen Abschlüssen. Für vielseitiges Styling und ganztägigen Komfort.",
+                "care_fallback": "Maschinenwäsche kalt mit ähnlichen Farben. Im Trockner bei niedriger Temperatur oder an der Luft trocknen. Bei Bedarf kühl bügeln. Nicht bleichen. Pflegeetikett beachten.",
+                "shipping_text": "Deutschland: Kostenloser Versand und kostenlose Rücksendung mit DHL. Lieferzeit: 2–3 Werktage. Europäische Union: Versand 5,99 € pro Bestellung, Lieferzeit 3–5 Werktage; Rücksendung kostenlos."
               },
               "blocks": {}
             }
           },
           "block_order": [
+            "zehn_context",
             "group_icgrde",
             "divider_VJhene",
             "variant_picker_R3rGDr",
+            "product_inventory",
             "buy_buttons_eYQEYi",
-            "text_aEtTtq"
+            "zehn_experience"
           ]
         }
       },
@@ -331,7 +338,7 @@
           "type": "text",
           "name": "t:names.header",
           "settings": {
-            "text": "<h3>You may also like </h3>",
+            "text": "<h3>Das könnte Ihnen auch gefallen</h3>",
             "width": "fit-content",
             "max_width": "normal",
             "alignment": "left",
@@ -450,7 +457,7 @@
       "settings": {
         "product": "{{ closest.product }}",
         "recommendation_type": "related",
-        "layout_type": "grid",
+        "layout_type": "carousel",
         "carousel_on_mobile": false,
         "max_products": 4,
         "columns": 4,

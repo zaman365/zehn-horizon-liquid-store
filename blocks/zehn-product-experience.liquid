@@ -1,0 +1,527 @@
+{% liquid
+  assign product = closest.product
+  assign selected_variant = product.selected_or_first_available_variant
+  assign descriptor = product.title | append: ' ' | append: product.type | append: ' ' | append: product.tags | downcase
+  assign guide_type = 'top'
+  if descriptor contains 'cargo short'
+    assign guide_type = 'cargo-short'
+  elsif descriptor contains 'short'
+    assign guide_type = 'short'
+  elsif descriptor contains 'jeans' or descriptor contains 'denim' or descriptor contains 'chinohose' or descriptor contains 'cargohose' or descriptor contains 'cargo pants' or descriptor contains ' hose'
+    assign guide_type = 'trouser'
+  elsif descriptor contains 'jacke' or descriptor contains 'jacket' or descriptor contains 'puffer'
+    assign guide_type = 'jacket'
+  elsif descriptor contains 'oversized' or descriptor contains 'relaxed' or descriptor contains 'loose fit'
+    assign guide_type = 'relaxed-top'
+  endif
+
+  assign materials = product.metafields.custom.materials.value | default: block.settings.materials_fallback
+  assign features = product.metafields.custom.features.value | default: block.settings.features_fallback
+  assign care = product.metafields.custom.care.value | default: block.settings.care_fallback
+%}
+
+<script src="{{ 'zehn-product-experience.js' | asset_url }}" defer></script>
+
+<zehn-product-experience class="zehn-product-experience" data-product-handle="{{ product.handle | escape }}" {{ block.shopify_attributes }}>
+  {% if product.description != blank %}
+    <div class="zehn-product-summary rte">
+      {{ product.description }}
+    </div>
+    <button class="zehn-text-action" type="button" data-dialog-open="zehn-details-{{ block.id }}">
+      Produktdetails ansehen
+      <span aria-hidden="true">→</span>
+    </button>
+  {% endif %}
+
+  <form class="zehn-buy-now" action="{{ routes.cart_add_url }}" method="post" data-buy-now-form>
+    <input type="hidden" name="id" value="{{ selected_variant.id }}" data-buy-now-id>
+    <input type="hidden" name="quantity" value="1">
+    <input type="hidden" name="return_to" value="/checkout">
+    <button class="button button-secondary" type="submit" {% unless selected_variant.available %}disabled{% endunless %}>
+      Jetzt kaufen
+    </button>
+  </form>
+
+  <div class="zehn-benefits" aria-label="Servicevorteile">
+    <button class="zehn-benefit" type="button" data-dialog-open="zehn-size-guide-{{ block.id }}">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h16v9H4zM8 7.5v3m4-3v2m4-2v3"/></svg>
+      <span><strong>Größenratgeber</strong><small>Die richtige Passform finden</small></span>
+    </button>
+    <div class="zehn-benefit">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h12v11H3zM15 10h3l3 3v4h-6zM7 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm10 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/></svg>
+      <span><strong>Kostenloser Versand</strong><small>Standardversand in Deutschland</small></span>
+    </div>
+    <div class="zehn-benefit">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h11a4 4 0 0 1 0 8H8m0 0 3-3m-3 3 3 3"/></svg>
+      <span><strong>Einfache Rückgabe</strong><small>Unkompliziert und transparent</small></span>
+    </div>
+    <div class="zehn-benefit">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.3 4.7 5.2.8-3.8 3.7.9 5.3-4.6-2.5-4.6 2.5.9-5.3-3.8-3.7 5.2-.8Z"/></svg>
+      <span><strong>Premium-Qualität</strong><small>Ausgewählte Materialien</small></span>
+    </div>
+  </div>
+
+  <div class="zehn-product-accordions">
+    <details>
+      <summary>Materialien <span aria-hidden="true">+</span></summary>
+      <div class="rte">{{ materials | newline_to_br }}</div>
+    </details>
+    <details>
+      <summary>Eigenschaften <span aria-hidden="true">+</span></summary>
+      <div class="rte">{{ features | newline_to_br }}</div>
+    </details>
+    <details>
+      <summary>Pflegehinweise <span aria-hidden="true">+</span></summary>
+      <div class="rte">{{ care | newline_to_br }}</div>
+    </details>
+    <details>
+      <summary>Versand &amp; Rückgabe <span aria-hidden="true">+</span></summary>
+      <div class="rte">{{ block.settings.shipping_text | newline_to_br }}</div>
+    </details>
+  </div>
+
+  <dialog class="zehn-product-dialog" id="zehn-details-{{ block.id }}" aria-labelledby="zehn-details-title-{{ block.id }}">
+    <div class="zehn-product-dialog__header">
+      <div>
+        <p class="zehn-product-dialog__eyebrow">{{ product.vendor }}</p>
+        <h2 id="zehn-details-title-{{ block.id }}">{{ product.title }}</h2>
+      </div>
+      <button type="button" data-dialog-close aria-label="Schließen">×</button>
+    </div>
+    <div class="zehn-product-dialog__body rte">
+      {{ product.description }}
+      <h3>Materialien</h3>
+      <p>{{ materials | newline_to_br }}</p>
+      <h3>Eigenschaften</h3>
+      <p>{{ features | newline_to_br }}</p>
+      <h3>Pflegehinweise</h3>
+      <p>{{ care | newline_to_br }}</p>
+    </div>
+  </dialog>
+
+  <dialog class="zehn-product-dialog zehn-size-guide" id="zehn-size-guide-{{ block.id }}" aria-labelledby="zehn-size-title-{{ block.id }}">
+    <div class="zehn-product-dialog__header">
+      <div>
+        <p class="zehn-product-dialog__eyebrow">Passform &amp; Maße</p>
+        <h2 id="zehn-size-title-{{ block.id }}">Größenratgeber</h2>
+      </div>
+      <button type="button" data-dialog-close aria-label="Schließen">×</button>
+    </div>
+    <div class="zehn-product-dialog__body">
+      <div class="zehn-unit-toggle" role="group" aria-label="Maßeinheit">
+        <button type="button" class="is-active" data-unit="cm">cm</button>
+        <button type="button" data-unit="inch">inch</button>
+      </div>
+
+      <div class="zehn-size-table-wrap">
+        {% case guide_type %}
+          {% when 'short' or 'cargo-short' %}
+            <table class="zehn-size-table">
+              <caption>{% if guide_type == 'cargo-short' %}Produktmaße Cargo Shorts{% else %}Produktmaße Chino Shorts{% endif %}</caption>
+              <thead><tr><th>Größe</th><th>Bund</th><th>Hüfte</th><th>Innenbein</th><th>Außenbein</th></tr></thead>
+              <tbody>
+                {% if guide_type == 'cargo-short' %}
+                  <tr><th>28</th><td data-cm="76">76</td><td data-cm="92">92</td><td data-cm="25.5">25,5</td><td data-cm="53.5">53,5</td></tr>
+                  <tr><th>30</th><td data-cm="81">81</td><td data-cm="97">97</td><td data-cm="26.5">26,5</td><td data-cm="55">55</td></tr>
+                  <tr><th>32</th><td data-cm="86">86</td><td data-cm="102">102</td><td data-cm="27.5">27,5</td><td data-cm="56.5">56,5</td></tr>
+                  <tr><th>34</th><td data-cm="91">91</td><td data-cm="107">107</td><td data-cm="28.5">28,5</td><td data-cm="58">58</td></tr>
+                  <tr><th>36</th><td data-cm="96">96</td><td data-cm="112">112</td><td data-cm="29.5">29,5</td><td data-cm="59.5">59,5</td></tr>
+                {% else %}
+                  <tr><th>28</th><td data-cm="76">76</td><td data-cm="93">93</td><td data-cm="23">23</td><td data-cm="49.5">49,5</td></tr>
+                  <tr><th>30</th><td data-cm="81">81</td><td data-cm="98">98</td><td data-cm="24">24</td><td data-cm="51.5">51,5</td></tr>
+                  <tr><th>32</th><td data-cm="86">86</td><td data-cm="103">103</td><td data-cm="25">25</td><td data-cm="53.5">53,5</td></tr>
+                  <tr><th>34</th><td data-cm="91">91</td><td data-cm="108">108</td><td data-cm="26">26</td><td data-cm="55.5">55,5</td></tr>
+                  <tr><th>36</th><td data-cm="96">96</td><td data-cm="113">113</td><td data-cm="27">27</td><td data-cm="57.5">57,5</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+          {% when 'trouser' %}
+            <table class="zehn-size-table">
+              <caption>Richtwerte für Hosen</caption>
+              <thead><tr><th>Größe</th><th>Bund</th><th>Hüfte</th><th>Innenbein L32</th></tr></thead>
+              <tbody>
+                <tr><th>28</th><td data-cm="78">78</td><td data-cm="93">93</td><td data-cm="81">81</td></tr>
+                <tr><th>30</th><td data-cm="83">83</td><td data-cm="98">98</td><td data-cm="81">81</td></tr>
+                <tr><th>32</th><td data-cm="88">88</td><td data-cm="103">103</td><td data-cm="81">81</td></tr>
+                <tr><th>34</th><td data-cm="93">93</td><td data-cm="108">108</td><td data-cm="81">81</td></tr>
+                <tr><th>36</th><td data-cm="98">98</td><td data-cm="113">113</td><td data-cm="81">81</td></tr>
+              </tbody>
+            </table>
+          {% when 'jacket' %}
+            <table class="zehn-size-table">
+              <caption>Richtwerte für Jacken</caption>
+              <thead><tr><th>Größe</th><th>Brust</th><th>Schulter</th><th>Ärmel</th><th>Länge</th></tr></thead>
+              <tbody>
+                <tr><th>S</th><td data-cm="113">113</td><td data-cm="46.8">46,8</td><td data-cm="69.8">69,8</td><td data-cm="69.5">69,5</td></tr>
+                <tr><th>M</th><td data-cm="119">119</td><td data-cm="48.2">48,2</td><td data-cm="70.3">70,3</td><td data-cm="71">71</td></tr>
+                <tr><th>L</th><td data-cm="125">125</td><td data-cm="50">50</td><td data-cm="70.9">70,9</td><td data-cm="73">73</td></tr>
+                <tr><th>XL</th><td data-cm="133">133</td><td data-cm="51.8">51,8</td><td data-cm="71.5">71,5</td><td data-cm="75">75</td></tr>
+              </tbody>
+            </table>
+          {% else %}
+            <table class="zehn-size-table">
+              <caption>{% if guide_type == 'relaxed-top' %}Produktmaße Oversized Fit{% else %}Produktmaße Regular Fit{% endif %}</caption>
+              <thead><tr><th>Größe</th><th>Brust</th><th>Länge</th><th>Schulter</th></tr></thead>
+              <tbody>
+                {% if guide_type == 'relaxed-top' %}
+                  <tr><th>XS</th><td data-cm="113">113</td><td data-cm="71">71</td><td data-cm="52.2">52,2</td></tr>
+                  <tr><th>S</th><td data-cm="119">119</td><td data-cm="72.5">72,5</td><td data-cm="53.6">53,6</td></tr>
+                  <tr><th>M</th><td data-cm="125">125</td><td data-cm="74">74</td><td data-cm="55">55</td></tr>
+                  <tr><th>L</th><td data-cm="131">131</td><td data-cm="76">76</td><td data-cm="56.8">56,8</td></tr>
+                  <tr><th>XL</th><td data-cm="139">139</td><td data-cm="78">78</td><td data-cm="58.6">58,6</td></tr>
+                  <tr><th>XXL</th><td data-cm="147">147</td><td data-cm="80">80</td><td data-cm="60.4">60,4</td></tr>
+                {% else %}
+                  <tr><th>XS</th><td data-cm="98">98</td><td data-cm="71">71</td><td data-cm="45.7">45,7</td></tr>
+                  <tr><th>S</th><td data-cm="104">104</td><td data-cm="72.5">72,5</td><td data-cm="47.1">47,1</td></tr>
+                  <tr><th>M</th><td data-cm="110">110</td><td data-cm="74">74</td><td data-cm="48.5">48,5</td></tr>
+                  <tr><th>L</th><td data-cm="116">116</td><td data-cm="76">76</td><td data-cm="50.3">50,3</td></tr>
+                  <tr><th>XL</th><td data-cm="124">124</td><td data-cm="78">78</td><td data-cm="52.1">52,1</td></tr>
+                  <tr><th>XXL</th><td data-cm="132">132</td><td data-cm="80">80</td><td data-cm="53.9">53,9</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+        {% endcase %}
+      </div>
+      <p class="zehn-size-guide__note">Alle Angaben sind Kleidungsmaße. Produktionsbedingte Abweichungen von ±1–2 cm sind möglich.</p>
+      <a class="zehn-text-action" href="/pages/contact?view=fitguide">Persönliche Größenberatung →</a>
+    </div>
+  </dialog>
+</zehn-product-experience>
+
+{% stylesheet %}
+  .zehn-product-experience {
+    display: grid;
+    gap: 22px;
+    width: 100%;
+  }
+
+  .zehn-product-summary {
+    position: relative;
+    max-height: 9.5em;
+    overflow: hidden;
+    color: rgb(var(--color-foreground-rgb) / 0.78);
+  }
+
+  .zehn-product-summary::after {
+    position: absolute;
+    inset: auto 0 0;
+    height: 2.8em;
+    background: linear-gradient(transparent, var(--color-background));
+    content: '';
+    pointer-events: none;
+  }
+
+  .zehn-text-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: fit-content;
+    padding: 0 0 5px;
+    border: 0;
+    border-bottom: 1px solid currentColor;
+    background: transparent;
+    color: var(--color-foreground);
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    text-transform: uppercase;
+  }
+
+  .zehn-buy-now,
+  .zehn-buy-now .button {
+    width: 100%;
+  }
+
+  .zehn-buy-now .button {
+    min-height: 48px;
+  }
+
+  .zehn-benefits {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-top: 1px solid rgb(var(--color-foreground-rgb) / 0.14);
+    border-left: 1px solid rgb(var(--color-foreground-rgb) / 0.14);
+  }
+
+  .zehn-benefit {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    min-width: 0;
+    min-height: 96px;
+    padding: 17px 14px;
+    border: 0;
+    border-right: 1px solid rgb(var(--color-foreground-rgb) / 0.14);
+    border-bottom: 1px solid rgb(var(--color-foreground-rgb) / 0.14);
+    background: transparent;
+    color: var(--color-foreground);
+    font: inherit;
+    text-align: left;
+  }
+
+  button.zehn-benefit {
+    cursor: pointer;
+  }
+
+  .zehn-benefit svg {
+    flex: 0 0 21px;
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.35;
+  }
+
+  .zehn-benefit span {
+    display: grid;
+    gap: 4px;
+  }
+
+  .zehn-benefit strong {
+    font-size: 0.76rem;
+    letter-spacing: 0.025em;
+  }
+
+  .zehn-benefit small {
+    color: rgb(var(--color-foreground-rgb) / 0.58);
+    font-size: 0.68rem;
+    line-height: 1.4;
+  }
+
+  .zehn-product-accordions {
+    border-top: 1px solid rgb(var(--color-foreground-rgb) / 0.18);
+  }
+
+  .zehn-product-accordions details {
+    border-bottom: 1px solid rgb(var(--color-foreground-rgb) / 0.18);
+  }
+
+  .zehn-product-accordions summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 17px 0;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    list-style: none;
+    text-transform: uppercase;
+  }
+
+  .zehn-product-accordions summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .zehn-product-accordions summary span {
+    font-size: 1.2rem;
+    font-weight: 300;
+    transition: transform 160ms ease;
+  }
+
+  .zehn-product-accordions details[open] summary span {
+    transform: rotate(45deg);
+  }
+
+  .zehn-product-accordions details > .rte {
+    padding: 0 0 20px;
+    color: rgb(var(--color-foreground-rgb) / 0.7);
+    font-size: 0.84rem;
+    line-height: 1.65;
+  }
+
+  .zehn-product-dialog {
+    width: min(680px, calc(100vw - 32px));
+    max-height: min(82vh, 840px);
+    padding: 0;
+    border: 0;
+    background: var(--color-background);
+    color: var(--color-foreground);
+    box-shadow: 0 24px 80px rgb(0 0 0 / 0.2);
+  }
+
+  .zehn-product-dialog::backdrop {
+    background: rgb(0 0 0 / 0.48);
+    backdrop-filter: blur(3px);
+  }
+
+  .zehn-product-dialog__header {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid rgb(var(--color-foreground-rgb) / 0.14);
+    background: var(--color-background);
+  }
+
+  .zehn-product-dialog__header h2 {
+    margin: 4px 0 0;
+    font-size: clamp(1.25rem, 3vw, 1.8rem);
+  }
+
+  .zehn-product-dialog__eyebrow {
+    margin: 0;
+    color: rgb(var(--color-foreground-rgb) / 0.55);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .zehn-product-dialog__header [data-dialog-close] {
+    display: grid;
+    flex: 0 0 38px;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    place-items: center;
+    border: 1px solid rgb(var(--color-foreground-rgb) / 0.2);
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  .zehn-product-dialog__body {
+    padding: 26px 28px 32px;
+    overflow: auto;
+  }
+
+  .zehn-unit-toggle {
+    display: inline-flex;
+    margin-bottom: 18px;
+    border: 1px solid rgb(var(--color-foreground-rgb) / 0.2);
+  }
+
+  .zehn-unit-toggle button {
+    min-width: 64px;
+    padding: 8px 14px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .zehn-unit-toggle button.is-active {
+    background: var(--color-foreground);
+    color: var(--color-background);
+  }
+
+  .zehn-size-table-wrap {
+    overflow-x: auto;
+  }
+
+  .zehn-size-table {
+    width: 100%;
+    min-width: 460px;
+    border-collapse: collapse;
+    font-size: 0.77rem;
+    text-align: center;
+  }
+
+  .zehn-size-table caption {
+    padding: 0 0 12px;
+    font-weight: 650;
+    text-align: left;
+  }
+
+  .zehn-size-table th,
+  .zehn-size-table td {
+    padding: 11px 12px;
+    border: 1px solid rgb(var(--color-foreground-rgb) / 0.16);
+  }
+
+  .zehn-size-table thead th {
+    background: rgb(var(--color-foreground-rgb) / 0.055);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .zehn-size-guide__note {
+    margin: 16px 0 20px;
+    color: rgb(var(--color-foreground-rgb) / 0.62);
+    font-size: 0.73rem;
+    line-height: 1.5;
+  }
+
+  @media screen and (max-width: 749px) {
+    .zehn-product-breadcrumb {
+      display: none;
+    }
+
+    .zehn-benefits {
+      grid-template-columns: 1fr;
+    }
+
+    .zehn-benefit {
+      min-height: 78px;
+    }
+
+    .zehn-product-dialog {
+      width: 100vw;
+      max-width: none;
+      max-height: 88vh;
+      margin: auto 0 0;
+    }
+
+    .zehn-product-dialog__header,
+    .zehn-product-dialog__body {
+      padding-inline: 20px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "ZEHN Produkterlebnis",
+  "tag": null,
+  "settings": [
+    {
+      "type": "textarea",
+      "id": "materials_fallback",
+      "label": "Materialien (Fallback)",
+      "default": "Die genaue Materialzusammensetzung finden Sie auf dem Pflegeetikett des Artikels. Aussagen zu zertifizierten oder recycelten Materialien gelten nur, wenn sie für dieses Produkt ausdrücklich angegeben sind."
+    },
+    {
+      "type": "textarea",
+      "id": "features_fallback",
+      "label": "Eigenschaften (Fallback)",
+      "default": "Moderne, maßgeschneiderte Passform mit raffinierten Details. Verstärkte Nähte für langlebige Haltbarkeit. Funktionale Details mit sauberen Abschlüssen. Für vielseitiges Styling und ganztägigen Komfort."
+    },
+    {
+      "type": "textarea",
+      "id": "care_fallback",
+      "label": "Pflegehinweise (Fallback)",
+      "default": "Maschinenwäsche kalt mit ähnlichen Farben. Im Trockner bei niedriger Temperatur oder an der Luft trocknen. Bei Bedarf kühl bügeln. Nicht bleichen. Pflegeetikett beachten."
+    },
+    {
+      "type": "textarea",
+      "id": "shipping_text",
+      "label": "Versand & Rückgabe",
+      "default": "Deutschland: Kostenloser Versand und kostenlose Rücksendung mit DHL. Lieferzeit: 2–3 Werktage. Europäische Union: Versand 5,99 € pro Bestellung, Lieferzeit 3–5 Werktage; Rücksendung kostenlos."
+    }
+  ],
+  "presets": [
+    {
+      "name": "ZEHN Produkterlebnis",
+      "category": "Produkt"
+    }
+  ]
+}
+{% endschema %}
