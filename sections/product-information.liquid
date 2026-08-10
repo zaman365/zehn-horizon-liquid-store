@@ -216,6 +216,7 @@
 
   #shopify-section-{{ section.id }} .pp__main-image {
     position: relative;
+    width: 100%;
     margin-bottom: 1rem;
     aspect-ratio: 2 / 3;
     max-width: 100%;
@@ -234,6 +235,12 @@
       grid-row: 1;
       margin-bottom: 0;
       justify-self: center;
+      /* Explicit width is REQUIRED here: justify-self:center makes this grid
+       * item content-sized, and its only child is position:absolute, which
+       * contributes zero intrinsic width — without this the box collapses to
+       * 0x0 and the image disappears. Matches .product-gallery-main in app.css. */
+      width: clamp(400px, calc(66.667vh - 106.667px), 546.667px);
+      max-width: 100%;
     }
   }
   #shopify-section-{{ section.id }} .pp__main-image img,
@@ -1468,6 +1475,27 @@
           }, 10000);
         }
         restartAutoSlide();
+
+        /* Match the thumbnail column height to the main image, as the Hydrogen
+         * version did with a ResizeObserver. Desktop only — the rail is hidden
+         * below 1024px, where the CSS fallback height is irrelevant. */
+        var thumbsEl = root.querySelector('[data-pp-thumbs]');
+        if (thumbsEl && mainImageEl) {
+          var syncThumbHeight = function () {
+            if (window.matchMedia('(min-width: 1024px)').matches) {
+              var h = mainImageEl.getBoundingClientRect().height;
+              if (h > 0) thumbsEl.style.height = h + 'px';
+            } else {
+              thumbsEl.style.height = '';
+            }
+          };
+          syncThumbHeight();
+          if (typeof ResizeObserver !== 'undefined') {
+            new ResizeObserver(syncThumbHeight).observe(mainImageEl);
+          } else {
+            window.addEventListener('resize', syncThumbHeight);
+          }
+        }
 
         return {
           filterByColor: filterByColor,
