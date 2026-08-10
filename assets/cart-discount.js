@@ -48,12 +48,20 @@ class CartDiscount extends Component {
     const discountCode = form.querySelector('input[name="discount"]');
     if (!(discountCode instanceof HTMLInputElement) || typeof this.dataset.sectionId !== 'string') return;
 
-    const discountCodeValue = discountCode.value;
+    const discountCodeValue = discountCode.value.trim();
+
+    if (!discountCodeValue) {
+      this.#handleDiscountError('discount_code');
+      return;
+    }
 
     const abortController = this.#createAbortController();
 
     const existingDiscounts = this.#existingDiscounts();
-    if (existingDiscounts.includes(discountCodeValue)) return;
+    if (existingDiscounts.some((code) => this.#normalizeCode(code) === this.#normalizeCode(discountCodeValue))) {
+      discountCode.value = '';
+      return;
+    }
 
     cartDiscountError.classList.add('hidden');
     cartDiscountErrorDiscountCode.classList.add('hidden');
@@ -82,13 +90,38 @@ class CartDiscount extends Component {
         signal: abortController.signal,
       });
 
-      const data = await response.json();
+      if (!response.ok) throw new Error(`Discount update failed with status ${response.status}`);
 
-      if (
-        data.discount_codes.find((/** @type {{ code: string; applicable: boolean; }} */ discount) => {
-          return discount.code === discountCodeValue && discount.applicable === false;
-        })
-      ) {
+      let data = await response.json();
+      let discountWasApplied = this.#hasApplicableDiscount(data, discountCodeValue);
+
+      // Shopify can persist a valid code before the mutation response reflects its
+      // final allocation. Confirm an ambiguous response against the persisted cart,
+      // matching the safeguard used by the Hydrogen storefront.
+      if (!discountWasApplied) {
+        const persistedResponse = await fetch(`${Theme.routes.cart_url}.json`, {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+          signal: abortController.signal,
+        });
+
+        if (persistedResponse.ok) {
+          const persistedCart = await persistedResponse.json();
+          discountWasApplied = this.#hasApplicableDiscount(persistedCart, discountCodeValue);
+
+          // Request fresh section HTML after an eventually-consistent success so
+          // totals and the applied-code pill render from the persisted cart state.
+          if (discountWasApplied) {
+            const refreshedResponse = await fetch(Theme.routes.cart_update_url, {
+              ...config,
+              signal: abortController.signal,
+            });
+            if (refreshedResponse.ok) data = await refreshedResponse.json();
+          }
+        }
+      }
+
+      if (!discountWasApplied) {
         discountCode.value = '';
         this.#handleDiscountError('discount_code');
         deferredPromise.resolve({
@@ -111,9 +144,7 @@ class CartDiscount extends Component {
         if (
           codes.length === existingDiscounts.length &&
           codes.every((/** @type {string} */ code) => existingDiscounts.includes(code)) &&
-          data.discount_codes.find((/** @type {{ code: string; applicable: boolean; }} */ discount) => {
-            return discount.code === discountCodeValue && discount.applicable === true;
-          })
+          this.#hasApplicableDiscount(data, discountCodeValue)
         ) {
           this.#handleDiscountError('shipping');
           discountCode.value = '';
@@ -256,6 +287,54 @@ class CartDiscount extends Component {
     }
 
     return discountCodes;
+  }
+
+  /**
+   * Normalizes a code for comparisons while preserving the submitted value sent to Shopify.
+   * @param {string} code
+   */
+  #normalizeCode(code) {
+    return code.trim().toLocaleLowerCase();
+  }
+
+  /**
+   * Checks both Shopify's discount-code response and the resulting discount allocations.
+   * @param {any} cart
+   * @param {string} submittedCode
+   */
+  #hasApplicableDiscount(cart, submittedCode) {
+    const normalizedCode = this.#normalizeCode(submittedCode);
+    const codeMatches = (/** @type {unknown} */ code) =>
+      typeof code === 'string' && this.#normalizeCode(code) === normalizedCode;
+
+    if (
+      Array.isArray(cart?.discount_codes) &&
+      cart.discount_codes.some(
+        (/** @type {{ code?: string; applicable?: boolean }} */ discount) =>
+          codeMatches(discount.code) && discount.applicable !== false
+      )
+    ) {
+      return true;
+    }
+
+    if (
+      Array.isArray(cart?.cart_level_discount_applications) &&
+      cart.cart_level_discount_applications.some(
+        (/** @type {{ title?: string }} */ application) => codeMatches(application.title)
+      )
+    ) {
+      return true;
+    }
+
+    return (
+      Array.isArray(cart?.items) &&
+      cart.items.some(
+        (/** @type {{ line_level_discount_allocations?: Array<{ discount_application?: { title?: string } }> }} */ item) =>
+          item.line_level_discount_allocations?.some((allocation) =>
+            codeMatches(allocation.discount_application?.title)
+          )
+      )
+    );
   }
 }
 

@@ -57,16 +57,21 @@ export class CartItemsComponent extends createViewEventElement(Component) {
   /** @param {CartDiscountUpdateEvent} event */
   #handleDiscountUpdate = (event) => {
     const external = this.#isExternalCartUpdate(event);
+
+    // Discount controls rendered inside this cart component own their UI update.
+    // Listening to their event here as well causes a second section morph which can
+    // replace the success pill or validation message that cart-discount just rendered.
+    if (!external) return;
+
     event.promise
       ?.then(({ detail }) => {
         const sectionsHtml = detail?.sections?.[this.sectionId];
         if (sectionsHtml) {
           morphSection(this.sectionId, sectionsHtml, { mode: this.isDrawer ? 'hydration' : 'full' });
           this.#updateCartQuantitySelectorButtonStates();
-        } else if (external) {
+        } else {
           // External caller (Shopify.actions.updateCart or SFAPI default handler) didn't
           // attach sections; refetch so the discount UI reflects the post-mutation cart.
-          // Internal cart-discount-component morphs the section itself — no fallback needed.
           sectionRenderer.renderSection(this.sectionId, {
             cache: false,
             mode: this.isDrawer ? 'hydration' : 'full',
