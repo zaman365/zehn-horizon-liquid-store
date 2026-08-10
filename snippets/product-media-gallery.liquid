@@ -26,7 +26,7 @@
   <div class="pp__gallery-grid">
 
     <div class="pp__thumbs" data-pp-thumbs {% if gallery_images.size <= 1 %}hidden{% endif %}>
-      <button type="button" class="pp__thumb-nav pp__thumb-nav--up" data-pp-thumb-scroll="up" aria-label="Vorherige Bilder anzeigen" hidden>
+      <button type="button" class="pp__thumb-nav pp__thumb-nav--up" data-pp-thumb-scroll="up" aria-label="Vorherige Bilder anzeigen" {% if gallery_images.size <= 4 %}hidden{% endif %}>
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
       </button>
       <div class="pp__thumb-rail" data-pp-thumb-rail>
