@@ -1,11 +1,19 @@
-
-
 {% liquid
+  assign zehn_static_paths = '|/about-us|/protokoll|/pages/faq|/pages/produktsicherheit|/pages/sustainability|/pages/track-order|/pages/payment|/pages/care|/pages/fitguide|'
+  assign zehn_request_token = '|' | append: request.path | append: '|'
+  assign show_zehn_static_page = false
+  if zehn_static_paths contains zehn_request_token
+    assign show_zehn_static_page = true
+  endif
+
   if section.settings.background_color != blank
     render 'contrast-override', background_color: section.settings.background_color, section_id: section.id
   endif
 %}
 
+{% if show_zehn_static_page %}
+  {% render 'zehn-static-page', path: request.path %}
+{% else %}
 <div
   class="section-background{% if section.settings.background_color != blank %} color-custom-{{ section.id }}{% endif %}"
 ></div>
@@ -33,6 +41,7 @@
     </div>
   </div>
 </div>
+{% endif %}
 
 {% schema %}
 {

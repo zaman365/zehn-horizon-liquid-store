@@ -1,0 +1,134 @@
+{%- doc -%}
+  Renders migrated Hydrogen content for footer destinations that do not yet
+  exist as Shopify Pages. A real Shopify resource takes precedence because
+  this snippet is only reached through the 404 template.
+
+  @param {string} path - Current request path
+{%- enddoc -%}
+
+{%- liquid
+  assign page_title = blank
+  assign page_subtitle = blank
+  assign page_category = 'ZEHN'
+
+  case path
+    when '/about-us'
+      assign page_title = 'Unsere Geschichte'
+      assign page_subtitle = 'Substanz statt Hype'
+      assign page_category = 'Über ZEHN'
+      capture page_content
+        echo '<section><h2>Was ZEHN ausmacht.</h2><p>Jede Naht. Jede Linie. Jede Materialwahl — bewusst und berechnet. Kein überflüssiges Detail. Nur strukturierte Intentionalität. Deutsche Engineering-Denkweise: klare Linien, leistungsbewusst, für die Ewigkeit gemacht.</p></section>'
+        echo '<section><h2>Gebaut für das Gegenteil.</h2><p>Der Markt ist laut: schnelle Mode, Greenwashing und Kollektionen ohne Seele. ZEHN wurde für alle gebaut, die den Unterschied zwischen gut gemacht und billig produziert spüren. Wir entwickeln jeden Drop berechnet, beabsichtigt und kompromisslos.</p></section>'
+        echo '<section><h2>Wie ZEHN entstand.</h2><p>ZEHN bedeutet zehn — eine einfache Zahl und ein hohes Versprechen: alles zehnmal besser durchdenken, ehrlicher gestalten und dauerhafter bauen. Du bist eine perfekte ZEHN, wenn du du selbst bist.</p></section>'
+      endcapture
+    when '/protokoll'
+      assign page_title = 'ZEHN PROTOKOLL'
+      assign page_subtitle = 'Nachweise statt Behauptungen'
+      assign page_category = 'Über ZEHN'
+      capture page_content
+        echo '<section><h2>Transparenz, die überprüfbar ist.</h2><p>ZEHN PROTOKOLL dokumentiert Material, Herkunft, Verarbeitung und Produktentscheidungen. Wir möchten nicht nur sagen, dass ein Produkt gut gemacht ist — wir möchten zeigen, worauf diese Aussage beruht.</p></section>'
+        echo '<section><h2>Material & Verarbeitung</h2><p>Verbindliche Angaben finden Sie direkt am jeweiligen Produkt. Aussagen zu zertifizierten oder recycelten Materialien gelten nur dort, wo sie ausdrücklich ausgewiesen und nachvollziehbar belegt sind.</p></section>'
+        echo '<section><h2>Das Register wächst.</h2><p>Weitere Produktnachweise und Leitfäden werden schrittweise ergänzt. Bei Fragen zu einem Produkt hilft unser Kundenservice unter <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a>.</p></section>'
+      endcapture
+    when '/pages/sustainability'
+      assign page_title = 'Nachhaltigkeit'
+      assign page_subtitle = 'Transparente Informationen zu Materialien und Pflege'
+      assign page_category = 'Über ZEHN'
+      capture page_content
+        echo '<section><h2>Weniger behaupten. Mehr belegen.</h2><p>Wir behandeln Nachhaltigkeit nicht als Werbeslogan. Materialzusammensetzung, Herkunft und besondere Eigenschaften werden produktbezogen angegeben. Verbindlich sind die Informationen auf der jeweiligen Produktseite und dem Pflegeetikett.</p></section>'
+        echo '<section><h2>Langlebigkeit beginnt beim Produkt.</h2><p>Klare Konstruktion, sorgfältige Verarbeitung und die richtige Pflege verlängern die Nutzungsdauer. Unser Anspruch ist Kleidung, die getragen werden soll — nicht nur für einen kurzen Trendzyklus.</p></section>'
+        echo '<section><h2>Fragen zu Materialien?</h2><p>Unser Team beantwortet produktbezogene Fragen unter <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a>.</p></section>'
+      endcapture
+    when '/pages/faq'
+      assign page_title = 'Häufig gestellte Fragen'
+      assign page_subtitle = 'Antworten auf die wichtigsten Fragen'
+      assign page_category = 'Rechtliches'
+      capture page_content
+        echo '<section><h2>Bestellung & Zahlung</h2><p>Wählen Sie Ihre Artikel aus und folgen Sie dem Checkout. Die für Ihre Bestellung verfügbaren Zahlungsarten werden dort angezeigt. Eine Änderung oder Stornierung hängt vom Bearbeitungsstatus ab; kontaktieren Sie uns deshalb möglichst schnell.</p></section>'
+        echo '<section><h2>Versand & Lieferung</h2><p>Innerhalb Deutschlands ist der Versand kostenlos. Die Regellieferzeit beträgt 2–5 Werktage. Nach dem Versand erhalten Sie eine E-Mail mit Sendungsverfolgung.</p></section>'
+        echo '<section><h2>Retouren</h2><p>Artikel können innerhalb von 30 Tagen ungetragen, ungewaschen und mit originalen Etiketten zurückgegeben werden. Details finden Sie unter <a href="/policies/refund-policy">Lieferung & Rückgabe</a>.</p></section>'
+        echo '<section><h2>Produkte & Größen</h2><p>Vergleichen Sie die Produktmaße mit einem gut sitzenden Kleidungsstück. Unser <a href="/pages/fitguide">Fitguide</a> und die <a href="/pages/care">Pflegehinweise</a> helfen bei Auswahl und Nutzung.</p></section>'
+      endcapture
+    when '/pages/produktsicherheit'
+      assign page_title = 'Produktsicherheit'
+      assign page_subtitle = 'Hinweise für eine sichere Nutzung'
+      assign page_category = 'Rechtliches'
+      capture page_content
+        echo '<section><h2>Produktinformationen</h2><p>Beachten Sie stets Pflege-, Material- und Sicherheitshinweise auf dem Produkt, dem Etikett und der jeweiligen Produktseite. Halten Sie Verpackungsmaterial von Kindern fern.</p></section>'
+        echo '<section><h2>Herstellerkontakt</h2><p>VINCET GmbH<br>Friedrich-Engels-Straße 23<br>09337 Hohenstein-Ernstthal<br>Deutschland</p><p>E-Mail: <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a><br>Telefon: <a href="tel:+491634210324">+49 163 4210324</a></p></section>'
+        echo '<section><h2>Problem melden</h2><p>Wenn Sie einen sicherheitsrelevanten Mangel vermuten, verwenden Sie das Produkt nicht weiter und senden Sie uns Produktname, Bestellnummer und eine kurze Beschreibung.</p></section>'
+      endcapture
+    when '/pages/track-order'
+      assign page_title = 'Bestellung verfolgen'
+      assign page_subtitle = 'Wo ist mein Paket?'
+      assign page_category = 'Kundenservice'
+      capture page_content
+        echo '<section><h2>Sendungsverfolgung</h2><p>Nach dem Versand erhalten Sie eine Bestätigungs-E-Mail mit Tracking-Link. Die Sendungsverfolgung wird in der Regel innerhalb von 24 Stunden nach Versand aktiviert.</p><p><a class="zehn-static-page__button" href="/account">Zum Kundenkonto</a></p></section>'
+        echo '<section><h2>Lieferzeiten</h2><p>Deutschland: 2–5 Werktage. Europäische Union: 3–8 Werktage. Während Aktionen und Feiertagen kann sich die Lieferzeit verlängern.</p></section>'
+        echo '<section><h2>Probleme mit der Lieferung?</h2><p>Kontaktieren Sie uns unter <a href="mailto:info@zehnfashion.de">info@zehnfashion.de</a> oder telefonisch unter <a href="tel:+491634210324">+49 163 4210324</a>.</p></section>'
+      endcapture
+    when '/pages/payment'
+      assign page_title = 'Zahlung & Sicherheit'
+      assign page_subtitle = 'Sicher und flexibel bezahlen'
+      assign page_category = 'Kundenservice'
+      capture page_content
+        echo '<section><h2>Verfügbare Zahlungsarten</h2><p>Die verfügbaren Zahlungsarten werden direkt im Shopify Checkout angezeigt und können je nach Land, Gerät und Bestellung variieren. Möglich sind unter anderem Kreditkarte, PayPal, Klarna und Kauf auf Rechnung.</p></section>'
+        echo '<section><h2>Sichere Zahlungsabwicklung</h2><p>Ihre Zahlung wird über verschlüsselte Verbindungen verarbeitet. Zahlungsinformationen werden nicht direkt in unserem Shop gespeichert, sondern durch Shopify und den jeweiligen Zahlungsanbieter verarbeitet.</p></section>'
+        echo '<section><h2>Erstattung</h2><p>Rückerstattungen erfolgen in der Regel über die ursprünglich verwendete Zahlungsmethode. Die Bearbeitung kann je nach Zahlungsanbieter einige Werktage dauern.</p></section>'
+      endcapture
+    when '/pages/care'
+      assign page_title = 'Stoffpflege'
+      assign page_subtitle = 'So bleibt Ihre ZEHN-Kleidung wie am ersten Tag'
+      assign page_category = 'Kundenservice'
+      capture page_content
+        echo '<section><h2>Grundregeln</h2><p>Das Pflegeetikett am Produkt hat immer Vorrang. Farben trennen, Taschen leeren, Verschlüsse schließen und Kleidungsstücke auf links drehen. Niedrige Temperaturen und Lufttrocknung schonen Material und Form.</p></section>'
+        echo '<section><h2>T-Shirts, Polos, Hosen & Shorts</h2><p>Mit ähnlichen Farben bei 30°C und einem milden Waschmittel waschen. Nicht bleichen. Bei Stretch-Anteilen keine hohe Hitze verwenden.</p></section>'
+        echo '<section><h2>Jacken</h2><p>Jacken aus Nylonmischungen oder wattierten Materialien nur nach Etikett reinigen. Oft reichen Auslüften oder eine punktuelle Reinigung. Bei empfindlichen Woll- oder Daunenmischungen im Zweifel professionelle Reinigung wählen.</p></section>'
+      endcapture
+    when '/pages/fitguide'
+      assign page_title = 'Fitguide'
+      assign page_subtitle = 'Produktmaße und Passformberatung'
+      assign page_category = 'Kundenservice'
+      capture page_content
+        echo '<section><h2>So finden Sie Ihre Größe</h2><p>Unsere Tabellen zeigen Produktmaße, nicht reine Körpermaße. Legen Sie ein gut passendes Kleidungsstück flach hin und vergleichen Sie Brust, Bund, Hüfte und Länge mit den Angaben auf der Produktseite. Abweichungen von ±1–2 cm sind normal.</p></section>'
+        echo '<section><h2>Oberteile & Jacken</h2><p>Für einen körpernäheren Look wählen Sie die Größe, deren Brustweite Ihrem Vergleichsteil entspricht. Für mehr Schulter- und Brustfreiheit oder einen entspannteren Sitz wählen Sie die größere Größe.</p></section>'
+        echo '<section><h2>Hosen, Jeans & Shorts</h2><p>Wählen Sie zuerst die Bundweite und anschließend die Beinlänge. Der Bund sollte geschlossen flach liegen, ohne am Bauch zu ziehen. Cargo-Modelle bieten mehr Beinweite als Chino-Modelle.</p></section>'
+        echo '<section><h2>Zwischen zwei Größen?</h2><p>Kleiner für einen körpernäheren Look, größer für mehr Komfort und Bewegungsfreiheit. Für persönliche Beratung kontaktieren Sie uns über die <a href="/pages/contact">Kontaktseite</a>.</p></section>'
+      endcapture
+  endcase
+-%}
+
+{%- if page_title != blank -%}
+  <article class="zehn-static-page" data-zehn-static-fallback data-zehn-static-path="{{ path | escape }}">
+    <header class="zehn-static-page__hero">
+      <div class="zehn-static-page__inner">
+        <p class="zehn-static-page__eyebrow">{{ page_category }}</p>
+        <h1>{{ page_title }}</h1>
+        <p class="zehn-static-page__subtitle">{{ page_subtitle }}</p>
+      </div>
+    </header>
+    <div class="zehn-static-page__content zehn-static-page__inner rte">
+      {{ page_content }}
+    </div>
+  </article>
+
+  <style>
+    body:has([data-zehn-static-fallback]) .ui-test-product-list { display: none; }
+    .zehn-static-page { width: 100%; color: var(--zehn-indigo, #0f1426); }
+    .zehn-static-page__inner { width: min(100% - 32px, 980px); margin-inline: auto; }
+    .zehn-static-page__hero { padding: clamp(72px, 10vw, 132px) 0 clamp(48px, 7vw, 88px); background: #0f1426; color: #fff; }
+    .zehn-static-page__eyebrow { margin: 0 0 18px; color: #ff5a1f; font-size: 12px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; }
+    .zehn-static-page h1 { max-width: 850px; margin: 0; color: inherit; font-size: clamp(42px, 7vw, 80px); line-height: .98; letter-spacing: -.035em; text-transform: uppercase; }
+    .zehn-static-page__subtitle { max-width: 700px; margin: 22px 0 0; color: rgb(255 255 255 / 72%); font-size: clamp(17px, 2vw, 22px); }
+    .zehn-static-page__content { display: grid; gap: 0; padding-block: clamp(48px, 8vw, 100px); }
+    .zehn-static-page__content section { display: grid; grid-template-columns: minmax(190px, .55fr) minmax(0, 1.45fr); gap: 24px clamp(28px, 6vw, 80px); padding: 34px 0; border-top: 1px solid rgb(15 20 38 / 14%); }
+    .zehn-static-page__content section:last-child { border-bottom: 1px solid rgb(15 20 38 / 14%); }
+    .zehn-static-page__content h2 { margin: 0; color: inherit; font-size: clamp(20px, 2.4vw, 30px); line-height: 1.1; }
+    .zehn-static-page__content p { margin: 0 0 16px; color: rgb(15 20 38 / 72%); line-height: 1.75; }
+    .zehn-static-page__content a:not(.zehn-static-page__button) { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+    .zehn-static-page__button { display: inline-flex; min-height: 44px; align-items: center; padding: 10px 18px; background: #0f1426; color: #fff; text-decoration: none; }
+    @media screen and (max-width: 749px) {
+      .zehn-static-page__content section { grid-template-columns: 1fr; gap: 14px; padding: 28px 0; }
+    }
+  </style>
+{%- endif -%}

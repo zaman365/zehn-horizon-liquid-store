@@ -462,7 +462,24 @@
           {%- liquid
             assign menu = block.settings.menu
             assign heading = block.settings.heading
-            if heading == blank and menu != blank
+            assign use_zehn_footer_links = false
+            if menu == blank or menu.handle == 'main-menu'
+              assign use_zehn_footer_links = true
+            endif
+
+            if use_zehn_footer_links
+              case forloop.index
+                when 1
+                  assign heading = 'Rechtliches'
+                  assign fallback_links = 'Impressum|/policies/legal-notice,AGB|/policies/terms-of-service,Datenschutz|/policies/privacy-policy,Cookies|/policies/privacy-policy#cookies,FAQ|/pages/faq,Produktsicherheit|/pages/produktsicherheit,Widerruf|/policies/refund-policy'
+                when 2
+                  assign heading = 'Über ZEHN'
+                  assign fallback_links = 'Unsere Geschichte|/about-us,Nachhaltigkeit|/pages/sustainability,ZEHN PROTOKOLL|/protokoll'
+                else
+                  assign heading = 'Kundenservice'
+                  assign fallback_links = 'Bestellung verfolgen|/pages/track-order,Kontakt|/pages/contact,Lieferung & Rückgabe|/policies/shipping-policy,Zahlung & Sicherheit|/pages/payment,Stoffpflege|/pages/care,Fitguide|/pages/fitguide'
+              endcase
+            elsif heading == blank and menu != blank
               assign heading = menu.title
             endif
           -%}
@@ -484,7 +501,15 @@
               role="region"
               aria-labelledby="zf-heading-{{ block.id }}"
             >
-              {%- if menu != blank -%}
+              {%- if use_zehn_footer_links -%}
+                <ul class="zf__links">
+                  {%- assign fallback_link_pairs = fallback_links | split: ',' -%}
+                  {%- for fallback_link in fallback_link_pairs -%}
+                    {%- assign fallback_link_parts = fallback_link | split: '|' -%}
+                    <li><a class="zf__link" href="{{ fallback_link_parts[1] }}">{{ fallback_link_parts[0] }}</a></li>
+                  {%- endfor -%}
+                </ul>
+              {%- elsif menu != blank -%}
                 <ul class="zf__links">
                   {%- for link in menu.links -%}
                     <li><a class="zf__link" href="{{ link.url }}">{{ link.title }}</a></li>
