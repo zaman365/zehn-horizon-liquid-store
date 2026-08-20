@@ -112,14 +112,14 @@
         "decrease_label": "Menge verringern",
         "increase_label": "Menge erhöhen",
         "remove_label": "Artikel entfernen",
-        "card_color": "#FFFFFF",
-        "text_color": "#0F1426",
-        "border_color": "#8E97A4",
-        "muted_color": "#F4F4F5",
-        "accent_color": "#FF5F1F",
-        "primary_color": "#0F1426",
-        "primary_foreground": "#F4F4F5",
-        "shipping_color": "#16A34A",
+        "card_color": "#ffffff",
+        "text_color": "#0f1426",
+        "border_color": "#8e97a4",
+        "muted_color": "#f4f4f5",
+        "accent_color": "#ff5f1f",
+        "primary_color": "#0f1426",
+        "primary_foreground": "#f4f4f5",
+        "shipping_color": "#16a34a",
         "z_index": 200
       }
     },
@@ -138,10 +138,10 @@
         "results_limit": 8,
         "offset": 4,
         "z_index": 60,
-        "card_color": "#FFFFFF",
-        "text_color": "#0F1426",
-        "muted_color": "#F4F4F5",
-        "accent_color": "#FF5F1F"
+        "card_color": "#ffffff",
+        "text_color": "#0f1426",
+        "muted_color": "#f4f4f5",
+        "accent_color": "#ff5f1f"
       }
     }
   },
