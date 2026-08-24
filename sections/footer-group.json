@@ -107,7 +107,6 @@
         "body_font_size": 14,
         "grid_breakpoint": 640,
         "field_radius": 4,
-        "max_width": 1600,
         "column_gap": 40,
         "padding_top": 96,
         "padding_bottom": 64,
