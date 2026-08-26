@@ -12,8 +12,9 @@
     "main": {
       "type": "product-information",
       "blocks": {
-        "details_popup_ngqzB4": {
-          "type": "details_popup",
+        "details_popup_E8zePn": {
+          "type": "details-popup",
+          "name": "Product details popup",
           "settings": {
             "trigger_label": "Produktdetails ansehen",
             "show_trigger_icon": true,
@@ -29,11 +30,12 @@
             "add_to_cart_label": "In den Warenkorb",
             "added_label": "Hinzugefügt",
             "soldout_label": "Ausverkauft"
-          }
+          },
+          "blocks": {}
         }
       },
       "block_order": [
-        "details_popup_ngqzB4"
+        "details_popup_E8zePn"
       ],
       "settings": {}
     },
