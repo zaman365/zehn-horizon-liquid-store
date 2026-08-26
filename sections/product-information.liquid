@@ -1,48 +1,25 @@
 {%- comment -%}
   ZEHN — Product page (Hydrogen `products.$handle.tsx` → Shopify Liquid)
   Place in: sections/main-product.liquid
-  Template: templates/product.json →
-  {
-    "sections": {
-      "main": {
-        "type": "main-product",
-        "blocks": {
-          "details": { "type": "details-popup", "settings": {} }
-        },
-        "block_order": ["details"]
-      }
-    },
-    "order": ["main"]
-  }
+  Template: templates/product.json → { "sections": { "main": { "type": "main-product" } }, "order": ["main"] }
 
-  ------------------------------------------------------------------
-  CHANGE LOG (details popup extracted to a Horizon theme block)
-  ------------------------------------------------------------------
-  - The "Produktdetails ansehen" trigger and its modal have been REMOVED
-    from this section. They now live in the standalone theme block
-    blocks/details-popup.liquid.
-  - This section opts in to theme blocks and renders them at
-    {% content_for 'blocks' %}, placed where the trigger used to sit (in
-    the product header). Add / remove / reorder the popup in the editor.
-  - The header summary list split (description to bulleted summary) is
-    unrelated to the popup and has been kept.
-  - Removed: the details-modal markup, its dedicated CSS (description,
-    slider, modal option and button styles, plus the old inline trigger
-    styles) and its JS (variant-picker clone, open handler, modal slider,
-    and the popup button label handling). The shared modal shell CSS is
-    kept for the size-guide modal.
-  Scope of the original conversion (unchanged, agreed with merchant):
+  Scope of this conversion (agreed with merchant):
   - Recommended-products section intentionally excluded.
   - Wishlist is localStorage-based (no wishlist app confirmed).
-  - Color-grouped gallery images matched by filename group (alt-text
-    fallback). No metafield/naming convention confirmed on Shopify side.
-  - The "quick add" bag icon in the fullscreen viewer closes the viewer
-    and scrolls to the main variant picker.
-  - Combined-listings cross-product option links are not ported.
-  - Meta/Google pixel calls are clearly-marked dataLayer stubs.
-  - Materials / features / care copy comes from
-    product.metafields.custom.* (namespace "custom"). Shipping copy is
-    static, as it was in the Hydrogen file.
+  - Color-grouped gallery images matched by alt text containing the selected
+    color value (no metafield/naming convention confirmed on the Shopify side).
+  - The "quick add" bag icon in the fullscreen viewer closes the viewer and
+    scrolls to the main variant picker instead of opening a duplicate modal.
+  - Combined-listings "different product" size jump (Hydrogen's
+    `isDifferentProduct`) has no 1:1 Shopify equivalent without Combined
+    Listings configured on these products, so cross-product option links are
+    not ported — all options are assumed to belong to this product's variants.
+  - Meta/Google pixel calls are left as clearly marked dataLayer stubs; wire
+    them to your existing GTM/Meta Pixel setup.
+  - Materials / features / care copy comes from product.metafields.custom.*
+    (namespace "custom", keys "materials" / "features" / "care"), same as
+    the Hydrogen metafield reads. Shipping copy is static, as it was in the
+    Hydrogen file.
 {%- endcomment -%}
 
 {%- liquid
@@ -375,6 +352,31 @@
   #shopify-section-{{ section.id }} .pp__summary li { margin-bottom: 0.5rem; font-weight: 500; }
   #shopify-section-{{ section.id }} .pp__summary strong { font-weight: 600; color: var(--pp-fg); }
 
+  #shopify-section-{{ section.id }} .pp__details-trigger {
+    display: none;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    font-family: var(--pp-font-body);
+    font-size: var(--pp-body);
+    font-weight: 600;
+    color: var(--pp-primary);
+    cursor: pointer;
+    transition: color 150ms ease;
+  }
+  #shopify-section-{{ section.id }} .pp__details-trigger.is-visible { display: inline-flex; }
+  #shopify-section-{{ section.id }} .pp__details-trigger:hover { color: color-mix(in srgb, var(--pp-primary) 70%, transparent); }
+  #shopify-section-{{ section.id }} .pp__details-trigger svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--pp-accent);
+    transition: transform 150ms ease;
+  }
+  #shopify-section-{{ section.id }} .pp__details-trigger:hover svg { transform: translateX(2px); }
+
   #shopify-section-{{ section.id }} .pp__price-row {
     display: flex;
     align-items: center;
@@ -690,6 +692,14 @@
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
   }
   #shopify-section-{{ section.id }} .pp__modal--size .pp__modal-panel { max-width: 56rem; }
+  #shopify-section-{{ section.id }} .pp__modal--details .pp__modal-panel {
+    max-height: 92vh;
+    max-width: 72rem;
+    border-radius: 1.5rem 1.5rem 0 0;
+  }
+  @media (min-width: 640px) {
+    #shopify-section-{{ section.id }} .pp__modal--details .pp__modal-panel { border-radius: 1rem; }
+  }
   #shopify-section-{{ section.id }} .pp__modal-head {
     display: flex;
     flex-shrink: 0;
@@ -784,6 +794,93 @@
   #shopify-section-{{ section.id }} .pp__sg-tips h3 { margin-top: 0; }
   #shopify-section-{{ section.id }} .pp__sg-tips ul { margin: 0; padding-left: 1.25rem; font-size: 0.875rem; color: color-mix(in srgb, var(--pp-fg) 70%, transparent); }
   #shopify-section-{{ section.id }} .pp__sg-tips li { margin-bottom: 0.5rem; }
+
+  /* ---------- description modal ---------- */
+  #shopify-section-{{ section.id }} .pp__details-html {
+    font-size: var(--pp-body);
+    line-height: 1.7;
+    color: color-mix(in srgb, var(--pp-fg) 70%, transparent);
+    margin-bottom: 2rem;
+  }
+  #shopify-section-{{ section.id }} .pp__details-html ul { list-style: disc; padding-left: 1.5rem; }
+  #shopify-section-{{ section.id }} .pp__details-html li { margin-bottom: 0.5rem; }
+  #shopify-section-{{ section.id }} .pp__details-html strong { font-weight: 600; color: var(--pp-fg); }
+  #shopify-section-{{ section.id }} .pp__details-html h2 { font-family: var(--pp-font-display); font-weight: 600; margin: 1rem 0 0.5rem; }
+  #shopify-section-{{ section.id }} .pp__details-html p { margin: 0 0 0.75rem; }
+
+  #shopify-section-{{ section.id }} .pp__modal-slider-wrap { position: relative; margin-bottom: 2rem; }
+  #shopify-section-{{ section.id }} .pp__modal-slider {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+  }
+  #shopify-section-{{ section.id }} .pp__modal-slider::-webkit-scrollbar { display: none; }
+  #shopify-section-{{ section.id }} .pp__modal-slide {
+    flex: 0 0 82%;
+    scroll-snap-align: start;
+    aspect-ratio: 4 / 5;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: var(--pp-card);
+  }
+  @media (min-width: 640px) { #shopify-section-{{ section.id }} .pp__modal-slide { flex-basis: 48%; } }
+  @media (min-width: 1024px) { #shopify-section-{{ section.id }} .pp__modal-slide { flex-basis: 32%; } }
+  #shopify-section-{{ section.id }} .pp__modal-slide img { width: 100%; height: 100%; object-fit: contain; }
+  #shopify-section-{{ section.id }} .pp__modal-slider-btn {
+    position: absolute;
+    top: 50%;
+    z-index: 5;
+    display: flex;
+    height: 2.75rem;
+    width: 2.75rem;
+    transform: translateY(-50%);
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.9);
+    border: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    cursor: pointer;
+  }
+  #shopify-section-{{ section.id }} .pp__modal-slider-btn:hover { background: #fff; }
+  #shopify-section-{{ section.id }} .pp__modal-slider-btn--prev { left: 0.5rem; }
+  #shopify-section-{{ section.id }} .pp__modal-slider-btn--next { right: 0.5rem; }
+  #shopify-section-{{ section.id }} .pp__modal-slider-btn svg { width: 1.5rem; height: 1.5rem; }
+
+  #shopify-section-{{ section.id }} .pp__modal-options {
+    max-width: 48rem;
+    margin: 0 auto 0.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--pp-border) 50%, transparent);
+    padding-top: 1.5rem;
+  }
+  #shopify-section-{{ section.id }} .pp__modal-fieldset { border: 0; padding: 0; margin: 0 0 1.25rem; }
+  #shopify-section-{{ section.id }} .pp__modal-legend {
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--pp-fg) 45%, transparent);
+  }
+  #shopify-section-{{ section.id }} .pp__modal-legend .pp__modal-legend-value {
+    margin-left: 0.5rem;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--pp-fg);
+  }
+  #shopify-section-{{ section.id }} .pp__modal-values { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+
+  #shopify-section-{{ section.id }} .pp__modal-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  #shopify-section-{{ section.id }} .pp__modal-buttons .pp__btn { width: auto; min-width: 13rem; }
 
   /* ---------- fullscreen image viewer ---------- */
   #shopify-section-{{ section.id }} .pp__viewer {
@@ -918,9 +1015,10 @@
             <h1 class="pp__title">{{ product.title }}</h1>
 
             <div class="pp__summary" data-pp-summary hidden></div>
-
-            {%- comment -%} Theme-block drop zone: the product details popup theme block renders its trigger and modal here. {%- endcomment -%}
-            {% content_for 'blocks' %}
+            <button type="button" class="pp__details-trigger" data-pp-open-details>
+              Produktdetails ansehen
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
 
             <div class="pp__price-row">
               <span class="pp__price{% if is_on_sale %} is-sale{% endif %}" data-pp-price>{{ current_variant.price | money }}</span>
@@ -1006,8 +1104,6 @@
                 type="button"
                 class="pp__btn pp__btn--buy"
                 data-pp-buy-now
-                data-label-idle="Jetzt kaufen"
-                data-label-soldout="Ausverkauft"
                 {% unless current_variant.available %}disabled{% endunless %}
               >
                 <span data-pp-buy-now-label>{% if current_variant.available %}Jetzt kaufen{% else %}Ausverkauft{% endif %}</span>
@@ -1017,9 +1113,6 @@
                 class="pp__btn pp__btn--cart"
                 data-pp-add-to-cart
                 data-variant-id="{{ current_variant.id }}"
-                data-label-idle="In den Warenkorb"
-                data-label-soldout="Ausverkauft"
-                data-label-added="Hinzugefügt"
                 {% unless current_variant.available %}disabled{% endunless %}
               >
                 <span data-pp-add-to-cart-label>{% if current_variant.available %}In den Warenkorb{% else %}Ausverkauft{% endif %}</span>
@@ -1049,6 +1142,7 @@
 
           {%- comment -%} ---------- accordion ---------- {%- endcomment -%}
           <div class="pp__accordion">
+            {%- assign accordion_items = 'Materialien|sizeFit,Eigenschaften|care,Pflegehinweise|shipping,Versand & Rückgabe' -%}
             <div class="pp__accordion-item">
               <button type="button" class="pp__accordion-trigger" data-pp-accordion-trigger aria-expanded="true">
                 <span>Materialien</span>
@@ -1138,6 +1232,51 @@
             <li>Unsere Kleidung ist für eine moderne, leicht taillierte Passform konzipiert</li>
             <li>Bei Fragen zur Größe kontaktieren Sie gerne unseren Kundenservice</li>
           </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {%- comment -%} ================= PRODUCT DESCRIPTION MODAL ================= {%- endcomment -%}
+  <div class="pp__modal pp__modal--details" data-pp-modal="details" aria-hidden="true">
+    <button type="button" class="pp__modal-backdrop" data-pp-close-modal="details" aria-label="Produktdetails schließen"></button>
+    <div class="pp__modal-panel" role="dialog" aria-modal="true" aria-label="Produktdetails">
+      <div class="pp__modal-head">
+        <h2>{{ product.title }}</h2>
+        <button type="button" class="pp__modal-close" data-pp-close-modal="details" aria-label="Schließen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="pp__modal-body">
+        <div class="pp__details-html" data-pp-details-html></div>
+
+        <div class="pp__modal-slider-wrap" data-pp-modal-slider-wrap {% if product.images.size == 0 %}hidden{% endif %}>
+          <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--prev" data-pp-modal-slide="left" aria-label="Vorherige Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--next" data-pp-modal-slide="right" aria-label="Weitere Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <div class="pp__modal-slider" data-pp-modal-slider>
+            {%- for image in product.images -%}
+              <div class="pp__modal-slide">
+                <img src="{{ image | image_url: width: 900 }}" alt="{{ image.alt | default: product.title | escape }}" loading="lazy">
+              </div>
+            {%- endfor -%}
+          </div>
+        </div>
+
+        {%- if real_options > 0 -%}
+          <div class="pp__modal-options" data-pp-modal-options></div>
+        {%- endif -%}
+
+        <div class="pp__modal-buttons">
+          <button type="button" class="pp__btn pp__btn--buy" data-pp-buy-now-modal {% unless current_variant.available %}disabled{% endunless %}>
+            <span data-pp-buy-now-modal-label>{% if current_variant.available %}Jetzt kaufen{% else %}Ausverkauft{% endif %}</span>
+          </button>
+          <button type="button" class="pp__btn pp__btn--cart" data-pp-add-to-cart-modal {% unless current_variant.available %}disabled{% endunless %}>
+            <span data-pp-add-to-cart-modal-label>{% if current_variant.available %}In den Warenkorb{% else %}Ausverkauft{% endif %}</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1516,22 +1655,30 @@
       syncWishlistButtons();
 
       /* ================= DESCRIPTION SUMMARY / DETAILS SPLIT ================= */
-      /* Extracts the first list from the product description into the header
-       * summary. The product-details popup that used to consume the rest of
-       * the description now lives in the standalone details-popup theme block. */
       function initDescriptionSplit() {
         var source = root.querySelector('[data-pp-description-source]');
         var summaryEl = root.querySelector('[data-pp-summary]');
+        var detailsEl = root.querySelector('[data-pp-details-html]');
+        var trigger = root.querySelector('[data-pp-open-details]');
         if (!source) return;
 
-        var wrapper = document.createElement('div');
+        var wrapper = document.createElement('div');A
         wrapper.innerHTML = source.innerHTML;
 
         var list = wrapper.querySelector('ul, ol');
         if (list && summaryEl) {
           summaryEl.innerHTML = list.outerHTML;
           summaryEl.hidden = false;
+          list.remove();
         }
+
+        var detailsHtml = wrapper.innerHTML
+          .replace(/Produktdetails ansehen/gi, '')
+          .replace(/<(p|div|span|h[1-6])(\s[^>]*)?>(\s|&nbsp;|<br\s*\/?>)*<\/\1>/gi, '')
+          .trim();
+
+        if (detailsEl) detailsEl.innerHTML = detailsHtml;
+        if (trigger && wrapper.textContent.trim() !== '') trigger.classList.add('is-visible');
       }
       initDescriptionSplit();
 
@@ -1650,14 +1797,6 @@
         })[0];
       }
 
-      /* Label helpers: read the admin-editable strings straight off each
-       * button's data-label-* attributes, falling back to the original German
-       * defaults. This is what lets the popup's button labels differ from the
-       * main buttons' while still sharing the same JS. */
-      function labelIdle(btn, fallback) { return btn.getAttribute('data-label-idle') || fallback; }
-      function labelSoldOut(btn, fallback) { return btn.getAttribute('data-label-soldout') || fallback; }
-      function labelAdded(btn, fallback) { return btn.getAttribute('data-label-added') || fallback; }
-
       function applyVariant(variant) {
         if (!variant) return;
         currentVariant = variant;
@@ -1672,24 +1811,18 @@
           if (onSale) el.textContent = formatMoney(variant.compare_at_price);
         });
 
-        root.querySelectorAll('[data-pp-buy-now]').forEach(function (btn) {
+        root.querySelectorAll('[data-pp-buy-now], [data-pp-buy-now-modal]').forEach(function (btn) {
           btn.disabled = !variant.available;
-          var span = btn.querySelector('span');
-          if (span) {
-            span.textContent = variant.available
-              ? labelIdle(btn, 'Jetzt kaufen')
-              : labelSoldOut(btn, 'Ausverkauft');
-          }
         });
-        root.querySelectorAll('[data-pp-add-to-cart]').forEach(function (btn) {
+        root.querySelectorAll('[data-pp-buy-now-label], [data-pp-buy-now-modal-label]').forEach(function (el) {
+          el.textContent = variant.available ? 'Jetzt kaufen' : 'Ausverkauft';
+        });
+        root.querySelectorAll('[data-pp-add-to-cart], [data-pp-add-to-cart-modal]').forEach(function (btn) {
           btn.disabled = !variant.available;
           btn.dataset.variantId = variant.id;
-          var span = btn.querySelector('span');
-          if (span && !btn.classList.contains('is-added')) {
-            span.textContent = variant.available
-              ? labelIdle(btn, 'In den Warenkorb')
-              : labelSoldOut(btn, 'Ausverkauft');
-          }
+        });
+        root.querySelectorAll('[data-pp-add-to-cart-label], [data-pp-add-to-cart-modal-label]').forEach(function (el) {
+          if (!el.closest('.is-added')) el.textContent = variant.available ? 'In den Warenkorb' : 'Ausverkauft';
         });
 
         try {
@@ -1733,6 +1866,48 @@
       }
       root.querySelectorAll('[data-pp-close-modal]').forEach(function (btn) {
         btn.addEventListener('click', function () { closeModal(btn.dataset.ppCloseModal); });
+      });
+
+      /* ---- description modal: lazily clone the variant picker in ---- */
+      var modalOptionsEl = root.querySelector('[data-pp-modal-options]');
+      var modalOptionsBuilt = false;
+      function syncModalOptions() {
+        if (!modalOptionsEl || modalOptionsBuilt) return;
+        var mainOptionsEl = root.querySelector('[data-pp-options]');
+        if (!mainOptionsEl) return;
+        Array.prototype.forEach.call(mainOptionsEl.children, function (fieldset) {
+          var clone = fieldset.cloneNode(true);
+          clone.classList.add('pp__modal-fieldset');
+          var legend = clone.querySelector('.pp__option-label');
+          if (legend) legend.className = 'pp__modal-legend';
+          var valuesWrap = clone.querySelector('[data-pp-option-values]');
+          if (valuesWrap) {
+            valuesWrap.className = 'pp__modal-values' +
+              (valuesWrap.classList.contains('pp__option-values--color') ? ' pp__option-values--color' : '');
+          }
+          var showMore = clone.querySelector('[data-pp-show-more]');
+          if (showMore) showMore.remove();
+          Array.prototype.forEach.call(clone.querySelectorAll('label'), function (label) { label.style.display = ''; });
+          modalOptionsEl.appendChild(clone);
+        });
+        modalOptionsBuilt = true;
+      }
+
+      var openDetailsBtn = root.querySelector('[data-pp-open-details]');
+      if (openDetailsBtn) {
+        openDetailsBtn.addEventListener('click', function () {
+          syncModalOptions();
+          openModal('details');
+        });
+      }
+
+      var modalSlider = root.querySelector('[data-pp-modal-slider]');
+      root.querySelectorAll('[data-pp-modal-slide]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!modalSlider) return;
+          var dir = btn.dataset.ppModalSlide === 'left' ? -1 : 1;
+          modalSlider.scrollBy({ left: dir * modalSlider.clientWidth, behavior: 'smooth' });
+        });
       });
 
       /* ---- size guide modal ---- */
@@ -1831,20 +2006,13 @@
           })
           .then(function () {
             document.dispatchEvent(new CustomEvent('cart:refresh'));
-            var buttons = root.querySelectorAll('[data-pp-add-to-cart]');
-            buttons.forEach(function (b) {
-              b.classList.add('is-added');
-              var span = b.querySelector('span');
-              if (span) span.textContent = labelAdded(b, 'Hinzugefügt');
-            });
+            var buttons = root.querySelectorAll('[data-pp-add-to-cart], [data-pp-add-to-cart-modal]');
+            var labels = root.querySelectorAll('[data-pp-add-to-cart-label], [data-pp-add-to-cart-modal-label]');
+            buttons.forEach(function (b) { b.classList.add('is-added'); });
+            labels.forEach(function (l) { l.textContent = 'Hinzugefügt'; });
             setTimeout(function () {
-              buttons.forEach(function (b) {
-                b.classList.remove('is-added');
-                var span = b.querySelector('span');
-                if (span) span.textContent = currentVariant.available
-                  ? labelIdle(b, 'In den Warenkorb')
-                  : labelSoldOut(b, 'Ausverkauft');
-              });
+              buttons.forEach(function (b) { b.classList.remove('is-added'); });
+              labels.forEach(function (l) { l.textContent = currentVariant.available ? 'In den Warenkorb' : 'Ausverkauft'; });
             }, 2000);
 
             /* Wire this to your existing GTM / Meta Pixel setup */
@@ -1861,7 +2029,7 @@
           })
           .catch(function (err) { console.error(err); });
       }
-      root.querySelectorAll('[data-pp-add-to-cart]').forEach(function (btn) {
+      root.querySelectorAll('[data-pp-add-to-cart], [data-pp-add-to-cart-modal]').forEach(function (btn) {
         btn.addEventListener('click', function () { addToCart(btn); });
       });
 
@@ -1880,7 +2048,7 @@
         }
         window.location.href = '/cart/' + currentVariant.id + ':1';
       }
-      root.querySelectorAll('[data-pp-buy-now]').forEach(function (btn) {
+      root.querySelectorAll('[data-pp-buy-now], [data-pp-buy-now-modal]').forEach(function (btn) {
         btn.addEventListener('click', function () { buyNow(btn); });
       });
     })();
@@ -1892,15 +2060,6 @@
   "name": "Main product",
   "tag": "section",
   "class": "zehn-main-product-section",
-  "settings": [],
-  "blocks": [{ "type": "@theme" }],
-  "presets": [
-    {
-      "name": "Main product",
-      "blocks": [
-        { "type": "details-popup" }
-      ]
-    }
-  ]
+  "settings": []
 }
 {% endschema %}
