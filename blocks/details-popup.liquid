@@ -1,0 +1,781 @@
+{%- comment -%}
+  ------------------------------------------------------------------
+  ZEHN / VINCET GmbH — "Produktdetails ansehen" popup (Horizon theme block)
+  ------------------------------------------------------------------
+  File:      blocks/details-popup.liquid
+  Theme:     Horizon (theme-block architecture, /blocks directory)
+
+  WHAT THIS IS
+  A self-contained theme block. It renders an inline trigger button
+  (wherever the merchant drops the block inside the product section)
+  plus a fixed-overlay modal. Every string and toggle is driven by the
+  block settings below — no code edits needed to reconfigure it.
+
+  HOW TO INSTALL
+  1. Save this file as blocks/details-popup.liquid.
+  2. Make sure the section it will live in accepts theme blocks, i.e.
+     that section's schema has:  "blocks": [{ "type": "@theme" }]
+     Horizon's product section (sections/main-product.liquid) already
+     opts in to theme blocks, so in most cases there is nothing to do.
+  3. In the theme editor, open a product page, click the product
+     section, "Add block", and choose "Product details popup".
+     (Or add it to templates/product.json directly — see note at end.)
+
+  IMPORTANT — SCOPE (read before enabling the variant picker / buttons)
+  A theme block cannot share variables or JavaScript with the section
+  around it (Shopify rule). This block is therefore independent:
+    - Description + image slider read straight from the product and are
+      completely safe. These are ON by default.
+    - The optional variant picker and Buy/Add-to-cart buttons run their
+      OWN selection state. They do NOT sync with the main product form.
+      If a customer changes the variant on the page, the popup will not
+      know. Only enable them if the popup is meant to work as a
+      standalone mini buy-box. They are OFF by default for that reason.
+
+  Design classes are prefixed `zehn-dp__` and carried verbatim from the
+  original popup so the look is unchanged.
+{%- endcomment -%}
+
+{%- liquid
+  # closest.product is the Horizon-idiomatic way for a block to reach the
+  # product it is rendered against; fall back to the global product object.
+  assign product = closest.product | default: product
+
+  assign current_variant = product.selected_or_first_available_variant
+
+  # Count "real" options (skip the implicit single-value "Title" option that
+  # Shopify adds to products with no real variants).
+  assign real_options = 0
+  for option in product.options_with_values
+    unless option.name == 'Title' and option.values.size == 1
+      assign real_options = real_options | plus: 1
+    endunless
+  endfor
+
+  assign show_picker = false
+  if settings.show_variant_picker and real_options > 0
+    assign show_picker = true
+  endif
+-%}
+
+<div
+  class="zehn-dp"
+  id="zehn-dp-{{ block.id }}"
+  data-zehn-dp
+  {{ block.shopify_attributes }}
+>
+  {%- comment -%} ---------- trigger button (inline, at the block's position) ---------- {%- endcomment -%}
+  <button type="button" class="zehn-dp__trigger" data-zehn-dp-open>
+    {{ settings.trigger_label | default: 'Produktdetails ansehen' }}
+    {%- if settings.show_trigger_icon -%}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    {%- endif -%}
+  </button>
+
+  {%- comment -%} ---------- modal ---------- {%- endcomment -%}
+  <div class="zehn-dp__modal" data-zehn-dp-modal aria-hidden="true">
+    <button type="button" class="zehn-dp__backdrop" data-zehn-dp-close aria-label="Produktdetails schließen"></button>
+    <div class="zehn-dp__panel" role="dialog" aria-modal="true" aria-label="Produktdetails">
+
+      <div class="zehn-dp__head">
+        <h2 class="zehn-dp__title">
+          {%- if settings.heading_type == 'custom' and settings.custom_heading != blank -%}
+            {{ settings.custom_heading }}
+          {%- else -%}
+            {{ product.title }}
+          {%- endif -%}
+        </h2>
+        <button type="button" class="zehn-dp__close" data-zehn-dp-close aria-label="Schließen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="zehn-dp__body">
+
+        {%- comment -%} ---------- description (safe: read straight from product) ---------- {%- endcomment -%}
+        {%- if settings.show_description and product.description != blank -%}
+          <div class="zehn-dp__desc">{{ product.description }}</div>
+        {%- endif -%}
+
+        {%- if settings.extra_content != blank -%}
+          <div class="zehn-dp__desc">{{ settings.extra_content }}</div>
+        {%- endif -%}
+
+        {%- comment -%} ---------- image slider (safe: read straight from product) ---------- {%- endcomment -%}
+        {%- if settings.show_image_slider and product.images.size > 0 -%}
+          <div class="zehn-dp__slider-wrap">
+            <button type="button" class="zehn-dp__slider-btn zehn-dp__slider-btn--prev" data-zehn-dp-slide="left" aria-label="Vorherige Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            </button>
+            <button type="button" class="zehn-dp__slider-btn zehn-dp__slider-btn--next" data-zehn-dp-slide="right" aria-label="Weitere Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+            <div class="zehn-dp__slider" data-zehn-dp-slider>
+              {%- for image in product.images -%}
+                <div class="zehn-dp__slide">
+                  <img
+                    src="{{ image | image_url: width: 900 }}"
+                    srcset="{{ image | image_url: width: 450 }} 450w, {{ image | image_url: width: 900 }} 900w, {{ image | image_url: width: 1200 }} 1200w"
+                    sizes="(min-width: 1024px) 32vw, (min-width: 640px) 48vw, 82vw"
+                    alt="{{ image.alt | default: product.title | escape }}"
+                    loading="lazy"
+                    width="{{ image.width }}"
+                    height="{{ image.height }}"
+                  >
+                </div>
+              {%- endfor -%}
+            </div>
+          </div>
+        {%- endif -%}
+
+        {%- comment -%}
+          ---------- variant picker (OPTIONAL, independent state) ----------
+          Runs its own selection. Does not sync with the main product form.
+        {%- endcomment -%}
+        {%- if show_picker -%}
+          <div class="zehn-dp__options" data-zehn-dp-options>
+            {%- for option in product.options_with_values -%}
+              {%- if option.name == 'Title' and option.values.size == 1 -%}{%- continue -%}{%- endif -%}
+              {%- assign option_name_lower = option.name | downcase -%}
+              {%- assign is_color = false -%}
+              {%- if option_name_lower == 'color' or option_name_lower == 'colour' or option_name_lower == 'farbe' -%}
+                {%- assign is_color = true -%}
+              {%- endif -%}
+              {%- assign option_index = option.position | minus: 1 -%}
+              <fieldset class="zehn-dp__fieldset" data-zehn-dp-option data-option-position="{{ option.position }}">
+                <legend class="zehn-dp__legend">{{ option.name }}</legend>
+                <div class="zehn-dp__values{% if is_color %} zehn-dp__values--color{% endif %}">
+                  {%- for value in option.values -%}
+                    {%- assign value_selected = false -%}
+                    {%- if current_variant.options[option_index] == value.name -%}
+                      {%- assign value_selected = true -%}
+                    {%- endif -%}
+                    <label>
+                      <input
+                        type="radio"
+                        class="zehn-dp__value-input"
+                        name="zehn-dp-{{ block.id }}-{{ option.position }}"
+                        value="{{ value.name | escape }}"
+                        data-zehn-dp-value-input
+                        data-option-position="{{ option.position }}"
+                        {% if value_selected %}checked{% endif %}
+                        {% unless value.available %}disabled{% endunless %}
+                      >
+                      {%- if is_color -%}
+                        {%- assign swatch_img = value.swatch.image | default: value.variant.featured_image -%}
+                        <span class="zehn-dp__swatch{% unless value.available %} is-unavailable{% endunless %}">
+                          {%- if swatch_img -%}
+                            <img src="{{ swatch_img | image_url: width: 88 }}" alt="{{ value.name | escape }}" loading="lazy" width="44" height="44">
+                          {%- elsif value.swatch.color -%}
+                            <span class="zehn-dp__swatch-color" style="background-color: {{ value.swatch.color }};"></span>
+                          {%- else -%}
+                            <span class="zehn-dp__swatch-letter">{{ value.name | slice: 0, 1 | upcase }}</span>
+                          {%- endif -%}
+                          <svg class="zehn-dp__swatch-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        </span>
+                      {%- else -%}
+                        <span class="zehn-dp__value{% unless value.available %} is-unavailable{% endunless %}">{{ value.name }}</span>
+                      {%- endif -%}
+                    </label>
+                  {%- endfor -%}
+                </div>
+              </fieldset>
+            {%- endfor -%}
+          </div>
+        {%- endif -%}
+
+        {%- comment -%} ---------- buttons (OPTIONAL, independent state) ---------- {%- endcomment -%}
+        {%- if settings.show_buy_now or settings.show_add_to_cart -%}
+          <div class="zehn-dp__buttons">
+            {%- if settings.show_buy_now -%}
+              <button
+                type="button"
+                class="zehn-dp__btn zehn-dp__btn--buy"
+                data-zehn-dp-buy
+                data-label-idle="{{ settings.buy_now_label | default: 'Jetzt kaufen' | escape }}"
+                data-label-soldout="{{ settings.soldout_label | default: 'Ausverkauft' | escape }}"
+                {% unless current_variant.available %}disabled{% endunless %}
+              >
+                <span>{% if current_variant.available %}{{ settings.buy_now_label | default: 'Jetzt kaufen' }}{% else %}{{ settings.soldout_label | default: 'Ausverkauft' }}{% endif %}</span>
+              </button>
+            {%- endif -%}
+            {%- if settings.show_add_to_cart -%}
+              <button
+                type="button"
+                class="zehn-dp__btn zehn-dp__btn--cart"
+                data-zehn-dp-cart
+                data-label-idle="{{ settings.add_to_cart_label | default: 'In den Warenkorb' | escape }}"
+                data-label-soldout="{{ settings.soldout_label | default: 'Ausverkauft' | escape }}"
+                data-label-added="{{ settings.added_label | default: 'Hinzugefügt' | escape }}"
+                {% unless current_variant.available %}disabled{% endunless %}
+              >
+                <span>{% if current_variant.available %}{{ settings.add_to_cart_label | default: 'In den Warenkorb' }}{% else %}{{ settings.soldout_label | default: 'Ausverkauft' }}{% endif %}</span>
+              </button>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+      </div>
+    </div>
+  </div>
+
+  {%- comment -%}
+    Data island: everything the (Liquid-free) JavaScript below needs. Kept as
+    a single JSON blob so the {% javascript %} tag stays static and can be
+    bundled/deduplicated by Horizon across every instance of this block.
+  {%- endcomment -%}
+  <script type="application/json" data-zehn-dp-data>
+    {
+      "currency": {{ cart.currency.iso_code | json }},
+      "options": {{ product.options | json }},
+      "variants": [
+        {%- for v in product.variants -%}
+          {
+            "id": {{ v.id }},
+            "options": {{ v.options | json }},
+            "available": {{ v.available | json }},
+            "price": {{ v.price }},
+            "compare_at_price": {{ v.compare_at_price | default: 0 }}
+          }{% unless forloop.last %},{% endunless %}
+        {%- endfor -%}
+      ],
+      "initialVariantId": {{ current_variant.id | default: 0 }}
+    }
+  </script>
+</div>
+
+{% stylesheet %}
+  .zehn-dp {
+    --dp-fg: var(--color-foreground, #14142b);
+    --dp-bg: var(--color-background, #ffffff);
+    --dp-primary: var(--color-primary, #14142b);
+    --dp-primary-fg: var(--color-primary-foreground, #ffffff);
+    --dp-accent: var(--color-accent, #c8a15a);
+    --dp-border: var(--color-border, #e3e3e8);
+    --dp-card: #ffffff;
+    --dp-font-body: var(--font-body-family, inherit);
+    --dp-font-display: var(--font-heading-family, var(--font-body-family, inherit));
+    --dp-h3: 1.25rem;
+    --dp-body: 1rem;
+  }
+  .zehn-dp *,
+  .zehn-dp *::before,
+  .zehn-dp *::after { box-sizing: border-box; }
+
+  /* ---------- trigger ---------- */
+  .zehn-dp__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+    background: none;
+    border: 0;
+    padding: 0;
+    font-family: var(--dp-font-body);
+    font-size: var(--dp-body);
+    font-weight: 600;
+    color: var(--dp-primary);
+    cursor: pointer;
+    transition: color 150ms ease;
+  }
+  .zehn-dp__trigger:hover { color: color-mix(in srgb, var(--dp-primary) 70%, transparent); }
+  .zehn-dp__trigger svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--dp-accent);
+    transition: transform 150ms ease;
+  }
+  .zehn-dp__trigger:hover svg { transform: translateX(2px); }
+
+  /* ---------- modal shell ---------- */
+  .zehn-dp__modal {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0,0,0,0.5);
+  }
+  .zehn-dp__modal.is-open { display: flex; }
+  .zehn-dp__backdrop {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: transparent;
+    cursor: default;
+  }
+  .zehn-dp__panel {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 72rem;
+    max-height: 92vh;
+    overflow: hidden;
+    background: var(--dp-bg);
+    color: var(--dp-fg);
+    border-radius: 1.5rem 1.5rem 0 0;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    font-family: var(--dp-font-body);
+  }
+  @media (min-width: 640px) {
+    .zehn-dp__panel { border-radius: 1rem; }
+  }
+  .zehn-dp__head {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--dp-border) 50%, transparent);
+  }
+  .zehn-dp__title {
+    margin: 0;
+    font-family: var(--dp-font-display);
+    font-size: var(--dp-h3);
+    color: var(--dp-fg);
+  }
+  .zehn-dp__close {
+    display: flex;
+    height: 2.5rem;
+    width: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 0;
+    background: none;
+    color: color-mix(in srgb, var(--dp-fg) 60%, transparent);
+    cursor: pointer;
+    transition: background-color 150ms ease;
+  }
+  .zehn-dp__close:hover { background: color-mix(in srgb, var(--dp-card) 60%, transparent); }
+  .zehn-dp__close svg { width: 1.5rem; height: 1.5rem; }
+  .zehn-dp__body {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    padding: 1.5rem;
+  }
+
+  /* ---------- description ---------- */
+  .zehn-dp__desc {
+    font-size: var(--dp-body);
+    line-height: 1.7;
+    color: color-mix(in srgb, var(--dp-fg) 70%, transparent);
+    margin-bottom: 2rem;
+  }
+  .zehn-dp__desc ul { list-style: disc; padding-left: 1.5rem; }
+  .zehn-dp__desc li { margin-bottom: 0.5rem; }
+  .zehn-dp__desc strong { font-weight: 600; color: var(--dp-fg); }
+  .zehn-dp__desc h2 { font-family: var(--dp-font-display); font-weight: 600; margin: 1rem 0 0.5rem; }
+  .zehn-dp__desc p { margin: 0 0 0.75rem; }
+
+  /* ---------- image slider ---------- */
+  .zehn-dp__slider-wrap { position: relative; margin-bottom: 2rem; }
+  .zehn-dp__slider {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+  }
+  .zehn-dp__slider::-webkit-scrollbar { display: none; }
+  .zehn-dp__slide {
+    flex: 0 0 82%;
+    scroll-snap-align: start;
+    aspect-ratio: 4 / 5;
+    border-radius: 1rem;
+    overflow: hidden;
+    background: var(--dp-card);
+  }
+  @media (min-width: 640px) { .zehn-dp__slide { flex-basis: 48%; } }
+  @media (min-width: 1024px) { .zehn-dp__slide { flex-basis: 32%; } }
+  .zehn-dp__slide img { width: 100%; height: 100%; object-fit: contain; }
+  .zehn-dp__slider-btn {
+    position: absolute;
+    top: 50%;
+    z-index: 5;
+    display: flex;
+    height: 2.75rem;
+    width: 2.75rem;
+    transform: translateY(-50%);
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.9);
+    border: 0;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    cursor: pointer;
+  }
+  .zehn-dp__slider-btn:hover { background: #fff; }
+  .zehn-dp__slider-btn--prev { left: 0.5rem; }
+  .zehn-dp__slider-btn--next { right: 0.5rem; }
+  .zehn-dp__slider-btn svg { width: 1.5rem; height: 1.5rem; }
+
+  /* ---------- variant picker ---------- */
+  .zehn-dp__options {
+    max-width: 48rem;
+    margin: 0 auto 0.5rem;
+    border-top: 1px solid color-mix(in srgb, var(--dp-border) 50%, transparent);
+    padding-top: 1.5rem;
+  }
+  .zehn-dp__fieldset { border: 0; padding: 0; margin: 0 0 1.25rem; }
+  .zehn-dp__legend {
+    margin-bottom: 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--dp-fg) 45%, transparent);
+  }
+  .zehn-dp__values { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .zehn-dp__value-input { position: absolute; opacity: 0; pointer-events: none; }
+
+  .zehn-dp__value {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    border-radius: 9999px;
+    padding: 0.75rem 1.5rem;
+    text-align: center;
+    font-size: 0.875rem;
+    background: var(--dp-card);
+    color: var(--dp-fg);
+    box-shadow: 0 2px 8px rgba(15,20,38,0.06);
+    cursor: pointer;
+    transition: all 300ms ease;
+  }
+  .zehn-dp__value:hover { background: color-mix(in srgb, var(--dp-card) 80%, var(--dp-fg) 5%); }
+  .zehn-dp__value-input:checked + .zehn-dp__value {
+    background: var(--dp-primary);
+    color: var(--dp-primary-fg);
+  }
+  .zehn-dp__value.is-unavailable {
+    background: color-mix(in srgb, var(--dp-card) 50%, transparent);
+    color: color-mix(in srgb, var(--dp-fg) 30%, transparent);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .zehn-dp__swatch {
+    position: relative;
+    display: flex;
+    height: 3.5rem;
+    width: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 2px solid color-mix(in srgb, var(--dp-border) 70%, transparent);
+    cursor: pointer;
+    transition: all 300ms ease;
+    overflow: hidden;
+  }
+  .zehn-dp__swatch:hover { border-color: color-mix(in srgb, var(--dp-fg) 40%, transparent); }
+  .zehn-dp__value-input:checked + .zehn-dp__swatch {
+    border-color: var(--dp-fg);
+    box-shadow: 0 4px 10px rgba(15,20,38,0.15);
+  }
+  .zehn-dp__swatch.is-unavailable { opacity: 0.3; pointer-events: none; }
+  .zehn-dp__swatch img,
+  .zehn-dp__swatch-color {
+    position: absolute;
+    inset: 2px;
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    border-radius: 9999px;
+    object-fit: cover;
+  }
+  .zehn-dp__swatch-letter {
+    position: relative;
+    display: flex;
+    height: 100%;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: var(--dp-card);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+  .zehn-dp__swatch-check {
+    position: relative;
+    z-index: 2;
+    width: 1.5rem;
+    height: 1.5rem;
+    color: #fff;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+    display: none;
+  }
+  .zehn-dp__value-input:checked + .zehn-dp__swatch .zehn-dp__swatch-check { display: block; }
+
+  /* ---------- buttons ---------- */
+  .zehn-dp__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .zehn-dp__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 13rem;
+    border-radius: 9999px;
+    padding: 1rem;
+    font-family: var(--dp-font-body);
+    font-size: 0.875rem;
+    letter-spacing: 0.02em;
+    box-shadow: 0 4px 12px rgba(15,20,38,0.12);
+    cursor: pointer;
+    transition: all 300ms ease;
+    border: 2px solid transparent;
+  }
+  .zehn-dp__btn:disabled { cursor: not-allowed; }
+  .zehn-dp__btn--buy {
+    background: #fff;
+    border-color: color-mix(in srgb, var(--dp-fg) 20%, transparent);
+    color: var(--dp-fg);
+  }
+  .zehn-dp__btn--buy:hover:not(:disabled) { background: color-mix(in srgb, var(--dp-fg) 5%, #fff); }
+  .zehn-dp__btn--buy:disabled {
+    background: color-mix(in srgb, var(--dp-fg) 20%, transparent);
+    border-color: color-mix(in srgb, var(--dp-fg) 20%, transparent);
+    color: color-mix(in srgb, var(--dp-fg) 40%, transparent);
+  }
+  .zehn-dp__btn--cart {
+    background: var(--dp-accent);
+    color: var(--dp-fg);
+  }
+  .zehn-dp__btn--cart:hover:not(:disabled) { background: color-mix(in srgb, var(--dp-accent) 90%, transparent); }
+  .zehn-dp__btn--cart:disabled {
+    background: color-mix(in srgb, var(--dp-fg) 20%, transparent);
+    color: color-mix(in srgb, var(--dp-fg) 40%, transparent);
+  }
+  .zehn-dp__btn--cart.is-added { background: #16a34a; color: #fff; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .zehn-dp * { transition: none !important; }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  (function () {
+    if (window.__zehnDetailsPopupInit) return;
+    window.__zehnDetailsPopupInit = true;
+
+    function init(root) {
+      if (root.dataset.zehnDpReady === 'true') return;
+      root.dataset.zehnDpReady = 'true';
+
+      var modal = root.querySelector('[data-zehn-dp-modal]');
+      var openBtn = root.querySelector('[data-zehn-dp-open]');
+      if (!modal || !openBtn) return;
+
+      var dataEl = root.querySelector('[data-zehn-dp-data]');
+      var data = {};
+      try { data = JSON.parse(dataEl.textContent); } catch (e) { data = {}; }
+
+      var optionNames = data.options || [];
+      var variants = data.variants || [];
+      var currentVariant =
+        variants.filter(function (v) { return v.id === data.initialVariantId; })[0] ||
+        variants[0] ||
+        null;
+
+      /* ---------- open / close ---------- */
+      function open() {
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+      function close() {
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+      openBtn.addEventListener('click', open);
+      root.querySelectorAll('[data-zehn-dp-close]').forEach(function (btn) {
+        btn.addEventListener('click', close);
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && modal.classList.contains('is-open')) close();
+      });
+
+      /* ---------- image slider ---------- */
+      var slider = root.querySelector('[data-zehn-dp-slider]');
+      root.querySelectorAll('[data-zehn-dp-slide]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!slider) return;
+          var dir = btn.dataset.zehnDpSlide === 'left' ? -1 : 1;
+          slider.scrollBy({ left: dir * slider.clientWidth, behavior: 'smooth' });
+        });
+      });
+
+      /* ---------- variant picker (optional, independent state) ---------- */
+      function labelIdle(btn, fallback) { return btn.getAttribute('data-label-idle') || fallback; }
+      function labelSoldOut(btn, fallback) { return btn.getAttribute('data-label-soldout') || fallback; }
+      function labelAdded(btn, fallback) { return btn.getAttribute('data-label-added') || fallback; }
+
+      function currentSelection() {
+        var selection = [];
+        root.querySelectorAll('[data-zehn-dp-value-input]').forEach(function (input) {
+          if (input.checked) selection[parseInt(input.dataset.optionPosition, 10) - 1] = input.value;
+        });
+        return selection;
+      }
+
+      function valueAvailable(position, valueName, selection) {
+        return variants.some(function (v) {
+          if (v.options[position - 1] !== valueName) return false;
+          if (!v.available) return false;
+          return selection.every(function (val, idx) {
+            if (idx === position - 1 || val == null) return true;
+            return v.options[idx] === val;
+          });
+        });
+      }
+
+      function refreshAvailability() {
+        var selection = currentSelection();
+        root.querySelectorAll('[data-zehn-dp-option]').forEach(function (fieldset) {
+          var position = parseInt(fieldset.dataset.optionPosition, 10);
+          fieldset.querySelectorAll('[data-zehn-dp-value-input]').forEach(function (input) {
+            var available = valueAvailable(position, input.value, selection);
+            input.disabled = !available;
+            var labelEl = input.nextElementSibling;
+            if (labelEl) labelEl.classList.toggle('is-unavailable', !available);
+          });
+        });
+      }
+
+      function variantForSelection(selection) {
+        return variants.filter(function (v) {
+          return v.options.every(function (val, idx) { return val === selection[idx]; });
+        })[0];
+      }
+
+      function syncButtons() {
+        var available = !currentVariant || currentVariant.available;
+        root.querySelectorAll('[data-zehn-dp-buy], [data-zehn-dp-cart]').forEach(function (btn) {
+          btn.disabled = !available;
+          var span = btn.querySelector('span');
+          if (span && !btn.classList.contains('is-added')) {
+            var isBuy = btn.hasAttribute('data-zehn-dp-buy');
+            span.textContent = available
+              ? labelIdle(btn, isBuy ? 'Jetzt kaufen' : 'In den Warenkorb')
+              : labelSoldOut(btn, 'Ausverkauft');
+          }
+        });
+      }
+
+      root.addEventListener('change', function (e) {
+        var input = e.target.closest('[data-zehn-dp-value-input]');
+        if (!input) return;
+        refreshAvailability();
+        var selection = currentSelection();
+        if (selection.length === optionNames.length && selection.every(function (v) { return v != null; })) {
+          var matched = variantForSelection(selection);
+          if (matched) { currentVariant = matched; syncButtons(); }
+        }
+      });
+      if (root.querySelector('[data-zehn-dp-options]')) refreshAvailability();
+
+      /* ---------- cart / buy (optional, independent state) ---------- */
+      function addToCart(btn) {
+        if (btn.disabled || !currentVariant) return;
+        fetch('/cart/add.js', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ items: [{ id: currentVariant.id, quantity: 1 }] })
+        })
+          .then(function (res) { if (!res.ok) throw new Error('Add to cart failed'); return res.json(); })
+          .then(function () {
+            /* Hint to the theme's cart drawer to refresh. Match this event
+             * name to your Horizon cart component if the drawer does not update. */
+            document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+            btn.classList.add('is-added');
+            var span = btn.querySelector('span');
+            if (span) span.textContent = labelAdded(btn, 'Hinzugefügt');
+            setTimeout(function () {
+              btn.classList.remove('is-added');
+              syncButtons();
+            }, 2000);
+          })
+          .catch(function (err) { console.error(err); });
+      }
+      root.querySelectorAll('[data-zehn-dp-cart]').forEach(function (btn) {
+        btn.addEventListener('click', function () { addToCart(btn); });
+      });
+
+      root.querySelectorAll('[data-zehn-dp-buy]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (btn.disabled || !currentVariant || !currentVariant.available) return;
+          window.location.href = '/cart/' + currentVariant.id + ':1';
+        });
+      });
+    }
+
+    function boot() {
+      document.querySelectorAll('[data-zehn-dp]').forEach(init);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', boot);
+    } else {
+      boot();
+    }
+
+    /* Re-init blocks the theme editor injects after load. */
+    document.addEventListener('shopify:section:load', boot);
+    document.addEventListener('shopify:block:select', boot);
+  })();
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Product details popup",
+  "settings": [
+    { "type": "header", "content": "Trigger button" },
+    { "type": "text", "id": "trigger_label", "label": "Button text", "default": "Produktdetails ansehen" },
+    { "type": "checkbox", "id": "show_trigger_icon", "label": "Show arrow icon", "default": true },
+
+    { "type": "header", "content": "Popup heading" },
+    {
+      "type": "select",
+      "id": "heading_type",
+      "label": "Heading source",
+      "options": [
+        { "value": "product", "label": "Product title" },
+        { "value": "custom", "label": "Custom text" }
+      ],
+      "default": "product"
+    },
+    { "type": "text", "id": "custom_heading", "label": "Custom heading", "info": "Used only when Heading source is set to Custom text." },
+
+    { "type": "header", "content": "Popup content" },
+    { "type": "checkbox", "id": "show_description", "label": "Show product description", "default": true },
+    { "type": "richtext", "id": "extra_content", "label": "Extra content", "info": "Optional. Shown below the description." },
+    { "type": "checkbox", "id": "show_image_slider", "label": "Show image slider", "default": true },
+
+    { "type": "header", "content": "Standalone buy box (advanced)" },
+    { "type": "paragraph", "content": "These controls run their OWN selection and do NOT sync with the main product form on the page. Leave them off unless the popup is meant to work as a self-contained mini buy box." },
+    { "type": "checkbox", "id": "show_variant_picker", "label": "Show variant picker", "default": false },
+    { "type": "checkbox", "id": "show_buy_now", "label": "Show \"Buy now\" button", "default": false },
+    { "type": "text", "id": "buy_now_label", "label": "Buy now label", "default": "Jetzt kaufen" },
+    { "type": "checkbox", "id": "show_add_to_cart", "label": "Show \"Add to cart\" button", "default": false },
+    { "type": "text", "id": "add_to_cart_label", "label": "Add to cart label", "default": "In den Warenkorb" },
+    { "type": "text", "id": "added_label", "label": "\"Added\" confirmation label", "default": "Hinzugefügt" },
+    { "type": "text", "id": "soldout_label", "label": "Sold out label", "info": "Shown on both buttons when the selected variant is unavailable.", "default": "Ausverkauft" }
+  ],
+  "presets": [
+    { "name": "Product details popup" }
+  ]
+}
+{% endschema %}
