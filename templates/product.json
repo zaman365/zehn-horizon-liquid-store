@@ -10,33 +10,7 @@
 {
   "sections": {
     "main": {
-      "type": "product-information",
-      "blocks": {
-        "details_popup_E8zePn": {
-          "type": "details-popup",
-          "name": "Product details popup",
-          "settings": {
-            "trigger_label": "Produktdetails ansehen",
-            "show_trigger_icon": true,
-            "heading_type": "product",
-            "custom_heading": "",
-            "show_description": true,
-            "extra_content": "",
-            "show_image_slider": true,
-            "show_variant_picker": true,
-            "show_buy_now": true,
-            "buy_now_label": "Jetzt kaufen",
-            "show_add_to_cart": true,
-            "add_to_cart_label": "In den Warenkorb",
-            "added_label": "Hinzugefügt",
-            "soldout_label": "Ausverkauft"
-          },
-          "blocks": {}
-        }
-      },
-      "block_order": [
-        "details_popup_E8zePn"
-      ],
+      "type": "main-product",
       "settings": {}
     },
     "product_recommendations_qggXJq": {
