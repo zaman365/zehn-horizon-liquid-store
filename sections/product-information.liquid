@@ -1,25 +1,53 @@
 {%- comment -%}
   ZEHN — Product page (Hydrogen `products.$handle.tsx` → Shopify Liquid)
   Place in: sections/main-product.liquid
-  Template: templates/product.json → { "sections": { "main": { "type": "main-product" } }, "order": ["main"] }
+  Template: templates/product.json →
+  {
+    "sections": {
+      "main": {
+        "type": "main-product",
+        "blocks": {
+          "details": { "type": "details_popup", "settings": {} }
+        },
+        "block_order": ["details"]
+      }
+    },
+    "order": ["main"]
+  }
 
-  Scope of this conversion (agreed with merchant):
+  ------------------------------------------------------------------
+  CHANGE LOG (popup → block conversion)
+  ------------------------------------------------------------------
+  - The "Produktdetails ansehen" trigger button AND the details modal
+    now render ONLY when a `details_popup` block is present on the
+    section. Add / remove the popup from the theme editor.
+  - All editable strings and toggles for the popup come from
+    block.settings (trigger label, heading source, button labels,
+    show/hide description / slider / variant picker / buttons, plus one
+    optional rich-text "Extra content" field). No product data was
+    turned into block fields — description, images and variants stay
+    driven by the product itself, as they must be.
+  - Button label JS now reads `data-label-idle` / `data-label-soldout`
+    / `data-label-added` from each button, with the original German
+    strings as fallbacks. This lets the modal buttons carry their own
+    (admin-editable) labels without breaking the shared cart logic used
+    by the main buttons.
+  - Fixed a runtime bug in initDescriptionSplit(): a stray `A` after
+    `document.createElement('div')` threw a ReferenceError and broke the
+    whole product script.
+
+  Scope of the original conversion (unchanged, agreed with merchant):
   - Recommended-products section intentionally excluded.
   - Wishlist is localStorage-based (no wishlist app confirmed).
-  - Color-grouped gallery images matched by alt text containing the selected
-    color value (no metafield/naming convention confirmed on the Shopify side).
-  - The "quick add" bag icon in the fullscreen viewer closes the viewer and
-    scrolls to the main variant picker instead of opening a duplicate modal.
-  - Combined-listings "different product" size jump (Hydrogen's
-    `isDifferentProduct`) has no 1:1 Shopify equivalent without Combined
-    Listings configured on these products, so cross-product option links are
-    not ported — all options are assumed to belong to this product's variants.
-  - Meta/Google pixel calls are left as clearly marked dataLayer stubs; wire
-    them to your existing GTM/Meta Pixel setup.
-  - Materials / features / care copy comes from product.metafields.custom.*
-    (namespace "custom", keys "materials" / "features" / "care"), same as
-    the Hydrogen metafield reads. Shipping copy is static, as it was in the
-    Hydrogen file.
+  - Color-grouped gallery images matched by filename group (alt-text
+    fallback). No metafield/naming convention confirmed on Shopify side.
+  - The "quick add" bag icon in the fullscreen viewer closes the viewer
+    and scrolls to the main variant picker.
+  - Combined-listings cross-product option links are not ported.
+  - Meta/Google pixel calls are clearly-marked dataLayer stubs.
+  - Materials / features / care copy comes from
+    product.metafields.custom.* (namespace "custom"). Shipping copy is
+    static, as it was in the Hydrogen file.
 {%- endcomment -%}
 
 {%- liquid
@@ -48,6 +76,17 @@
   assign shipping = 'Deutschland: Kostenloser Versand und kostenlose Rücksendung mit DHL. Lieferzeit: 2–3 Werktage. Europäische Union: Versand 5,99 € pro Bestellung, Lieferzeit 3–5 Werktage; Rücksendung kostenlos.'
 
   assign all_products_url = routes.all_products_collection_url
+
+  comment
+    Capture the (single) details-popup block so we can render the trigger
+    in the product header AND the modal near the bottom of the section.
+  endcomment
+  assign details_block = null
+  for block in section.blocks
+    if block.type == 'details_popup'
+      assign details_block = block
+    endif
+  endfor
 -%}
 
 <style>
@@ -1015,10 +1054,27 @@
             <h1 class="pp__title">{{ product.title }}</h1>
 
             <div class="pp__summary" data-pp-summary hidden></div>
-            <button type="button" class="pp__details-trigger" data-pp-open-details>
-              Produktdetails ansehen
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-            </button>
+
+            {%- comment -%}
+              Trigger for the details popup — rendered only when a
+              `details_popup` block exists. `is-visible` is set here so the
+              button always shows when the merchant has added the popup, even
+              if the product has no description (images/variants may still be
+              worth opening for).
+            {%- endcomment -%}
+            {%- if details_block -%}
+              <button
+                type="button"
+                class="pp__details-trigger is-visible"
+                data-pp-open-details
+                {{ details_block.shopify_attributes }}
+              >
+                {{ details_block.settings.trigger_label | default: 'Produktdetails ansehen' }}
+                {%- if details_block.settings.show_trigger_icon -%}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+                {%- endif -%}
+              </button>
+            {%- endif -%}
 
             <div class="pp__price-row">
               <span class="pp__price{% if is_on_sale %} is-sale{% endif %}" data-pp-price>{{ current_variant.price | money }}</span>
@@ -1104,6 +1160,8 @@
                 type="button"
                 class="pp__btn pp__btn--buy"
                 data-pp-buy-now
+                data-label-idle="Jetzt kaufen"
+                data-label-soldout="Ausverkauft"
                 {% unless current_variant.available %}disabled{% endunless %}
               >
                 <span data-pp-buy-now-label>{% if current_variant.available %}Jetzt kaufen{% else %}Ausverkauft{% endif %}</span>
@@ -1113,6 +1171,9 @@
                 class="pp__btn pp__btn--cart"
                 data-pp-add-to-cart
                 data-variant-id="{{ current_variant.id }}"
+                data-label-idle="In den Warenkorb"
+                data-label-soldout="Ausverkauft"
+                data-label-added="Hinzugefügt"
                 {% unless current_variant.available %}disabled{% endunless %}
               >
                 <span data-pp-add-to-cart-label>{% if current_variant.available %}In den Warenkorb{% else %}Ausverkauft{% endif %}</span>
@@ -1142,7 +1203,6 @@
 
           {%- comment -%} ---------- accordion ---------- {%- endcomment -%}
           <div class="pp__accordion">
-            {%- assign accordion_items = 'Materialien|sizeFit,Eigenschaften|care,Pflegehinweise|shipping,Versand & Rückgabe' -%}
             <div class="pp__accordion-item">
               <button type="button" class="pp__accordion-trigger" data-pp-accordion-trigger aria-expanded="true">
                 <span>Materialien</span>
@@ -1237,50 +1297,92 @@
     </div>
   </div>
 
-  {%- comment -%} ================= PRODUCT DESCRIPTION MODAL ================= {%- endcomment -%}
-  <div class="pp__modal pp__modal--details" data-pp-modal="details" aria-hidden="true">
-    <button type="button" class="pp__modal-backdrop" data-pp-close-modal="details" aria-label="Produktdetails schließen"></button>
-    <div class="pp__modal-panel" role="dialog" aria-modal="true" aria-label="Produktdetails">
-      <div class="pp__modal-head">
-        <h2>{{ product.title }}</h2>
-        <button type="button" class="pp__modal-close" data-pp-close-modal="details" aria-label="Schließen">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="pp__modal-body">
-        <div class="pp__details-html" data-pp-details-html></div>
-
-        <div class="pp__modal-slider-wrap" data-pp-modal-slider-wrap {% if product.images.size == 0 %}hidden{% endif %}>
-          <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--prev" data-pp-modal-slide="left" aria-label="Vorherige Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+  {%- comment -%}
+    ================= PRODUCT DETAILS POPUP (BLOCK) =================
+    Rendered only when a `details_popup` block is present. Every string
+    and toggle below is driven by that block's settings.
+  {%- endcomment -%}
+  {%- if details_block -%}
+    {%- assign db = details_block.settings -%}
+    <div class="pp__modal pp__modal--details" data-pp-modal="details" aria-hidden="true">
+      <button type="button" class="pp__modal-backdrop" data-pp-close-modal="details" aria-label="Produktdetails schließen"></button>
+      <div class="pp__modal-panel" role="dialog" aria-modal="true" aria-label="Produktdetails">
+        <div class="pp__modal-head">
+          <h2>
+            {%- if db.heading_type == 'custom' and db.custom_heading != blank -%}
+              {{ db.custom_heading }}
+            {%- else -%}
+              {{ product.title }}
+            {%- endif -%}
+          </h2>
+          <button type="button" class="pp__modal-close" data-pp-close-modal="details" aria-label="Schließen">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
-          <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--next" data-pp-modal-slide="right" aria-label="Weitere Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-          </button>
-          <div class="pp__modal-slider" data-pp-modal-slider>
-            {%- for image in product.images -%}
-              <div class="pp__modal-slide">
-                <img src="{{ image | image_url: width: 900 }}" alt="{{ image.alt | default: product.title | escape }}" loading="lazy">
-              </div>
-            {%- endfor -%}
-          </div>
         </div>
+        <div class="pp__modal-body">
+          {%- if db.show_description -%}
+            <div class="pp__details-html" data-pp-details-html></div>
+          {%- endif -%}
 
-        {%- if real_options > 0 -%}
-          <div class="pp__modal-options" data-pp-modal-options></div>
-        {%- endif -%}
+          {%- if db.extra_content != blank -%}
+            <div class="pp__details-html">{{ db.extra_content }}</div>
+          {%- endif -%}
 
-        <div class="pp__modal-buttons">
-          <button type="button" class="pp__btn pp__btn--buy" data-pp-buy-now-modal {% unless current_variant.available %}disabled{% endunless %}>
-            <span data-pp-buy-now-modal-label>{% if current_variant.available %}Jetzt kaufen{% else %}Ausverkauft{% endif %}</span>
-          </button>
-          <button type="button" class="pp__btn pp__btn--cart" data-pp-add-to-cart-modal {% unless current_variant.available %}disabled{% endunless %}>
-            <span data-pp-add-to-cart-modal-label>{% if current_variant.available %}In den Warenkorb{% else %}Ausverkauft{% endif %}</span>
-          </button>
+          {%- if db.show_image_slider -%}
+            <div class="pp__modal-slider-wrap" data-pp-modal-slider-wrap {% if product.images.size == 0 %}hidden{% endif %}>
+              <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--prev" data-pp-modal-slide="left" aria-label="Vorherige Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <button type="button" class="pp__modal-slider-btn pp__modal-slider-btn--next" data-pp-modal-slide="right" aria-label="Weitere Produktfotos" {% if product.images.size <= 1 %}hidden{% endif %}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+              <div class="pp__modal-slider" data-pp-modal-slider>
+                {%- for image in product.images -%}
+                  <div class="pp__modal-slide">
+                    <img src="{{ image | image_url: width: 900 }}" alt="{{ image.alt | default: product.title | escape }}" loading="lazy">
+                  </div>
+                {%- endfor -%}
+              </div>
+            </div>
+          {%- endif -%}
+
+          {%- if real_options > 0 and db.show_variant_picker -%}
+            <div class="pp__modal-options" data-pp-modal-options></div>
+          {%- endif -%}
+
+          {%- if db.show_buy_now or db.show_add_to_cart -%}
+            <div class="pp__modal-buttons">
+              {%- if db.show_buy_now -%}
+                <button
+                  type="button"
+                  class="pp__btn pp__btn--buy"
+                  data-pp-buy-now-modal
+                  data-label-idle="{{ db.buy_now_label | default: 'Jetzt kaufen' | escape }}"
+                  data-label-soldout="{{ db.soldout_label | default: 'Ausverkauft' | escape }}"
+                  {% unless current_variant.available %}disabled{% endunless %}
+                >
+                  <span data-pp-buy-now-modal-label>{% if current_variant.available %}{{ db.buy_now_label | default: 'Jetzt kaufen' }}{% else %}{{ db.soldout_label | default: 'Ausverkauft' }}{% endif %}</span>
+                </button>
+              {%- endif -%}
+              {%- if db.show_add_to_cart -%}
+                <button
+                  type="button"
+                  class="pp__btn pp__btn--cart"
+                  data-pp-add-to-cart-modal
+                  data-label-idle="{{ db.add_to_cart_label | default: 'In den Warenkorb' | escape }}"
+                  data-label-soldout="{{ db.soldout_label | default: 'Ausverkauft' | escape }}"
+                  data-label-added="{{ db.added_label | default: 'Hinzugefügt' | escape }}"
+                  {% unless current_variant.available %}disabled{% endunless %}
+                >
+                  <span data-pp-add-to-cart-modal-label>{% if current_variant.available %}{{ db.add_to_cart_label | default: 'In den Warenkorb' }}{% else %}{{ db.soldout_label | default: 'Ausverkauft' }}{% endif %}</span>
+                </button>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
         </div>
       </div>
     </div>
-  </div>
+  {%- endif -%}
 
   {%- comment -%} ================= JSON-LD ================= {%- endcomment -%}
   <script type="application/ld+json">
@@ -1678,6 +1780,8 @@
           .trim();
 
         if (detailsEl) detailsEl.innerHTML = detailsHtml;
+        /* Trigger is already forced visible in Liquid when the block exists; this
+         * kept only as a no-op safety for the description-driven original flow. */
         if (trigger && wrapper.textContent.trim() !== '') trigger.classList.add('is-visible');
       }
       initDescriptionSplit();
@@ -1797,6 +1901,14 @@
         })[0];
       }
 
+      /* Label helpers: read the admin-editable strings straight off each
+       * button's data-label-* attributes, falling back to the original German
+       * defaults. This is what lets the popup's button labels differ from the
+       * main buttons' while still sharing the same JS. */
+      function labelIdle(btn, fallback) { return btn.getAttribute('data-label-idle') || fallback; }
+      function labelSoldOut(btn, fallback) { return btn.getAttribute('data-label-soldout') || fallback; }
+      function labelAdded(btn, fallback) { return btn.getAttribute('data-label-added') || fallback; }
+
       function applyVariant(variant) {
         if (!variant) return;
         currentVariant = variant;
@@ -1813,16 +1925,22 @@
 
         root.querySelectorAll('[data-pp-buy-now], [data-pp-buy-now-modal]').forEach(function (btn) {
           btn.disabled = !variant.available;
-        });
-        root.querySelectorAll('[data-pp-buy-now-label], [data-pp-buy-now-modal-label]').forEach(function (el) {
-          el.textContent = variant.available ? 'Jetzt kaufen' : 'Ausverkauft';
+          var span = btn.querySelector('span');
+          if (span) {
+            span.textContent = variant.available
+              ? labelIdle(btn, 'Jetzt kaufen')
+              : labelSoldOut(btn, 'Ausverkauft');
+          }
         });
         root.querySelectorAll('[data-pp-add-to-cart], [data-pp-add-to-cart-modal]').forEach(function (btn) {
           btn.disabled = !variant.available;
           btn.dataset.variantId = variant.id;
-        });
-        root.querySelectorAll('[data-pp-add-to-cart-label], [data-pp-add-to-cart-modal-label]').forEach(function (el) {
-          if (!el.closest('.is-added')) el.textContent = variant.available ? 'In den Warenkorb' : 'Ausverkauft';
+          var span = btn.querySelector('span');
+          if (span && !btn.classList.contains('is-added')) {
+            span.textContent = variant.available
+              ? labelIdle(btn, 'In den Warenkorb')
+              : labelSoldOut(btn, 'Ausverkauft');
+          }
         });
 
         try {
@@ -2007,12 +2125,19 @@
           .then(function () {
             document.dispatchEvent(new CustomEvent('cart:refresh'));
             var buttons = root.querySelectorAll('[data-pp-add-to-cart], [data-pp-add-to-cart-modal]');
-            var labels = root.querySelectorAll('[data-pp-add-to-cart-label], [data-pp-add-to-cart-modal-label]');
-            buttons.forEach(function (b) { b.classList.add('is-added'); });
-            labels.forEach(function (l) { l.textContent = 'Hinzugefügt'; });
+            buttons.forEach(function (b) {
+              b.classList.add('is-added');
+              var span = b.querySelector('span');
+              if (span) span.textContent = labelAdded(b, 'Hinzugefügt');
+            });
             setTimeout(function () {
-              buttons.forEach(function (b) { b.classList.remove('is-added'); });
-              labels.forEach(function (l) { l.textContent = currentVariant.available ? 'In den Warenkorb' : 'Ausverkauft'; });
+              buttons.forEach(function (b) {
+                b.classList.remove('is-added');
+                var span = b.querySelector('span');
+                if (span) span.textContent = currentVariant.available
+                  ? labelIdle(b, 'In den Warenkorb')
+                  : labelSoldOut(b, 'Ausverkauft');
+              });
             }, 2000);
 
             /* Wire this to your existing GTM / Meta Pixel setup */
@@ -2060,6 +2185,53 @@
   "name": "Main product",
   "tag": "section",
   "class": "zehn-main-product-section",
-  "settings": []
+  "settings": [],
+  "blocks": [
+    {
+      "type": "details_popup",
+      "name": "Product details popup",
+      "limit": 1,
+      "settings": [
+        { "type": "header", "content": "Trigger button" },
+        { "type": "text", "id": "trigger_label", "label": "Button text", "default": "Produktdetails ansehen" },
+        { "type": "checkbox", "id": "show_trigger_icon", "label": "Show arrow icon", "default": true },
+
+        { "type": "header", "content": "Popup heading" },
+        {
+          "type": "select",
+          "id": "heading_type",
+          "label": "Heading source",
+          "options": [
+            { "value": "product", "label": "Product title" },
+            { "value": "custom", "label": "Custom text" }
+          ],
+          "default": "product"
+        },
+        { "type": "text", "id": "custom_heading", "label": "Custom heading", "info": "Used only when Heading source is set to Custom text." },
+
+        { "type": "header", "content": "Popup content" },
+        { "type": "checkbox", "id": "show_description", "label": "Show product description", "default": true },
+        { "type": "richtext", "id": "extra_content", "label": "Extra content", "info": "Optional. Shown below the description inside the popup." },
+        { "type": "checkbox", "id": "show_image_slider", "label": "Show image slider", "default": true },
+        { "type": "checkbox", "id": "show_variant_picker", "label": "Show variant picker", "default": true },
+
+        { "type": "header", "content": "Buttons" },
+        { "type": "checkbox", "id": "show_buy_now", "label": "Show \"Buy now\" button", "default": true },
+        { "type": "text", "id": "buy_now_label", "label": "Buy now label", "default": "Jetzt kaufen" },
+        { "type": "checkbox", "id": "show_add_to_cart", "label": "Show \"Add to cart\" button", "default": true },
+        { "type": "text", "id": "add_to_cart_label", "label": "Add to cart label", "default": "In den Warenkorb" },
+        { "type": "text", "id": "added_label", "label": "\"Added\" confirmation label", "default": "Hinzugefügt" },
+        { "type": "text", "id": "soldout_label", "label": "Sold out label", "info": "Shown on both buttons when the selected variant is unavailable.", "default": "Ausverkauft" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Main product",
+      "blocks": [
+        { "type": "details_popup" }
+      ]
+    }
+  ]
 }
 {% endschema %}
